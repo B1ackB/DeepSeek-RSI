@@ -1,0 +1,13 @@
+import { readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+const mode = process.argv[2];
+if (!['offline', 'live', 'compression'].includes(mode)) throw new Error('Specify offline, live or compression; the latter two spend the approved G0 budget');
+const log = await readFile('/private/tmp/rsi-g0-host.log', 'utf8');
+const launch = log.match(/http:\/\/127\.0\.0\.1:3080\/\?token=[^\s]+/)?.[0];
+if (!launch) throw new Error('Missing local launch URL');
+const login = await fetch(launch, { redirect: 'manual' });
+const cookie = login.headers.getSetCookie().map(row => row.split(';')[0]).join('; ');
+const response = await fetch('http://127.0.0.1:3080/rsi-g0-probe/run', { method: 'POST', headers: { 'content-type': 'application/json', origin: 'http://127.0.0.1:3080', cookie }, body: JSON.stringify({ type: 'client-request', rpcId: randomUUID(), method: 'run', payload: { mode } }), signal: AbortSignal.timeout(240000) });
+const result = (await response.json()).result;
+console.log(JSON.stringify(result, null, 2));
+if (!result.ok) process.exitCode = 1;

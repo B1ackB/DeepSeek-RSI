@@ -1,0 +1,625 @@
+diff --git a/packages/client/ui-layout/README.i18n.yaml b/packages/client/ui-layout/README.i18n.yaml
+index 17187a8179..98f7945b31 100644
+--- a/packages/client/ui-layout/README.i18n.yaml
++++ b/packages/client/ui-layout/README.i18n.yaml
+@@ -2,5 +2,5 @@
+ # side as of the last confirmed-consistent state. Both languages carry equal authority;
+ # after editing either side, bring the other along and re-record with:
+ #   pnpm run verify-translation-pairing --write packages/client/ui-layout/README.md
+-README.md: aa00242f1d63924b990cfec23bd0438332662b06
+-README.zh.md: 801346967f9fbb031e5e6c2612dff84af79f2d45
++README.md: 77b368087ccbde1fe596c570d96e16cbcd210e8d
++README.zh.md: 48f0e62056f28b9e41ba42fd6667d603f623cc66
+diff --git a/packages/client/ui-layout/README.md b/packages/client/ui-layout/README.md
+index aa00242f1d..77b368087c 100644
+--- a/packages/client/ui-layout/README.md
++++ b/packages/client/ui-layout/README.md
+@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
+
+ ## Summary
+
+-This package provides the shell layout of the Web GUI: a three-column AppFrame with resizable sidebar and details panels, a concession chain that shrinks the details column and then auto-closes it when space runs out, and the `ctx.layout` panel-geometry service other plugins call to open or close the details column. It also seats the theme presenter, which projects the resolved color scheme, alias tokens, content font size, and `theme-color` metadata onto the document. Choose it for the standard window chrome; panel geometry is transient and resets on reload.
++This package provides the shell layout of the Web GUI: a three-column AppFrame with resizable sidebar and details panels, a concession chain that shrinks the details column and then auto-closes it when space runs out, and the `ctx.layout` panel-geometry service other plugins call to open or close the details column. It also seats the theme presenter, which projects the resolved color scheme, alias tokens, content font size, and `theme-color` metadata onto the document. Choose it for the standard window chrome; panel widths are transient; extension-panel open/closed preference survives browser reload.
+
+ ## Table of Contents
+
+@@ -25,7 +25,7 @@ This package provides the shell layout of the Web GUI: a three-column AppFrame w
+ <a id="use-this-package"></a>
+ ## Use this package
+
+-Mount this plugin at the root slot; it then renders the app frame around whatever occupies the sidebar, conversation, and details columns. Users resize the sidebar by dragging its invisible hit strip and the details panel by dragging its floating pill; when the window narrows, only details shrinks, then auto-closes. A closed sidebar retains a 56px control rail; details closes to zero width.
++Mount this plugin at the root slot; it then renders the app frame around whatever occupies the sidebar, conversation, and details columns. Register a root-scoped list entry into `shell.panel` to add a right-column tab alongside the native tool details. Users resize the sidebar by dragging its invisible hit strip and the details panel by dragging its floating pill; when the window narrows, only details shrinks, then auto-closes. A closed sidebar retains a 56px control rail; details closes to zero width.
+
+ ### Theme presentation
+
+@@ -39,7 +39,7 @@ The presenter consumes resolved theme snapshots and projects them onto the docum
+ <details>
+ <summary>Implementation internals — click to expand</summary>
+
+-One `register()` call contributes `AppFrame` into the runtime's built-in `'root'` slot and, in the same breath, declares the four child slots (`sidebar`, `conversation`, `details`, `shell.overlay`), seats the layout store (panel geometry), and wires the `ctx.layout` panel-action service. The transient layout store starts the sidebar at its default width and details closed, and never reads or writes `localStorage`. AppFrame always mounts the conversation and details columns; a connected Session renders through `SessionProvider`. It projects the selected Session title over the build-configured product title or the localized `common.brand.localBuild` fallback, so locale revisions update document metadata with the root entry. The theme presenter is a second effect: pure DOM writes from resolved snapshots — initial state through the getter once, then event-driven only, with no React path. It applies palette, font-size, and token variables before measuring the rendered background as the single color authority.
++One `register()` call contributes `AppFrame` into the runtime's built-in `'root'` slot and, in the same breath, declares the five child slots (`sidebar`, `conversation`, `details`, `shell.overlay`, `shell.panel`), seats the layout store (panel geometry), and wires the `ctx.layout` panel-action service. The transient layout store starts the sidebar at its default width and details closed, and never reads or writes `localStorage`. With extension tabs registered, AppFrame restores the open/closed preference, chooses the first extension on initial desktop entry, and keeps the pane available without a Session. A native open-details action selects the existing tool view. AppFrame always mounts the conversation and details columns; a connected Session renders through `SessionProvider`. It projects the selected Session title over the build-configured product title or the localized `common.brand.localBuild` fallback, so locale revisions update document metadata with the root entry. The theme presenter is a second effect: pure DOM writes from resolved snapshots — initial state through the getter once, then event-driven only, with no React path. It applies palette, font-size, and token variables before measuring the rendered background as the single color authority.
+
+ </details>
+
+@@ -73,7 +73,7 @@ None; this package neither assembles nor sends a provider request.
+
+ These limits define the current layout behavior. They are current package constraints, not a general window-manager comparison or a task backlog.
+
+-- **Panel geometry is transient** — reload restores the sidebar default and details closed; switching between distinct Session ids also closes details and forgets its dragged width, while unselected surfaces render details at zero width without modifying geometry.
++- **Panel geometry is transient** — without extension tabs, reload restores the sidebar default and details closed; switching between distinct Session ids also closes details. Extension tabs retain their open/closed preference in browser storage, while widths still reset. Unregistering the selected extension falls back to another extension or closes the native pane.
+ - **Concession-chain auto-close derives a zero width without touching the preferred width** — the panel restores itself when the window widens; consumers must not read the stored details width as the rendered truth.
+ - **No scroll anchoring during squeeze reflow** — layout changes may move the reader's viewport.
+
+diff --git a/packages/client/ui-layout/README.zh.md b/packages/client/ui-layout/README.zh.md
+index 801346967f..48f0e62056 100644
+--- a/packages/client/ui-layout/README.zh.md
++++ b/packages/client/ui-layout/README.zh.md
+@@ -9,7 +9,7 @@ kind: "package-reference"
+
+ ## 概述
+
+-本包提供 Web GUI 的外壳布局：一个三栏 AppFrame，带可缩放的侧栏与详情面板；一条让步链，在空间不足时先收缩详情栏、随后自动关闭它；以及 `ctx.layout` 面板几何服务，供其他插件调用以打开或关闭详情栏。它还承载主题呈现器，把解析后的配色方案、别名 token、正文字号与 `theme-color` 元数据投影到 document。需要标准窗口外观时选择它；面板几何是瞬时的，重新加载即重置。
++本包提供 Web GUI 的外壳布局：一个三栏 AppFrame，带可缩放的侧栏与详情面板；一条让步链，在空间不足时先收缩详情栏、随后自动关闭它；以及 `ctx.layout` 面板几何服务，供其他插件调用以打开或关闭详情栏。它还承载主题呈现器，把解析后的配色方案、别名 token、正文字号与 `theme-color` 元数据投影到 document。需要标准窗口外观时选择它；面板宽度是瞬时的；扩展面板的开关偏好会在浏览器刷新后恢复。
+
+ ## 目录
+
+@@ -25,7 +25,7 @@ kind: "package-reference"
+ <a id="use-this-package"></a>
+ ## 使用本包
+
+-在 root 槽位挂载本插件；它随即围绕占据侧栏、会话与详情栏的内容渲染应用框架。用户拖动不可见命中条带缩放侧栏、拖动浮动胶囊缩放详情面板；窗口变窄时只有详情栏收缩，随后自动关闭。关闭的侧栏保留 56px 控制栏；详情栏关闭到零宽度。
++在 root 槽位挂载本插件；它随即围绕占据侧栏、会话与详情栏的内容渲染应用框架。在根作用域的 `shell.panel` 注册列表 entry，即可在右侧添加与原生工具详情并列的页签。用户拖动不可见命中条带缩放侧栏、拖动浮动胶囊缩放详情面板；窗口变窄时只有详情栏收缩，随后自动关闭。关闭的侧栏保留 56px 控制栏；详情栏关闭到零宽度。
+
+ ### 主题呈现
+
+@@ -39,7 +39,7 @@ kind: "package-reference"
+ <details>
+ <summary>实现细节——点击展开</summary>
+
+-一次 `register()` 调用把 `AppFrame` 贡献进运行时的内建 `'root'` 槽位，并在同一刻声明四个子槽位（`sidebar`、`conversation`、`details`、`shell.overlay`）、安放布局 store（面板几何）并接好 `ctx.layout` 面板动作服务。瞬时布局 store 以默认宽度启动侧栏、保持详情栏关闭，从不读写 `localStorage`。AppFrame 始终挂载会话与详情两栏；已连接 Session 经 `SessionProvider` 渲染。它把所选 Session 标题投影到构建配置的产品标题或本地化 `common.brand.localBuild` 回退值之上，因此 locale revision 会随根 entry 一起更新文档元数据。主题呈现器是第二个 effect：从解析后的快照做纯 DOM 写入——初始状态经 getter 读取一次，此后仅事件驱动，不经过 React。它先应用调色板、字号与 token 变量，再把渲染出的背景测量为唯一的颜色依据。
++一次 `register()` 调用把 `AppFrame` 贡献进运行时的内建 `'root'` 槽位，并在同一刻声明五个子槽位（`sidebar`、`conversation`、`details`、`shell.overlay`、`shell.panel`）、安放布局 store（面板几何）并接好 `ctx.layout` 面板动作服务。瞬时布局 store 以默认宽度启动侧栏、保持详情栏关闭，从不读写 `localStorage`。扩展页签注册后，AppFrame 恢复开关偏好，桌面首次进入选择第一个扩展，无 Session 时仍可显示；原生打开详情动作选择原工具视图。AppFrame 始终挂载会话与详情两栏；已连接 Session 经 `SessionProvider` 渲染。它把所选 Session 标题投影到构建配置的产品标题或本地化 `common.brand.localBuild` 回退值之上，因此 locale revision 会随根 entry 一起更新文档元数据。主题呈现器是第二个 effect：从解析后的快照做纯 DOM 写入——初始状态经 getter 读取一次，此后仅事件驱动，不经过 React。它先应用调色板、字号与 token 变量，再把渲染出的背景测量为唯一的颜色依据。
+
+ </details>
+
+@@ -73,7 +73,7 @@ kind: "package-reference"
+
+ 这些限制界定了当前布局行为。它们是当前包约束，不是通用窗口管理器对比或任务积压。
+
+-- **面板几何是瞬时状态**——重新加载会恢复侧栏默认值并保持详情栏关闭；在不同会话 id 之间切换同样会关闭详情栏并忘记拖动后的宽度，而未选中表面以零宽度渲染详情栏却不修改几何。
++- **面板几何是瞬时的** — 没有扩展页签时，刷新恢复侧栏默认宽度并关闭详情栏；切换不同 Session ID 也关闭详情栏。扩展页签在浏览器存储中保留开关偏好，宽度仍会重置。卸载当前扩展后切换到其他扩展，或关闭原生面板。
+ - **让步链自动关闭通过推导零宽度实现，不触碰偏好宽度**——窗口变宽时面板自行恢复；消费方不得把 store 中的详情宽度当作渲染真值。
+ - **挤压重排期间无滚动锚定**——布局变化可能移动读者的视口。
+
+diff --git a/packages/client/ui-layout/src/client/AppFrame.module.css b/packages/client/ui-layout/src/client/AppFrame.module.css
+index 9ba4e82be6..623d0fa90f 100644
+--- a/packages/client/ui-layout/src/client/AppFrame.module.css
++++ b/packages/client/ui-layout/src/client/AppFrame.module.css
+@@ -40,7 +40,32 @@
+   min-width: 0;
+   overflow: hidden;
+   border-left: 0.5px solid var(--dsw-alias-border-l3);
++  display: flex;
++  flex-direction: column;
++}
++
++.panelHeader {
++	display: flex;
++	align-items: center;
++	justify-content: space-between;
++	gap: 8px;
++	padding: 12px;
++	border-bottom: 0.5px solid var(--dsw-alias-border-l3);
++}
++.panelTabs { display: flex; gap: 8px; }
++.panelHeader button, .panelOpen {
++	font: inherit;
++	color: inherit;
++	background: var(--dsw-alias-bg-base);
++	border: 0.5px solid var(--dsw-alias-border-l3);
++	border-radius: 8px;
++	padding: 6px 10px;
++	cursor: pointer;
+ }
++.panelHeader button[aria-selected='true'] { font-weight: 600; background: var(--dsw-alias-button-floating-fill); }
++.panelBody { flex: 1; min-height: 0; overflow: auto; }
++.panelBody[hidden] { display: none; }
++.panelOpen { position: absolute; top: 16px; right: 16px; }
+
+ /* The details subtree stays mounted at zero width, so its border must not paint
+    a 1px seam. The collapsed sidebar instead retains a bordered compact rail. */
+@@ -48,6 +73,8 @@
+   border-left: none;
+ }
+
++.frame[data-has-panels][data-details-collapsed] .detailsCol { visibility: hidden; }
++
+ /* Drag handles are frame children (columns clip overflow): an 8px hit strip
+    centered on the column border via inline left, above column content. Details
+    adds a visible 12x32 pill at vertical center; sidebar keeps only the hit strip. */
+diff --git a/packages/client/ui-layout/src/client/AppFrame.tsx b/packages/client/ui-layout/src/client/AppFrame.tsx
+index cbef893aed..20ae2e4226 100644
+--- a/packages/client/ui-layout/src/client/AppFrame.tsx
++++ b/packages/client/ui-layout/src/client/AppFrame.tsx
+@@ -13,19 +13,21 @@
+ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+ import type { ReactNode } from 'react'
+ import type {
+-  PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
++  PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore, InjectFace,
+ } from '@deepseek-ai/dsh-client-ui-slots'
+ import { computeColumns, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT } from './columns.ts'
+ import { DocumentTitle } from './DocumentTitle.tsx'
+ import type { createLayoutStore } from './stores.ts'
+ import css from './AppFrame.module.css'
++import type { PanelInjected } from './index.ts'
+
+ /** Full composed props: runtime share + child-slot render share + store share. */
+ export type AppFrameProps =
+   & PropsRuntime<'root'>
+-  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
++  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay' | 'shell.panel'>
+   & PropsStore<ReturnType<typeof createLayoutStore>>
+   & PropsLocale<'common'>
++  & InjectFace<PanelInjected>
+
+ /** Center column grid item (session-body building block). */
+ function CenterColumn(props: { children?: ReactNode }) {
+@@ -95,8 +97,12 @@ export function AppFrame({
+   renderSlot,
+   SessionProvider,
+   t,
++  usePanels,
+ }: AppFrameProps) {
+   const panels = useStore(s => s)
++  const panelList = usePanels(s => s)
++  const hasPanels = panelList.entries.length > 0
++  const preferencesReady = useRef(false)
+   const detailsSession = useSessions((s) => {
+     const current = s.current
+     return current !== undefined && s.byId[current]?.blank === false ? current : undefined
+@@ -111,11 +117,31 @@ export function AppFrame({
+   const lastSession = useRef(detailsSession)
+   useLayoutEffect(() => {
+     if (detailsSession === undefined) return
+-    if (lastSession.current !== undefined && lastSession.current !== detailsSession) {
++    if (!hasPanels && lastSession.current !== undefined && lastSession.current !== detailsSession) {
+       actions.closeDetails()
+     }
+     lastSession.current = detailsSession
+-  }, [actions, detailsSession])
++  }, [actions, detailsSession, hasPanels])
++
++  useEffect(() => {
++    if (!hasPanels) { preferencesReady.current = false; return }
++    if (!preferencesReady.current) {
++      // Mark before publishing an external-store update, which can render synchronously.
++      preferencesReady.current = true
++      let saved: string | null = null
++      try { saved = localStorage.getItem('dsh.shell.panel.open') } catch { /* Browser storage may be unavailable. */ }
++      actions.selectPanel(panelList.entries[0]!.id)
++      if (saved === 'closed' || (saved !== 'open' && viewport < SIDEBAR_AUTO_COLLAPSE)) actions.closeDetails()
++      return
++    }
++    try { localStorage.setItem('dsh.shell.panel.open', panels.details === 0 ? 'closed' : 'open') } catch { /* Viewing remains usable without persistence. */ }
++  }, [actions, hasPanels, panelList, panels.details, viewport])
++
++  useEffect(() => {
++    if (panels.panel === null || panelList.entries.some(entry => entry.id === panels.panel)) return
++    if (hasPanels) actions.selectPanel(panelList.entries[0]!.id)
++    else { actions.openDetails(); actions.closeDetails(); preferencesReady.current = false }
++  }, [actions, hasPanels, panelList, panels.panel])
+
+   // Track the frame's own box (not the window): rAF-throttled ResizeObserver.
+   useEffect(() => {
+@@ -149,7 +175,7 @@ export function AppFrame({
+   const sidebarPreference = sidebarCollapsed
+     ? 0
+     : panels.sidebar === 0 ? SIDEBAR_DEFAULT : panels.sidebar
+-  const cols = computeColumns(viewport, sidebarPreference, detailsSession === undefined ? 0 : panels.details)
++  const cols = computeColumns(viewport, sidebarPreference, detailsSession === undefined && !hasPanels ? 0 : panels.details)
+   const colsRef = useRef(cols)
+   colsRef.current = cols
+
+@@ -179,6 +205,7 @@ export function AppFrame({
+       style={{ gridTemplateColumns: `${cols.sidebar}px minmax(0, 1fr) ${cols.details}px` }}
+       data-sidebar-collapsed={sidebarCollapsed || undefined}
+       data-details-collapsed={cols.details === 0 || undefined}
++      data-has-panels={hasPanels || undefined}
+       data-dragging={dragging || undefined}
+     >
+       <DocumentTitle
+@@ -204,11 +231,22 @@ export function AppFrame({
+             entry while no session is current. */}
+         <CenterColumn>{renderSlot('conversation', {})}</CenterColumn>
+         <DetailsColumn>
+-          <SessionProvider>{renderSlot('details', {})}</SessionProvider>
++          {hasPanels && <div className={css.panelHeader}>
++            <div role="tablist" aria-label={panelList.entries[0]!.label} className={css.panelTabs}>
++              {panelList.entries.map(entry => <button type="button" role="tab" key={entry.id} aria-selected={panels.panel === entry.id} onClick={() => actions.selectPanel(entry.id)}>{entry.label}</button>)}
++              <button type="button" role="tab" aria-selected={panels.panel === null} disabled={detailsSession === undefined} onClick={() => actions.openDetails()}>{panelList.detailsLabel}</button>
++            </div>
++            <button type="button" aria-label={t('close')} onClick={() => actions.closeDetails()}>×</button>
++          </div>}
++          <div className={css.panelBody} hidden={hasPanels && panels.panel !== null}>
++            <SessionProvider>{renderSlot('details', {})}</SessionProvider>
++          </div>
++          {hasPanels && panels.panel !== null && <div className={css.panelBody} role="tabpanel">{renderSlot('shell.panel', {}, { only: panels.panel })}</div>}
+         </DetailsColumn>
+       </>
+       <div className={css.overlayLayer} data-shell-overlay>
+         {renderSlot('shell.overlay', {})}
++        {hasPanels && cols.details === 0 && <button type="button" className={css.panelOpen} aria-label={`${t('expand')} ${panelList.entries[0]!.label}`} onClick={() => actions.selectPanel(panelList.entries[0]!.id)}>{panelList.entries[0]!.label}</button>}
+       </div>
+       {/* The collapsed rail is fixed-width: no resize handle while closed. */}
+       {!sidebarCollapsed && <DragHandle side="sidebar" left={cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
+diff --git a/packages/client/ui-layout/src/client/index.ts b/packages/client/ui-layout/src/client/index.ts
+index 56afec15e3..c375924e3c 100644
+--- a/packages/client/ui-layout/src/client/index.ts
++++ b/packages/client/ui-layout/src/client/index.ts
+@@ -1,7 +1,7 @@
+ /**
+  * Layout plugin, browser half: one register() call contributes AppFrame into
+  * the runtime's built-in 'root' slot and, in the same breath, declares the
+- * four child slots (declaration = exclusive render authority), seats the
++ * five child slots (declaration = exclusive render authority), seats the
+  * layout store (panel geometry), and wires the panel-action service face.
+  * ctx.layout is the cross-plugin panel-action contract; navigation state lives
+  * with the runtime sessions service. A second effect seats the theme
+@@ -17,6 +17,17 @@ import { AppFrame } from './AppFrame.tsx'
+ import { createLayoutStore } from './stores.ts'
+ import { LayoutController } from './service.ts'
+ import { ThemePresenter } from './theme-presenter.ts'
++import { en, zh } from './panel-locales.ts'
++import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
++
++/** Root-scoped right panel tabs projected from the slot registry. */
++export interface PanelList {
++	entries: readonly { id: string; label: string }[]
++	detailsLabel: string
++}
++
++/** Registry-owned observable; the renderer supplies usePanels. */
++export interface PanelInjected { hooks: { panels: HostObservable<PanelList> } }
+
+ // Contract exports only (export-convergence rule: cross-package consumers
+ // keep a symbol exported; test-only/package-internal symbols live off /src).
+@@ -34,9 +45,10 @@ declare module '@deepseek-ai/cordis' {
+ }
+
+ declare module '@deepseek-ai/dsh-client-ui-slots' {
++  interface LocaleNamespaceMap { layoutPanels: keyof typeof zh }
+   interface SlotMap {
+     // The 'root' entry itself is the runtime's built-in slot (declared
+-    // there); these four are the frame's children, declared by the same
++    // there); these five are the frame's children, declared by the same
+     // register() call that contributes AppFrame. Session owners never pass
+     // sessionId: the framework injects it as a standard prop.
+     /**
+@@ -84,6 +96,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
+      * `id` is added beside the shipped entries instead of replacing them.
+      */
+     'shell.overlay': { kind: 'list'; scope: 'root' }
++    /** Additional right-column tabs; coexist with the native details seat. */
++    'shell.panel': { kind: 'list'; scope: 'root' }
+   }
+ }
+
+@@ -117,6 +131,34 @@ export const inject = ['slots', 'theme', 'locale']
+  * @param ctx - client root context.
+  */
+ export function apply(ctx: ClientContext): void {
++  ctx.effect(() => ctx.locale.register('layoutPanels', { zh, en }), 'ui-layout: panel labels')
++  const panelText = ctx.locale.bind('layoutPanels')
++  let panelsVersion = -1
++  let localeRevision = -1
++  let panelList: PanelList = { entries: [], detailsLabel: '' }
++  const panels: HostObservable<PanelList> = {
++    getSnapshot: () => {
++      const version = ctx.slots.getVersion('shell.panel')
++      const revision = ctx.locale.getSnapshot().revision
++      if (version !== panelsVersion || revision !== localeRevision) {
++        panelsVersion = version
++        localeRevision = revision
++        panelList = {
++          entries: ctx.slots.entriesOfSlot('shell.panel').map(entry => ({
++            id: entry.options.id!,
++            label: typeof entry.options.label === 'function' ? entry.options.label() : entry.options.label ?? entry.options.id!,
++          })),
++          detailsLabel: panelText('details'),
++        }
++      }
++      return panelList
++    },
++    subscribe: listener => {
++      const offEntries = ctx.slots.subscribe('shell.panel', listener)
++      const offLocale = ctx.locale.subscribe(listener)
++      return () => { offEntries(); offLocale() }
++    },
++  }
+   const layout = new LayoutController()
+   ctx.effect(() => {
+     const disposeService = ctx.reflect.provide('layout', layout)
+@@ -128,15 +170,16 @@ export function apply(ctx: ClientContext): void {
+         'conversation': { kind: 'single', scope: 'session-maybe' },
+         'details': { kind: 'single', scope: 'session' },
+         'shell.overlay': { kind: 'list', scope: 'root' },
++        'shell.panel': { kind: 'list', scope: 'root' },
+       },
+       // Exclusive store: the factory itself — the framework instantiates per
+       // entry and delivers useStore/actions to AppFrame as standard props.
+       store: createLayoutStore,
+       // The hook's only side effect connects the root store to ctx.layout;
+       // conversation business actions belong to their registrants.
+-      inject: (actions: PanelActions) => {
++      inject: (actions: PanelActions): PanelInjected => {
+         layout.attachPanels(actions)
+-        return {}
++        return { hooks: { panels } }
+       },
+     }, AppFrame)
+     return () => {
+diff --git a/packages/client/ui-layout/src/client/stores.ts b/packages/client/ui-layout/src/client/stores.ts
+index 7b6e2807ee..945d8fd06f 100644
+--- a/packages/client/ui-layout/src/client/stores.ts
++++ b/packages/client/ui-layout/src/client/stores.ts
+@@ -20,7 +20,7 @@ import {
+  * `narrowExpanded` is the manual override that re-expands the auto-collapsed
+  * sidebar over the squeezed center without rewriting the width preference.
+  */
+-type LayoutState = { sidebar: number; details: number; narrow: boolean; narrowExpanded: boolean }
++type LayoutState = { sidebar: number; details: number; narrow: boolean; narrowExpanded: boolean; panel: string | null }
+
+ /**
+  * Annotation twin of the actions literal below (the export needs a declared
+@@ -33,6 +33,7 @@ type LayoutActions = {
+   setNarrow: (draft: LayoutState, narrow: boolean) => void
+   openDetails: (draft: LayoutState) => void
+   closeDetails: (draft: LayoutState) => void
++  selectPanel: (draft: LayoutState, id: string) => void
+ }
+
+ /**
+@@ -47,7 +48,7 @@ type LayoutActions = {
+  */
+ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutActions>  {
+   const handle = defineStore({
+-    init: (): LayoutState => ({ sidebar: SIDEBAR_DEFAULT, details: 0, narrow: false, narrowExpanded: false }),
++    init: (): LayoutState => ({ sidebar: SIDEBAR_DEFAULT, details: 0, narrow: false, narrowExpanded: false, panel: null }),
+     actions: {
+       setSidebar: (d, px: number) => { d.sidebar = clampWidth(px, SIDEBAR_MIN, SIDEBAR_MAX) },
+       setDetails: (d, px: number) => { d.details = clampWidth(px, DETAILS_MIN, DETAILS_MAX) },
+@@ -64,8 +65,9 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
+         d.narrow = narrow
+         d.narrowExpanded = false
+       },
+-      openDetails: (d) => { if (d.details === 0) d.details = DETAILS_DEFAULT },
++      openDetails: (d) => { d.panel = null; if (d.details === 0) d.details = DETAILS_DEFAULT },
+       closeDetails: (d) => { d.details = 0 },
++      selectPanel: (d, id: string) => { d.panel = id; if (d.details === 0) d.details = DETAILS_DEFAULT },
+     },
+   })
+   return handle
+diff --git a/packages/client/ui-layout/tests/app-frame.client.spec.tsx b/packages/client/ui-layout/tests/app-frame.client.spec.tsx
+index a640480360..90e1ea0e05 100644
+--- a/packages/client/ui-layout/tests/app-frame.client.spec.tsx
++++ b/packages/client/ui-layout/tests/app-frame.client.spec.tsx
+@@ -11,7 +11,7 @@
+  * resizes are driven through the ResizeObserver stub.
+  */
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+-import { act, cleanup, render } from '@testing-library/react'
++import { act, cleanup, fireEvent, render } from '@testing-library/react'
+ import { useSyncExternalStore } from 'react'
+ import { AppFrame } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
+ import type { AppFrameProps } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
+@@ -54,7 +54,7 @@ function hookOf<T>(inst: { subscribe: (fn: () => void) => () => void; getSnapsho
+   return function useSelector<S>(sel: (s: T) => S): S { return sel(useSyncExternalStore(inst.subscribe, inst.getSnapshot)) }
+ }
+
+-function mountFrame() {
++function mountFrame(panelEntries: Array<{ id: string; label: string }> = []) {
+   window.innerWidth = frameWidth // first-render viewport source before the observer fires
+   const instance = createLayoutStore().create()
+   const slotCalls: { key: string; props: unknown }[] = []
+@@ -101,6 +101,7 @@ function mountFrame() {
+       useWorkspaces={((sel: (s: WorkspaceSnapshot) => unknown) => sel(workspaceState)) as never}
+       SessionProvider={SessionProviderStub}
+       t={key => key === 'brand.localBuild' ? 'DSH Local Build' : key}
++      usePanels={((selector: (value: { entries: typeof panelEntries; detailsLabel: string }) => unknown) => selector({ entries: panelEntries, detailsLabel: 'Tool details' })) as AppFrameProps['usePanels']}
+     />
+   )
+   const utils = render(element())
+@@ -124,6 +125,7 @@ function drag(handle: Element, fromX: number, toX: number): void {
+ }
+
+ beforeEach(() => {
++  localStorage.clear()
+   frameWidth = 1920
+   selectedSession.current = 's-test' as SessionId
+   selectedSessionBlank.current = false
+@@ -434,3 +436,36 @@ describe('AppFrame — unmount with an in-flight resize frame', () => {
+     expect(tracks(frame)).toEqual([280, 330])
+   })
+ })
++
++
++describe('extension right panels', () => {
++  it('opens without a Session, restores collapse preference, and keeps native details available', () => {
++    selectedSession.current = undefined
++    const first = mountFrame([{ id: 'rsi', label: 'RSI' }])
++    expect(first.getByRole('tab', { name: 'RSI' }).getAttribute('aria-selected')).toBe('true')
++    expect(tracks(first.frame)[1]).toBeGreaterThan(0)
++    fireEvent.click(first.getByRole('button', { name: 'close' }))
++    expect(tracks(first.frame)[1]).toBe(0)
++    first.unmount()
++    const next = mountFrame([{ id: 'rsi', label: 'RSI' }])
++    expect(tracks(next.frame)[1]).toBe(0)
++    fireEvent.click(next.getByRole('button', { name: 'expand RSI' }))
++    expect(tracks(next.frame)[1]).toBeGreaterThan(0)
++    selectedSession.current = 's-tool' as SessionId
++    act(() => { next.rerenderFrame(); next.instance.actions.openDetails() })
++    expect(next.getByRole('tab', { name: 'Tool details' }).getAttribute('aria-selected')).toBe('true')
++    expect(next.getByTestId('details-content').closest('[hidden]')).toBeNull()
++  })
++
++  it('returns to native details after unregister and restores an extension after registration', () => {
++    const entries = [{ id: 'rsi', label: 'RSI' }]
++    const view = mountFrame(entries)
++    act(() => { view.instance.actions.openDetails() })
++    entries.splice(0)
++    act(() => { view.rerenderFrame() })
++    expect(view.queryByRole('tab', { name: 'RSI' })).toBeNull()
++    entries.push({ id: 'rsi', label: 'RSI' })
++    act(() => { view.rerenderFrame() })
++    expect(view.getByRole('tab', { name: 'RSI' }).getAttribute('aria-selected')).toBe('true')
++  })
++})
+diff --git a/packages/client/ui-layout/tests/apply.client.spec.ts b/packages/client/ui-layout/tests/apply.client.spec.ts
+index da3056b5db..1a99116e8b 100644
+--- a/packages/client/ui-layout/tests/apply.client.spec.ts
++++ b/packages/client/ui-layout/tests/apply.client.spec.ts
+@@ -46,7 +46,7 @@ describe('ui-layout client apply', () => {
+     expect(slots.spec('details')).toEqual({ kind: 'single', scope: 'session' })
+   })
+
+-  it('injects no business face and attaches the layout actions', async () => {
++  it('injects the panel registry projection and attaches the layout actions', async () => {
+     const { ctx, slots } = await bench()
+     const fiber = ctx.plugin({ inject: [...inject], apply })
+     await fiber.await()
+@@ -54,7 +54,7 @@ describe('ui-layout client apply', () => {
+       setSidebar: vi.fn(), setDetails: vi.fn(), toggleSidebar: vi.fn(), openDetails: vi.fn(), closeDetails: vi.fn(),
+     }
+     const injected = (slots.entries('root')[0]!.inject as (actions: never) => object)(actions as never)
+-    expect(injected).toEqual({})
++    expect(injected).toHaveProperty('hooks.panels')
+     const layout = ctx.get('layout') as LayoutController
+     layout.toggleSidebar()
+     expect(actions.toggleSidebar).toHaveBeenCalledOnce()
+diff --git a/packages/client/ui-layout/tests/layout-store.client.spec.ts b/packages/client/ui-layout/tests/layout-store.client.spec.ts
+index c6f0069197..a298d57a2d 100644
+--- a/packages/client/ui-layout/tests/layout-store.client.spec.ts
++++ b/packages/client/ui-layout/tests/layout-store.client.spec.ts
+@@ -19,7 +19,7 @@ beforeEach(() => { localStorage.clear() })
+ describe('createLayoutStore', () => {
+   it('initializes the sidebar at its default width, details closed, wide viewport assumed', () => {
+     const { store } = createLayoutStore().create()
+-    expect(store.getSnapshot()).toEqual({ sidebar: SIDEBAR_DEFAULT, details: 0, narrow: false, narrowExpanded: false })
++    expect(store.getSnapshot()).toEqual({ sidebar: SIDEBAR_DEFAULT, details: 0, narrow: false, narrowExpanded: false, panel: null })
+   })
+
+   it('each create() is an independent instance (factory is not a singleton)', () => {
+@@ -55,7 +55,7 @@ describe('createLayoutStore', () => {
+     actions.setSidebar(400)
+     actions.setNarrow(true)
+     actions.toggleSidebar()
+-    expect(store.getSnapshot()).toEqual({ sidebar: 400, details: 0, narrow: true, narrowExpanded: true })
++    expect(store.getSnapshot()).toEqual({ sidebar: 400, details: 0, narrow: true, narrowExpanded: true, panel: null })
+     actions.toggleSidebar()
+     expect(store.getSnapshot().narrowExpanded).toBe(false)
+     expect(store.getSnapshot().sidebar).toBe(400)
+@@ -69,7 +69,7 @@ describe('createLayoutStore', () => {
+     actions.setNarrow(true)
+     expect(store.getSnapshot().narrowExpanded).toBe(true)
+     actions.setNarrow(false)
+-    expect(store.getSnapshot()).toMatchObject({ narrow: false, narrowExpanded: false })
++    expect(store.getSnapshot()).toMatchObject({ narrow: false, narrowExpanded: false, panel: null })
+     actions.setNarrow(true)
+     expect(store.getSnapshot().narrowExpanded).toBe(false)
+   })
+@@ -98,6 +98,7 @@ describe('createLayoutStore', () => {
+       details: 0,
+       narrow: false,
+       narrowExpanded: false,
++      panel: null,
+     })
+   })
+ })
+diff --git a/packages/client/ui-layout/tests/service.client.spec.ts b/packages/client/ui-layout/tests/service.client.spec.ts
+index ea4118927c..2ef1099ca0 100644
+--- a/packages/client/ui-layout/tests/service.client.spec.ts
++++ b/packages/client/ui-layout/tests/service.client.spec.ts
+@@ -10,6 +10,7 @@ function fakePanels(): PanelActions {
+     setNarrow: vi.fn(),
+     openDetails: vi.fn(),
+     closeDetails: vi.fn(),
++    selectPanel: vi.fn(),
+   }
+ }
+
+diff --git a/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.i18n.yaml b/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.i18n.yaml
+new file mode 100644
+index 0000000000..0d8f292e5e
+--- /dev/null
++++ b/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.i18n.yaml
+@@ -0,0 +1,6 @@
++# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
++# side as of the last confirmed-consistent state. Both languages carry equal authority;
++# after editing either side, bring the other along and re-record with:
++#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.md
++2026-09-08-root-right-panel-tabs.md: bb4dde2c566665000a46e418c01805d5c56f418e
++2026-09-08-root-right-panel-tabs.zh.md: 9334f1f48675540a49ae0dc88ac4373c79f05515
+diff --git a/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.md b/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.md
+new file mode 100644
+index 0000000000..bb4dde2c56
+--- /dev/null
++++ b/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.md
+@@ -0,0 +1,21 @@
++# Agent Note: Root-scoped right panel tabs
++
++Status: implemented
++
++English | [中文](2026-09-08-root-right-panel-tabs.zh.md)
++
++## Problem
++
++Extensions that observe work across Sessions need a visible home before a Session exists. The native details slot belongs to the selected Session and replacing it removes tool inspection.
++
++## Decision
++
++The layout declares an additive root-scoped `shell.panel` slot and renders its labeled entries beside native tool details. The first extension opens on desktop entry unless browser storage records a collapsed preference. Native open-details actions select tool inspection; an absent selected extension falls back to another extension or closes the pane.
++
++## Alternatives considered
++
++Replacing the Session details occupant couples an extension to native feature components. An overlay obscures conversation content. A root-scoped tab keeps both owners independent while reusing the column geometry.
++
++## Consequences
++
++Panel visibility survives reload, but width and selected tab do not. Storage failure falls back to initial viewport behavior. Closing or selecting a tab changes only viewing state; extension work needs its own authorization and lifecycle. Component checks cover initialization, stored collapse, native selection and registration removal; browser checks cover the assembled entry.
+diff --git a/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.zh.md b/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.zh.md
+new file mode 100644
+index 0000000000..9334f1f486
+--- /dev/null
++++ b/.agents/notes/implemented/feature/2026-09-08-root-right-panel-tabs.zh.md
+@@ -0,0 +1,21 @@
++# Agent Note: 根作用域的右侧面板页签
++
++Status: implemented
++
++[English](2026-09-08-root-right-panel-tabs.md) | 中文
++
++## Problem
++
++跨 Session 观察工作的扩展需要在尚无 Session 时拥有可见入口。原生详情槽位属于所选 Session，替换它会移除工具检查能力。
++
++## Decision
++
++布局声明可追加的根作用域 `shell.panel` 槽位，将带标签的 entry 与原生工具详情并列渲染。桌面进入时打开第一个扩展，除非浏览器存储记录了收起偏好。原生打开详情动作选择工具检查；当前扩展消失时切换到其他扩展或关闭面板。
++
++## Alternatives considered
++
++替换 Session 详情占用者会让扩展依赖原生功能组件。浮层会遮挡会话内容。根作用域页签复用栏宽管理，同时保持两个内容所有者独立。
++
++## Consequences
++
++面板开关在刷新后恢复，宽度与所选页签不保留。存储失败时采用初始视口规则。关闭或选择页签只改变显示状态，扩展工作需要自己的授权与生命周期。组件检查覆盖初始化、存储的收起偏好、原生详情选择及移除注册；浏览器检查覆盖组装后的入口。
+diff --git a/packages/client/ui-layout/src/client/panel-locales.ts b/packages/client/ui-layout/src/client/panel-locales.ts
+new file mode 100644
+index 0000000000..f8e85d92c5
+--- /dev/null
++++ b/packages/client/ui-layout/src/client/panel-locales.ts
+@@ -0,0 +1,4 @@
++/** Labels for the right-column extension tabs. */
++export const zh = { details: '工具详情' };
++/** English keys mirror the Chinese dictionary. */
++export const en: Record<keyof typeof zh, string> = { details: 'Tool details' };

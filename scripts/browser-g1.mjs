@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+const harness = process.env.RSI_HARNESS ?? '/Users/black/Documents/VSCodeProject/deepseek-harness';
+const { chromium } = await import(pathToFileURL(resolve(harness, 'apps/web/node_modules/playwright/index.mjs')).href);
+const log = await readFile(process.argv[2] ?? '/private/tmp/rsi-g1-browser-host.log', 'utf8');
+const launch = log.match(/http:\/\/127\.0\.0\.1:\d+\/\?token=[^\s]+/)?.[0];
+assert.ok(launch);
+const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+try {
+	const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, locale: 'zh-CN' });
+	const errors = []; page.on('pageerror', e => errors.push(e.message));
+	await page.goto(launch);
+	await page.getByRole('button', { name: '设置', exact: true }).waitFor();
+	const welcome = page.getByRole('button', { name: '继续', exact: true }); if (await welcome.isVisible()) await welcome.click();
+	const panel = page.getByRole('complementary', { name: 'RSI 控制面板' });
+	await panel.getByRole('heading', { name: 'Skill 优化' }).waitFor({ timeout: 20000 });
+	await panel.getByText('未选择会话', { exact: true }).waitFor();
+	await page.getByRole('button', { name: '关闭', exact: true }).click();
+	await page.reload();
+	await page.getByRole('button', { name: '展开 RSI', exact: true }).click();
+	await panel.getByText('高级设置：Skill 与设计偏好', { exact: true }).click();
+	await panel.getByText('纳入已有 Skill', { exact: true }).click();
+	await panel.getByText('g1-browser-sample', { exact: true }).locator('..').getByRole('button', { name: '纳入管理', exact: true }).click();
+	await panel.getByRole('button', { name: '核对来源', exact: true }).waitFor();
+	const rpc = (endpoint) => page.evaluate(async endpoint => {
+		const response = await fetch(`/rsi-g1-fixture/${endpoint}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'client-request', rpcId: crypto.randomUUID(), method: endpoint, payload: {} }) });
+		return (await response.json()).result;
+	}, endpoint);
+	assert.equal((await rpc('status')).value.calls, 0);
+	assert.equal((await rpc('trace')).value.calls, 0);
+	await panel.getByRole('button', { name: '分析优化机会', exact: true }).click();
+	await panel.getByRole('textbox', { name: '分析发送内容', exact: true }).waitFor();
+	assert.equal((await rpc('status')).value.calls, 0, 'Preview cannot call a model');
+	await panel.getByRole('button', { name: '确认范围与预算，开始分析', exact: true }).click();
+	await panel.getByText('缩短结果说明 · 简洁表达', { exact: true }).waitFor();
+	await panel.getByText('缩短结果说明 · 简洁表达', { exact: true }).click();
+	await panel.getByRole('button', { name: '保存授权草稿', exact: true }).click();
+	await panel.getByText('简洁表达 · 草稿，未授权修改', { exact: true }).waitFor();
+	assert.equal(await panel.getByRole('button', { name: '正式授权：等待评测契约' }).isDisabled(), true);
+	assert.equal(await panel.locator('[data-rsi-owner="rsi"]').getAttribute('data-rsi-total'), '130');
+	const final = await rpc('status'); assert.equal(final.value.calls, 1); assert.equal(final.value.state.drafts.length, 1);
+	await mkdir('.cache/g1-evidence', { recursive: true });
+	await panel.getByRole('heading', { name: 'Skill 优化' }).scrollIntoViewIfNeeded();
+	await page.screenshot({ path: '.cache/g1-evidence/main.png' });
+	await panel.getByText('简洁表达 · 草稿，未授权修改', { exact: true }).scrollIntoViewIfNeeded();
+	await page.screenshot({ path: '.cache/g1-evidence/draft.png' });
+	assert.deepEqual(errors, []);
+	const evidence = { check: 'G1 isolated browser workflow', status: 'passed', paidRequests: 0, fixtureCalls: 1, fixtureTokens: 130, checks: ['no-session entry', 'default expanded', 'collapse preference after reload', 'manual Skill enrollment', 'native Session observation', 'preview without model', 'explicit one-shot analysis', 'RSI ledger display', 'draft without modification authority'], browserErrors: errors };
+	await writeFile('.cache/g1-evidence/result.json', JSON.stringify(evidence, null, '\t') + '\n'); console.log(JSON.stringify(evidence));
+} catch (error) {
+	await mkdir('.cache/g1-evidence', { recursive: true });
+	for (const page of browser.contexts().flatMap(c => c.pages())) await page.screenshot({ path: '.cache/g1-evidence/failure.png' });
+	throw error;
+} finally { await browser.close(); }
