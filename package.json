@@ -1,18 +1,51 @@
 {
 	"name": "@b1ackb/deepseek-rsi",
-	"version": "0.0.0-g0",
+	"version": "0.0.0-g2.3",
 	"private": true,
 	"type": "module",
-	"engines": { "node": ">=24" },
-	"exports": { ".": "./dist/index.js", "./client": "./dist/client.js", "./package.json": "./package.json" },
-	"files": ["dist", "fixtures", "cordis.patch.yml", "README.md"],
-	"dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-client-ui-settings-plugins"] } },
+	"engines": {
+		"node": ">=24"
+	},
+	"exports": {
+		".": "./dist/index.js",
+		"./client": "./dist/client.js",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist",
+		"fixtures",
+		"cordis.patch.yml",
+		"patches",
+		"docs",
+		"AGENTS.md"
+	],
+	"dsh": {
+		"bundle": {
+			"patch": "./cordis.patch.yml"
+		},
+		"client": {
+			"platform": "web",
+			"inject": [
+				"@deepseek-ai/dsh-client-ui-settings-plugins",
+				"@deepseek-ai/dsh-client-ui-layout",
+				"@deepseek-ai/dsh-client-ui-session",
+				"@deepseek-ai/dsh-client-ui-workspace"
+			]
+		}
+	},
 	"scripts": {
 		"link:harness": "node scripts/link-harness.mjs",
 		"build": "node scripts/build.mjs",
 		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
 		"test": "node --test tests/*.test.ts"
 	},
-	"dependencies": { "zod": "4.4.3" },
-	"devDependencies": { "@types/node": "25.3.0", "@types/react": "19.2.14", "esbuild": "0.28.2", "typescript": "6.0.3" }
+	"dependencies": {
+		"zod": "4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "25.3.0",
+		"@types/react": "19.2.14",
+		"esbuild": "0.28.2",
+		"typescript": "6.0.3"
+	}
 }

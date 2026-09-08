@@ -1,5 +1,7 @@
 # DeepSeek RSI：相关项目源码研究
 
+[文档导航](README.md) · [开发规范](../AGENTS.md)
+
 研究日期：2026-09-07。对应需求与实施方案：[FRAMEWORK.md](FRAMEWORK.md)。
 
 ## 1. 结论与证据范围

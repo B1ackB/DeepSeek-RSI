@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+const harness = process.env.RSI_HARNESS ?? '/Users/black/Documents/VSCodeProject/deepseek-harness';
+const { chromium } = await import(pathToFileURL(resolve(harness, 'apps/web/node_modules/playwright/index.mjs')).href);
+const log = await readFile(process.argv[2] ?? '/private/tmp/rsi-mainflow-host.log', 'utf8');
+const launch = log.match(/http:\/\/127\.0\.0\.1:\d+\/\?token=[^\s]+/)?.[0]; assert.ok(launch);
+const evidenceDir = '.cache/mainflow-evidence'; await mkdir(evidenceDir, { recursive: true });
+const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+try {
+	const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, locale: 'zh-CN' });
+	const errors = []; page.on('pageerror', e => errors.push(e.message));
+	await page.goto(launch); await page.getByRole('button', { name: '设置', exact: true }).waitFor();
+	const welcome = page.getByRole('button', { name: '继续', exact: true }); if (await welcome.isVisible()) await welcome.click();
+	const panel = page.getByRole('complementary', { name: 'RSI 控制面板' });
+	await panel.getByRole('heading', { name: 'Skill 优化' }).waitFor({ timeout: 20000 });
+	const status = () => page.evaluate(async () => {
+		const response = await fetch('/rsi-g1-fixture/status', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'client-request', rpcId: crypto.randomUUID(), method: 'status', payload: {} }) });
+		return (await response.json()).result.value;
+	});
+	const editor = page.locator('[contenteditable="true"]').last(); await editor.fill('/rsi-frontend-design 设计产品落地页，保留清楚的标题和可用导航。'); await editor.press('Enter');
+	const card = panel.getByRole('region', { name: '偏好驱动 Skill 修改' });
+	await card.getByLabel('自然语言偏好', { exact: true }).waitFor({ timeout: 20000 });
+	assert.equal((await status()).calls, 0);
+	await card.getByLabel('自然语言偏好', { exact: true }).fill('页面紧凑，少用圆角；保留可访问性。');
+	await page.screenshot({ path: `${evidenceDir}/confirmation.png` });
+	await card.getByRole('button', { name: '确认偏好、范围与预算，生成候选', exact: true }).click();
+	await card.getByRole('button', { name: '确认启用此候选并开始页面', exact: true }).waitFor({ timeout: 20000 });
+	assert.equal((await status()).calls, 1);
+	await card.getByText('SKILL.md', { exact: true }).click();
+	await card.getByRole('button', { name: '确认启用此候选并开始页面', exact: true }).scrollIntoViewIfNeeded();
+	await page.screenshot({ path: `${evidenceDir}/review.png` });
+	await page.reload();
+	await card.getByRole('button', { name: '确认启用此候选并开始页面', exact: true }).waitFor();
+	assert.equal((await status()).calls, 1);
+	await card.getByRole('button', { name: '确认启用此候选并开始页面', exact: true }).click();
+	await card.getByRole('heading', { name: '页面任务已派发', exact: true }).waitFor();
+	await page.getByText('固定响应：本次流程验证完成，没有生成页面。', { exact: true }).first().waitFor();
+	await page.screenshot({ path: `${evidenceDir}/dispatched.png` });
+	await panel.getByRole('button', { name: '结束本次任务', exact: true }).click();
+	await editor.fill('/rsi-frontend-design 设计第二个页面，沿用必需导航。'); await editor.press('Enter');
+	await card.getByLabel('自然语言偏好', { exact: true }).waitFor();
+	await card.getByLabel('自然语言偏好', { exact: true }).fill('进一步压缩装饰，保留明确层级。');
+	await card.getByRole('button', { name: '确认偏好、范围与预算，生成候选', exact: true }).click();
+	await card.getByRole('button', { name: '确认启用此候选并开始页面', exact: true }).waitFor();
+	await card.getByRole('button', { name: '确认启用此候选并开始页面', exact: true }).click();
+	await card.getByRole('heading', { name: '页面任务已派发', exact: true }).waitFor();
+	await card.getByRole('button', { name: '打开关联页面会话', exact: true }).click();
+	await page.getByText('固定响应：本次流程验证完成，没有生成页面。', { exact: true }).first().waitFor();
+	const final = await status(); assert.equal(final.state.mainflow.tasks[0].status, 'dispatched'); assert.equal(final.state.mainflow.tasks[1].status, 'dispatched'); assert.notEqual(final.state.mainflow.tasks[1].sessionId, final.state.mainflow.tasks[1].executionSessionId); assert.deepEqual(errors, []);
+	await page.screenshot({ path: `${evidenceDir}/linked.png` });
+	const result = { status: 'passed', paidRequests: 0, fixtureCalls: final.calls, checks: ['composer pre-dispatch gate', 'combined preference authorization card', 'complete diff review', 'review reload without generation replay', 'separate activation', 'daily dispatch after exact approval', 'second iteration links clean session and opens it'], browserErrors: errors };
+	await writeFile(`${evidenceDir}/result.json`, JSON.stringify(result, null, '\t') + '\n'); console.log(JSON.stringify(result));
+} catch (error) { for (const page of browser.contexts().flatMap(c => c.pages())) await page.screenshot({ path: `${evidenceDir}/failure.png` }); throw error; }
+finally { await browser.close(); }

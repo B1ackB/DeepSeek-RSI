@@ -7,8 +7,9 @@ await build({
 	banner: { js: 'window.__ModuleLoader__.load({id:"@b1ackb/deepseek-rsi",factory:(require)=>{var module={exports:{}};var exports=module.exports;' },
 	footer: { js: 'return module.exports;}});' },
 });
-if (process.argv.includes('--probe')) {
+if (process.argv.includes('--probe') || process.argv.includes('--latency') || process.argv.includes('--g1-fixture')) {
 	await mkdir('.cache', { recursive: true });
 	await writeFile('.cache/package.json', JSON.stringify({ name: 'rsi-g0-test-helper', version: '0.0.0-g0', type: 'module' }));
-	await build({ entryPoints: ['scripts/host-probe.ts'], outfile: '.cache/host-probe.js', bundle: true, platform: 'node', format: 'esm', packages: 'external' });
+	const probe = process.argv.includes('--g1-fixture') ? 'g1-browser-fixture' : process.argv.includes('--latency') ? 'latency-probe' : 'host-probe';
+	await build({ entryPoints: [`scripts/${probe}.ts`], outfile: `.cache/${probe}.js`, bundle: true, platform: 'node', format: 'esm', packages: 'external' });
 }

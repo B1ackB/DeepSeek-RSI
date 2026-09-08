@@ -9,6 +9,8 @@ import { openStore } from './store.ts';
 import type { Store } from './store.ts';
 import { observeUsage } from './usage.ts';
 import { integer, fault } from './contracts.ts';
+import { applyG1 } from './g1.ts';
+import { g1ConfigSchema } from './g1-contracts.ts';
 
 export const name = 'deepseek-rsi-g0';
 export const inject = ['connection', 'llm'];
@@ -17,7 +19,8 @@ declare module '@deepseek-ai/cordis' {
 	interface Context { rsiG0: { store: Store; rsiSessions: Set<string>; probeSessions: Set<string>; active: Set<AbortController> }; }
 }
 
-export function apply(ctx: Context) {
+export function apply(ctx: Context, input: unknown = {}) {
+	const config = g1ConfigSchema.parse(input);
 	const home = process.env.DSH_HOME;
 	if (!home) throw new Error('G0 requires an explicit DSH_HOME');
 	const store = openStore(join(home, 'rsi', 'g0.sqlite'));
@@ -25,9 +28,16 @@ export function apply(ctx: Context) {
 	const active = new Set<AbortController>();
 	const probeSessions = new Set<string>();
 	const retries = new Map<string, string>();
+	const analysisSessions = new Map<string, string>();
 	ctx.provide('rsiG0', { store, rsiSessions, probeSessions, active });
-	ctx.effect(() => () => { for (const task of active) task.abort(); store.close(); });
-	ctx.on('llm/stream', observeUsage(store, rsiSessions, probeSessions, retries));
+	let closeBusiness: (() => Promise<void>) | undefined;
+	ctx.effect(() => async () => { for (const task of active) task.abort(); await closeBusiness?.(); store.close(); });
+	ctx.on('llm/stream', observeUsage(store, rsiSessions, probeSessions, retries, analysisSessions));
+	ctx.inject(['skills', 'sessions', 'agents', 'workspaceRegistry', 'tools'], inner => {
+		const business = applyG1(inner, store, config, analysisSessions);
+		closeBusiness = business.dispose;
+		inner.provide('rsiG1', business);
+	});
 	ctx.on('session/event', (session, event) => {
 		if (event.type === 'turn/end') retries.delete(session.id);
 		if (event.type !== 'llm/retry-started') return;

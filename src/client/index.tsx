@@ -5,9 +5,14 @@ import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client';
 import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client';
 import { snapshotSchema, type Snapshot } from '../contracts.ts';
+import { createPanelModel } from './model.ts';
+import { RsiPanel, type PanelInjected } from './panel.tsx';
 
 export const inject = ['connection', 'slots', 'sessions'];
 export function apply(ctx: Context) {
+	const model = createPanelModel(ctx.get('connection') as ConnectionHandle);
+	ctx.effect(() => () => model.dispose());
+	ctx.slots.inject('shell.panel', () => ctx.slots.register({ name: 'shell.panel', id: 'rsi', order: 0, label: 'RSI', inject: (): PanelInjected => ({ hooks: { rsi: model.source }, command: model.command, catalog: model.catalog, openSession: async (id: string) => { const sessions = ctx.get('sessions') as ISessions; await sessions.refresh(); sessions.open(id as Parameters<ISessions['open']>[0]); } }) }, RsiPanel));
 	const connection = ctx.get('connection') as ConnectionHandle;
 	const sessions = ctx.get('sessions') as ISessions;
 	async function call(endpoint: string, payload: unknown, signal?: AbortSignal): Promise<Snapshot> {
@@ -62,13 +67,13 @@ export function apply(ctx: Context) {
 				<div><button disabled={busy || !!connectionError} onClick={() => void submit('set_marker')}>保存测试标记</button> <button disabled={busy || !!connectionError || snapshot.cancelled} onClick={() => void submit('cancel_probe')}>取消探针</button></div>
 				<p>探针：{snapshot.cancelled ? '已请求取消；资源清理结果以验证报告为准' : '就绪'} · 最后更新 {new Date(snapshot.updatedAt).toLocaleTimeString()}</p>
 				{(['session', 'rsi', 'unresolved'] as const).map(owner => {
-					const rows = snapshot.attempts.filter(a => a.owner === owner && (owner !== 'session' || a.sessionId === selection.current));
-					const confirmed = rows.filter(a => a.tokens.total !== null);
+					const rows = snapshot.attempts.filter(a => a.owner === owner && (owner !== 'session' || a.sessionId === selection.current) && (owner !== 'rsi' || a.purpose === 'probe'));
+					const confirmed = rows.filter(a => a.usageState === 'confirmed' && a.tokens.total !== null);
 					return <div key={owner} style={{ border: '1px solid currentColor', borderRadius: 8, padding: 12 }}>
 						<h3>{{ session: '当前 Harness 会话', rsi: 'RSI 探针', unresolved: '待核实归属' }[owner]}</h3>
 						{owner === 'session' && <p>{selection.current ?? '未选择会话'} · 仅统计本插件加载后的请求</p>}
 						<p>{confirmed.length ? `已确认 ${confirmed.reduce((sum, a) => sum + a.tokens.total!, 0)} Token` : '尚无已确认用量'} · {rows.filter(a => a.usageState !== 'confirmed' && a.state !== 'not_sent').length} 次用量待核实</p>
-						{rows.map(a => <p key={a.attemptId}>{a.sessionId ?? '无会话标识'} · {a.callKind} · {a.state} · {a.tokens.total ?? '未知'} Token</p>)}
+							{rows.map(a => <p key={a.attemptId} data-rsi-attempt={a.attemptId} data-rsi-total={a.tokens.total}>{a.sessionId ?? '无会话标识'} · {a.callKind} · {a.state} · {a.tokens.total ?? '未知'} Token</p>)}
 					</div>;
 				})}
 			</> : <p>等待宿主状态…</p>}

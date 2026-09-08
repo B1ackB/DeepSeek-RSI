@@ -1,5 +1,9 @@
 # DeepSeek Harness 本地运行
 
+[文档导航](README.md) · [开发规范](../AGENTS.md)
+
+本文保留宿主安装与环境复核的历史记录；当前 RSI 插件的启动、安装和能力边界以 [项目入口](README.md) 与 [G1 报告](G1-REPORT.md) 为准。
+
 安装日期：2026-09-07。
 
 2026-09-08 更新：G0 插件已作为本地包安装到隔离的 Web profile，OrbStack 2.2.3 初始化完成。实际探针与清理结果见 [G0-REPORT.md](G0-REPORT.md)。本轮仍使用 Node 25.8.1；原生插件管理调用到的 pnpm 为 11.19.0。开发覆盖层与安装包不要同时加载。
