@@ -2,6 +2,8 @@
 
 安装日期：2026-09-07。
 
+2026-09-08 更新：G0 插件已作为本地包安装到隔离的 Web profile，OrbStack 2.2.3 初始化完成。实际探针与清理结果见 [G0-REPORT.md](G0-REPORT.md)。本轮仍使用 Node 25.8.1；原生插件管理调用到的 pnpm 为 11.19.0。开发覆盖层与安装包不要同时加载。
+
 - 源码目录：`/Users/black/Documents/VSCodeProject/deepseek-harness`
 - 仓库：`https://github.com/B1ackB/deepseek-harness`
 - 已验证版本：`0.1.3-alpha.1`，提交 `d347e70390`
