@@ -1,0 +1,10 @@
+{
+	"sameNonSkillInput": true,
+	"sameModelAndSettings": true,
+	"candidateDigest": "440094f8f3a211593236e2c534805d5a1c03933a75d3088830b43482dcdfe961",
+	"approvedDigest": "440094f8f3a211593236e2c534805d5a1c03933a75d3088830b43482dcdfe961",
+	"baselineDigest": "b49d83ed548e84f320900d19bb2d43e9ff9689c698b185ce5231f104d7b79990",
+	"candidateSkillInActualRequest": true,
+	"baselineSkillInComparison": true,
+	"sourceUnchanged": true
+}

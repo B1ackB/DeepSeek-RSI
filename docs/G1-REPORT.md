@@ -1,47 +1,47 @@
-# G1 实施与验收记录
+# G1 Implementation and Validation
 
-[文档导航](README.md) · [开发规范](../AGENTS.md)
+[Documentation](README.md) · [Development rules](../AGENTS.md)
 
-日期：2026-09-08。用户授权 G1 并先补齐必要的 G0 验收；持续使用 ponytail full、Tab 缩进和已有依赖。
+Date: 2026-09-08. Historical G1 authorization included necessary G0 follow-up. Development used ponytail full, tabs, and existing dependencies.
 
-## 已实现
+## Implemented
 
-- Harness 主页面右侧的根作用域扩展页签：默认桌面展开、开关偏好恢复、无会话入口、与原生工具详情共存及卸载回退。改动独立记录在 `patches/harness-right-panel.patch`，底座为 `d347e703908d0406b7a7ef80e3a0e594d86b2215`。
-- 单个目录型 Skill 纳入、文件清单及内容摘要、只读封存；重新核对 Harness provider、作用域、工作区及来源完整性。不会修改原文件。
-- 本地机械信号形成机会，合并重复事件，支持忽略与暂缓。模型仅在预览范围和预算被确认后执行一次分析，不带工具、不自动重试。
-- 模型方向运行时校验、文件范围核对、授权草稿及撤销。没有正式评测契约时拒绝正式授权，不产生候选或启用版本。
-- SQLite 版本 2 增量迁移；分析状态、操作回执和用量持久化。日常会话与 RSI 分账，取消和重启不释放已用额度或自动重放。
+- Root-scoped main-page RSI tab, desktop default expansion, restored display preference, no-session access, native tool-detail coexistence, and uninstall fallback. The separate patch is `patches/harness-right-panel.patch`, based on Harness `d347e703908d0406b7a7ef80e3a0e594d86b2215`.
+- Directory Skill enrollment, complete manifest/digest, read-only sealing, and provider/scope/workspace/source revalidation without source edits.
+- Mechanical signals, deduplication, ignore/snooze. One tool-free analysis only after exact preview/budget confirmation, without retries.
+- Runtime validation of model directions/paths, drafts and revocation. Missing formal evaluation blocks authorization, candidate generation, and activation.
+- SQLite 2 incremental migration, persistent state/receipts/usage, disjoint daily/RSI accounting, no budget recovery or replay after cancellation/restart.
 
-## 本轮验证
+## Validation
 
-- G0 显示链路补验：固定 Adapter 到真实 RPC 和 Chrome 截图的三次上界为 137 / 76 / 86 ms，均小于 1 秒。零外部 API；不代表在线供应商的延迟保证。
-- 插件 TypeScript Host/Client 检查、构建及 7 项集成/状态测试通过。G1 用真实 Cordis、Skill registry、Session 事件和 LLM 中间件配固定 Adapter，覆盖无确认零调用、去重/忽略、过期命令、精确输入确认、同操作一次派发、文件越界、草稿不等于授权、异常 JSON、取消、来源变化、未知用量及重启。
-- Harness GUI：290 文件、4017 项通过，1 项原有跳过。Harness 完整构建、本地化检查通过。官方浏览器回放最终为 92 文件通过、1 文件跳过、1 文件失败；唯一失败是反馈页面吞吐率文本的时序差异，该文件随后原样单独重跑 4 项全通过。共享布局的关闭样式回归已修复，原生生命周期 8 项通过。回放需 `TZ=Asia/Shanghai` 匹配既有样例固定时区；没有修改样例或期望输出。
-- 独立 Chrome 浏览器已走通：无会话默认入口 → 收起刷新恢复 → 纳入目录 Skill → 原生 Session 事件产生机会 → 预览零调用 → 确认一次分析 → 130 个固定 Token 记入 RSI → 保存未授权草稿。无 page error，外部请求 0。证据在 `.cache/g1-evidence/result.json`、`main.png`、`draft.png`。
+- G0 usage-to-Chrome screenshot upper bounds: 137/76/86 ms, all under one second with zero external API calls; not online-provider latency guarantees.
+- Host/client types, build, and seven integration/state tests passed. Native Cordis, registries, Session events, and LLM middleware with a fixed adapter covered zero-call confirmation boundaries, deduplication/ignore, stale commands, exact input, idempotent dispatch, path boundaries, draft versus authorization, invalid JSON, cancellation, changed sources, unknown usage, restart.
+- Harness GUI: 290 files, 4017 tests passed, one preexisting skip. Full build/localization checks passed. Official browser replay: 92 files passed, one skipped, one failed on feedback-throughput timing. That unchanged file then passed all four tests alone. A shared-layout close-style regression was fixed; eight native lifecycle tests passed. Replays used TZ=Asia/Shanghai; fixtures/expected output were unchanged.
+- Isolated Chrome completed no-session entry → collapse/reload → enrollment → native event opportunity → zero-call preview → confirmed analysis → 130 fixture RSI tokens → unauthorized draft. No page errors or external requests. Evidence: `.cache/g1-evidence/result.json`, main.png, draft.png.
 
-## 未通过这些验证证明的事项
+## Real High call and limits
 
-首批单独授权的 1 次真实 DeepSeek-V4-Flash / High 请求：展示输入 2060 字节，约 34.5 秒结束，确认输入 658、输出 4096（全部为推理），合计 4754 Token。输出上限触发，分析失败且没有完整方向、没有草稿、没有重试。该次验证了真实供应商、已安装包、账本与浏览器用量链路；成功分析由下述 Low 补验提供证据。一次分析成功或固定响应不代表模型准确率、Skill 效果提升或 Token 节省。正式题集、候选执行器、评估、启用、回滚及远程 Linux 属于后续 Gate。
+One separately authorized DeepSeek-V4-Flash / High request used 2060 visible input bytes and about 34.5 seconds: input 658, output 4096 (all reasoning), total 4754 tokens. It hit the output cap and failed analysis with no complete direction, draft, or retry. This verifies real-provider/package/ledger/browser accounting, not successful analysis; the Low follow-up supplies that evidence.
 
-受管 Skill 纳入方式、评测缺失时仅保存草稿的两项建议仍待用户回复确认；实现使用可调整的推荐默认值，不记为既定产品批准。容量及归属限制详见 G1-CONTRACTS.md。
+Neither a successful analysis nor a fixture proves accuracy, Skill improvement, or savings. Formal datasets, candidate execution/evaluation/adoption/rollback and remote Linux were later work. Enrollment/draft-only defaults were initially pending user confirmation; see [G1 contracts](G1-CONTRACTS.md) for limits and the later decision.
 
-## Low 补验
+## Low follow-up
 
-用户已确认默认改为 DeepSeek-V4-Flash / Low，并额外授权 1 次真实分析，上限为 4096 输出 Token（含推理）、32 KiB 输入、5 分钟，不重试。0.0.0-g1.2 已完成路线与预算在准备/开始两个边界的核对、实际推理档位展示和历史 High 记录兼容；Host/Client 类型检查、7 项测试及构建通过。回归检查覆盖前端 High 请求拒绝、旧 High 预览不得派发和重启保留旧预算。
+The user confirmed Low as default and separately authorized one real call: 4096 output tokens including reasoning, 32 KiB input, five minutes, no retry. g1.2 checked route/budget at prepare/start, displayed actual reasoning level, and preserved historical High records. Types, seven tests, and build passed, including rejecting new High requests/old High previews and preserving old budgets after restart.
 
-用户自行关闭原 Harness 后，核对 3080 与数据库均未被进程占用，备份至本仓库 `.cache/g0.before-g1-low.sqlite`，再升级并启动测试宿主。
+After the user stopped Harness, port 3080/database ownership were clear; the database was backed up to `.cache/g0.before-g1-low.sqlite` before upgrade/testing.
 
-- 真实 Low 分析成功：1 次请求、不重试，展示输入 2068 字节，约 26.3 秒；供应商确认输入 581、输出 3406（其中推理 3137），总计 3987 Token。结果含简洁表达和可维护性两个方向，通过结构与相对路径校验，右侧面板显示 3987。证据：`.cache/g1-live-low-evidence/result.json`、`usage.png`。
-- 在线浏览器走到保存草稿时，测试脚本使用序号选中了机会卡，导致定位超时；请求已经成功结束，没有再次消费。已将测试定位改为按方向标题选择卡片。原临时工作区已由 finally 移除，真实分析保留，未把该次在线流程记为全程通过。
-- 复用上述 Low 响应，在新的隔离 profile 中禁用真实 DeepSeek Adapter，补验主页面入口、分析展示、修正后的卡片定位、填写必需信息、保存草稿与正式授权禁用。浏览器无错误，1 次固定 Adapter 调用、固定用量 130、付费请求 0；该回放不新增真实供应商证据。证据：`.cache/g1-low-draft-evidence/result.json`、`draft.png`。
-- 真实测试前的 81 条请求记录逐条比较完全保留，仅新增 1 条 Low 请求；源 Skill 的四个文件与原样例逐字节一致。测试 Skill 已暂停观察。当前真实 profile 不含此分析的授权草稿，回放草稿只保存在隔离测试 profile。
+- Real Low success: one call, 2068 visible bytes, about 26.3 seconds; input 581, output 3406 including 3137 reasoning, total 3987. Brevity/maintainability directions passed schema/path validation; sidebar showed 3987. Evidence: `.cache/g1-live-low-evidence/result.json`, usage.png.
+- The browser driver later selected an opportunity by index while saving a draft and timed out. The call had already succeeded; no additional spending occurred. Selection was changed to direction title. The temporary workspace was removed in finally; the real analysis stayed, and this online flow was not called an end-to-end pass.
+- Replayed the Low response in a fresh profile with the real adapter disabled. Entry, analysis, corrected selection, required information, draft save, and disabled formal authorization passed. One fixture call, 130 fixture tokens, zero paid calls, no browser errors. Evidence: `.cache/g1-low-draft-evidence/result.json`, draft.png; not additional provider evidence.
+- All 81 prior request rows remained identical, with one new Low row. Four source Skill files remained byte-identical. Observation was paused. The real profile contains no draft from this analysis; the replay draft exists only in the isolated profile.
 
-Low 补验完成后，所授权的这一批 1 次请求已消费，不能自动重放。下一步先冻结 G2 的正式授权、候选范围、隔离执行及最小评测契约；尚未开始 G2 实现。
+This one-call budget was consumed and cannot be replayed. The historical next step was freezing G2 scope/isolation/check contracts before implementation.
 
-## 资源与版本
+## Versions and cleanup
 
-首轮安装的 Chromium 仅用于官方回放，缓存位于本仓库 `.cache/playwright`。首轮 Harness 服务（63372、55598、58139）及测试浏览器已关闭。既有 `/Users/black/.dsh-rsi-dev` profile 当时升级至 G1（0.0.0-g1.1），数据库迁移到版本 2，原 G0 已确认 5026 Token 与取消状态保留；升级前备份为 `rsi/g0.before-g1-2026-09-08.sqlite`。真实验收用工作区登记已移除、测试 Skill 已暂停观察，历史和证据保留。没有提交密钥，没有推送远端或创建 PR。
+Chromium for official replay stayed in `.cache/playwright`. First-round services on 63372, 55598, 58139 and test browsers closed. The real development profile was initially upgraded to g1.1/SQLite 2, retaining G0's 5026 tokens and cancelled state. Backup: `rsi/g0.before-g1-2026-09-08.sqlite`. Test workspace registrations were removed and observation paused, preserving history. This stage did not push or create a PR.
 
-High 真实调用使用 0.0.0-g1；0.0.0-g1.1 补充输出上限包含推理的提示；Low 真实调用使用 0.0.0-g1.2。最终交付 0.0.0-g1.3 只补齐验收文档和包版本，Host/Client 运行产物与通过 Low 补验的 g1.2 完全一致。升级/卸载前须停止会话和宿主，未验证活跃日常请求期间的宿主插件热卸载。
+High used g1; g1.1 added wording that the output limit includes reasoning. Low used g1.2; final g1.3 changed only version/docs with identical host/client runtime artifacts. Stop sessions/host before upgrade/uninstall; hot removal during active daily requests was unverified.
 
-Low 的付费测试服务（PID 79715，49235）与隔离回放服务（PID 79939，50057）均已收到 SIGINT 并退出，测试浏览器由 finally 关闭。本轮没有启动容器。
+Low service PID 79715/port 49235 and replay PID 79939/port 50057 received SIGINT and exited. Browsers closed in finally. No containers were started in this stage.

@@ -6,11 +6,10 @@ import { isUserInvocable, renderSkillContent, type SkillDefinition } from '@deep
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { fault } from './contracts.ts';
+import type {} from './scenarios/index.ts';
 import type { Store } from './store.ts';
 import type { Enrollment, ManagedSkill } from './g1-contracts.ts';
 
-const frontend = /前端|网页|页面设计|frontend|front-end|web[- ]design|ui[- ]design/i;
-const buildPage = (text: string) => /前端|页面|网页|落地页|landing page|frontend|front-end/i.test(text) && /写|开发|设计|实现|搭建|修改|美化|制作|优化|重构|build|implement|design|create|code|write|refactor/i.test(text);
 const userText = (messages: readonly UserMessage[]) => messages.filter(m => m.source.kind === 'user').flatMap(m => m.content.flatMap(c => c.type === 'text' ? [c.text] : [])).join('\n');
 
 export function applyOnboarding(ctx: Context, store: Store, prepareManaged: (workspaceId: string, sessionId: string, name: string) => Promise<ManagedSkill>, startPage?: (agent: Agent, turn: number, skills: SkillDefinition[], decision: Extract<PreStepDecision, { kind: 'enter' }>, signal: AbortSignal) => Promise<PreStepDecision>) {
@@ -30,7 +29,7 @@ export function applyOnboarding(ctx: Context, store: Store, prepareManaged: (wor
 			const questions = ctx.get('userQuestions');
 			if (!questions) throw fault('questions_unavailable', 'Harness 尚未提供用户问答服务，无法确认本次 RSI 范围');
 			const labels = skills.map(skill => `纳入 ${skill.name}`);
-			const answer = await questions.ask({ agent, signal, questions: [{ id: 'rsi-enrollment', header: 'RSI · 本次任务', question: proposed ? '前端编写即将开始。是否选用以下 Skill，并纳入本次自我迭代范围？' : `本次将使用 ${skills.map(s => s.name).join('、')}。是否纳入自我迭代范围？`, detail: '仅记录本次任务的优化线索；不自动分析、修改或启用 Skill。同一会话内的连续修改沿用本次选择，可在右侧结束。暂不纳入时，原任务正常继续。', options: [...labels.map(label => ({ label, description: '仅本次任务；实际修改和启用仍需另行授权' })), { label: '暂不纳入，继续编写', description: '本次任务不记录为 RSI 优化线索' }] }] });
+			const answer = await questions.ask({ agent, signal, questions: [{ id: 'rsi-enrollment', header: 'RSI · 本次任务', question: proposed ? 'Skill 任务即将开始。是否选用以下 Skill，并纳入本次自我迭代范围？' : `本次将使用 ${skills.map(s => s.name).join('、')}。是否纳入自我迭代范围？`, detail: '仅记录本次任务的优化线索；不自动分析、修改或启用 Skill。同一会话内的连续修改沿用本次选择，可在右侧结束。暂不纳入时，原任务正常继续。', options: [...labels.map(label => ({ label, description: '仅本次任务；实际修改和启用仍需另行授权' })), { label: '暂不纳入，继续编写', description: '本次任务不记录为 RSI 优化线索' }] }] });
 			signal.throwIfAborted();
 			const selected = answer.answers.find(a => a.id === 'rsi-enrollment');
 			const index = selected?.selected.length === 1 && !selected.custom?.trim() ? labels.indexOf(selected.selected[0]!) : -1;
@@ -62,13 +61,14 @@ export function applyOnboarding(ctx: Context, store: Store, prepareManaged: (wor
 		const text = userText(messages);
 		const explicit = [...new Set([...text.matchAll(/(?:^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g)].map(m => m[1]!))];
 		const definitions: SkillDefinition[] = [];
-		for (const name of explicit.slice(0, 32)) { const skill = await ctx.skills.get(name, options(agent, signal)); if (skill && isUserInvocable(skill) && (buildPage(text) || frontend.test(`${skill.name} ${skill.description}`))) definitions.push(skill); }
+		for (const name of explicit.slice(0, 32)) { const skill = await ctx.skills.get(name, options(agent, signal)); if (skill && isUserInvocable(skill)) definitions.push(skill); }
 		const proposed = definitions.length === 0;
-		if (proposed && !buildPage(text)) return decision;
+		const scenario = ctx.rsiScenarios.forRequest(text);
+		if (proposed && !scenario) return decision;
 		if (proposed) {
 			const catalog = await ctx.skills.snapshot(options(agent, signal));
 			if (!catalog.complete) throw fault('catalog_incomplete', 'Skill 目录尚未完整，请稍后重试');
-			for (const entry of catalog.skills.filter(s => isUserInvocable(s) && s.resourceBase?.kind === 'directory' && frontend.test(`${s.name} ${s.description}`)).slice(0, 6)) { const skill = await ctx.skills.get(entry.name, options(agent, signal)); if (skill) definitions.push(skill); }
+			for (const entry of catalog.skills.filter(s => isUserInvocable(s) && s.resourceBase?.kind === 'directory' && scenario!.matchesSkill(s)).slice(0, 6)) { const skill = await ctx.skills.get(entry.name, options(agent, signal)); if (skill) definitions.push(skill); }
 		}
 		const supported = definitions.filter(s => s.resourceBase?.kind === 'directory').slice(0, 6);
 		if (!supported.length) return decision;
@@ -83,7 +83,7 @@ export function applyOnboarding(ctx: Context, store: Store, prepareManaged: (wor
 		if (decision.kind !== 'allow' || exec.name !== 'skill' || !exec.agent || !root(exec.agent) || current(exec.agent.session.id)) return decision;
 		const parsed = z.object({ name: z.string() }).safeParse(exec.arguments); if (!parsed.success) return decision;
 		const skill = await ctx.skills.get(parsed.data.name, options(exec.agent, exec.signal));
-		if (skill?.resourceBase?.kind === 'directory' && frontend.test(`${skill.name} ${skill.description}`)) {
+		if (skill?.resourceBase?.kind === 'directory') {
 			const turn = exec.agent.session.snapshotEvents().findLast(e => e.type === 'turn/start');
 			if (turn?.type === 'turn/start') await ask(exec.agent, turn.data.turn, [skill], false, exec.signal);
 		}

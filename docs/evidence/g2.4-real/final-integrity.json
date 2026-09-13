@@ -1,0 +1,15 @@
+{
+	"status": "passed",
+	"oldAttemptsPreserved": 116,
+	"newAttempts": 4,
+	"confirmedTokens": 23830,
+	"oldSkillsAndAnalysesPreserved": true,
+	"projectActiveUnchanged": true,
+	"persistedPreferencesUnchanged": true,
+	"ownedHarnessPortsReleased": [
+		59806,
+		60131,
+		60660
+	],
+	"runtimeContainersStarted": 0
+}

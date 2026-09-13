@@ -1,44 +1,45 @@
-# DeepSeek RSI 开发规范
+# DeepSeek RSI Development Guidelines
 
-## 文档路由
+## Documentation routing
 
-- 总入口与按任务分类的阅读路线：[docs/README.md](docs/README.md)。先查入口，再阅读当前工作涉及的材料。
-- 产品与架构：[框架](docs/FRAMEWORK.md)、[前端场景与偏好边界](docs/FRONTEND-SCENARIO.md)；字段与状态：[核心契约](docs/CONTRACTS.md)、[G1 契约](docs/G1-CONTRACTS.md)、[G2 前端准备契约](docs/G2-CONTRACTS.md)。
-- 实现证据：[G0 报告](docs/G0-REPORT.md)、[G1 报告](docs/G1-REPORT.md)、[G2 前置报告](docs/G2-REPORT.md)。报告中的历史验证不代替当前代码检查。
-- 根目录只保留本 AGENTS.md 作为开发规范；项目说明、设计、契约、研究与验收资料统一放入 `docs/`，新增资料同步登记总入口。`fixtures/` 中的 SKILL.md 和参考文件是运行资源，保留原位置。
+- Start at [docs/README.md](docs/README.md), then read the material relevant to your task.
+- Current architecture and collaboration: [architecture](docs/ARCHITECTURE.md), [contributing](docs/CONTRIBUTING.md), and [scenario/comparison contracts](docs/EXTENSION-CONTRACTS.md). Register new scenarios through `src/scenarios/`; reuse authorization, accounting, and version management.
+- Product: [framework](docs/FRAMEWORK.md) and [frontend scenario](docs/FRONTEND-SCENARIO.md). Fields and states: [core contracts](docs/CONTRACTS.md), [G1](docs/G1-CONTRACTS.md), and [G2](docs/G2-CONTRACTS.md).
+- Historical evidence: [G0](docs/G0-REPORT.md), [G1](docs/G1-REPORT.md), and [G2 preparation](docs/G2-REPORT.md). Historical reports do not replace current source checks.
+- Keep this AGENTS.md as the only root development guide. Put project descriptions, designs, contracts, research, and acceptance reports in `docs/`; register new documents in its index. SKILL.md and references in `fixtures/` are runtime resources and remain in place.
 
-## 工作依据
+## Basis for implementation
 
-- 开始实现前阅读当前 Gate 涉及的代码、[框架](docs/FRAMEWORK.md)和[契约](docs/CONTRACTS.md)，检查 Git 状态；不得把设计或历史验证当作当前实现证据。
-- 按 Gate 细化契约：先写清本阶段字段、约束、状态转换和失败行为，再实现。本阶段用不到的完整对象与扩展接口暂不创建。
-- 用户需求与取舍不清楚时向用户询问；技术接口是否可行通过源码和受控实验验证，不要求用户猜测。
-- G0 接入原型已实现，当前证据与限制见 [G0 报告](docs/G0-REPORT.md)。用户已批准 G0 实现、专用测试 Skill、首批调用预算和 OrbStack 初始化，并于 2026-09-08 批准开始 G1、先补齐必要的 G0 验收；不得将这些授权自动扩展到 G2–G5 或新的付费批次。正式评测配置另行确定。
-- 用户随后要求继续开发，本轮落实初始前端 Skill 与 G2 前置偏好准备。后续候选执行前继续细化当期契约；已有真实调用授权不能用于新批次。
+- Read the current Gate's code, [framework](docs/FRAMEWORK.md), and [contracts](docs/CONTRACTS.md), and inspect Git status before implementing. Do not present a design or an old validation as current implementation evidence.
+- Refine contracts per Gate: define fields, constraints, transitions, and failure behavior before coding. Do not prebuild unused objects or extension interfaces.
+- Ask about unclear product requirements and tradeoffs. Verify technical feasibility through source and controlled experiments rather than asking the user to guess.
+- G0 integration is implemented; see its report for evidence and limitations. The user authorized G0, its dedicated test Skill, its first paid batch, and OrbStack initialization, then authorized G1 on 2026-09-08 after necessary G0 follow-up checks. Do not extend these approvals to G2–G5 or new paid batches. Formal evaluation configuration is separate.
+- Subsequent development authorization covered the initial frontend Skill and G2 preference preparation. Refine each execution contract before candidate work; historical paid budgets cannot fund new batches.
 
-## Ponytail 与代码风格
+## Ponytail and code style
 
-- 持续使用 ponytail，默认 full，直到用户改变偏好。先理解实际调用链，再选择满足要求的最小实现。
-- 代码使用 Tab 缩进。标识符采用英文；文档与解释性注释默认中文，优先说明原因和限制。
-- 优先复用项目或 Harness 已有能力，其次标准库、平台能力、已有依赖。新增依赖需说明现有能力为何不足。
-- 首版一个 TypeScript 插件包；使用普通函数与职责清楚的小模块。没有实际需求时不增加多包、通用框架、工厂、单实现接口或未来配置。
-- 当前使用 EditorConfig 的 Tab 约定、TypeScript strict、esbuild 和 Node 内置测试；命令见 package.json。没有独立格式化器，不添加重叠工具链。
-- 有明确适用上限的简化用 `ponytail:` 注释记录限制和触发升级的条件，不给普通代码堆注释。
+- Keep ponytail active at full intensity until the user changes this preference. Understand the actual call chain, then implement the smallest solution that meets the requirement.
+- Use tabs for code indentation and English identifiers. Project documentation is written in English. Explanatory code comments may remain Chinese; explain reasons and limitations. Preserve original runtime fixtures and immutable experimental evidence in their source language.
+- Prefer existing project/Harness capabilities, then the standard library, platform features, and installed dependencies. Explain why these are insufficient before adding a dependency.
+- Keep one TypeScript plugin package, ordinary functions, and small modules with clear responsibilities. Do not introduce multiple packages, generic frameworks, factories, single-implementation interfaces, or speculative configuration without an actual need.
+- Use the existing EditorConfig tab convention, strict TypeScript, esbuild, and Node's test runner. Commands are in package.json. Do not add overlapping formatting or test toolchains.
+- Use a `ponytail:` comment for a deliberate simplification with a concrete limit and upgrade trigger; avoid routine commentary on ordinary code.
 
-## 契约与边界
+## Contracts and boundaries
 
-- 模型输出、Web 输入、持久化读取、进程结果都在相应信任边界校验；TypeScript 类型不能代替运行时校验。
-- 每类跨边界对象使用一份可执行定义作为权威来源，能推导类型就不手抄第二份；具体校验方式在 G0 决定，不预设新增库。
-- 授权、预算、评分、有效版本指针由宿主代码控制。模型自报成功不能替代这些检查。
-- 未知用量不是零，过期状态不能继续写入，半成品不能标为通过。错误必须保留原因和可恢复状态。
-- 不将凭据写入文档、日志、测试样例或提交；复用 Harness 凭据管理。
-- 修改契约时同步更新受影响实现及检查。破坏性变更需说明兼容或迁移处理，不静默清空持久数据。
+- Validate model output, Web input, persisted data, and process results at their trust boundaries. TypeScript types do not replace runtime validation.
+- Each cross-boundary object has one executable authoritative definition. Infer types where possible rather than copying them. G0 determines validation mechanisms; do not assume a new library is needed.
+- Host code owns authorization, budgets, compilation checks, and active version pointers. Users decide whether to adopt; functional or aesthetic scores must not make that choice for them. Model-reported success cannot replace host checks.
+- Unknown usage is not zero. Stale state cannot write, and partial work cannot pass. Preserve errors and recoverable state.
+- Reuse Harness credential management. Never put credentials in documentation, logs, fixtures, or commits.
+- Update affected implementation and checks when a contract changes. Explain migration or compatibility for breaking changes; never silently clear persisted data.
 
-## 验证与收尾
+## Validation and delivery
 
-- 非平凡逻辑保留最小、可重复运行的验证，优先现有测试工具或标准库；重点验证权限、状态冲突、计量、取消与恢复。
-- 不为低影响文案或展示改动堆积镜像实现的测试。验证通过后，没有新变化或未解问题就不反复扩大测试。
-- 真实付费调用前明确模型、次数、输出上限与其他必要预算；文档示例不代表消费授权。
-- 测试完成后关闭本次启动的服务、子进程及容器，除非用户明确要求保留。按记录的资源归属清理，不杀掉用户原有进程。
-- 验证资源已释放后再报告清理完成；失败时如实记录剩余资源。交付说明区分已实现、已验证、尚待验证。
-
-- 2026-09-08 用户本轮已批准实现文档确认的新主流程；g2.3 实现与本轮证据见 docs/MAINFLOW-REPORT.md。历史真实调用授权仍不用于新批次。
+- Keep minimal repeatable checks for nontrivial logic, especially permissions, state conflicts, accounting, cancellation, and recovery. Prefer existing tools or the standard library.
+- Do not add tests mirroring low-impact wording or presentation changes. After checks pass, broaden them only for new changes, failures, or unresolved concerns.
+- Confirm the model, request count, output cap, and necessary budget before real paid calls. Documentation examples are not spending authorization.
+- Close services, subprocesses, and containers started for testing unless the user asks to retain them. Clean up by recorded ownership; never stop the user's existing processes.
+- Verify release of resources before claiming cleanup. Report remaining resources on failure. Distinguish implemented, validated, and unvalidated work.
+- On 2026-09-08 the user authorized the documented main workflow. See [g2.3 evidence](docs/MAINFLOW-REPORT.md); previous paid-call authorization still does not apply to new batches.
+- On 2026-09-13 the user authorized continuing from uncommitted g2.4 work to implement user comparisons, sidebar feedback, and collaboration across Skill types. Paid calls still require a separate budget. SQLite is now version 6; preserve historical data.

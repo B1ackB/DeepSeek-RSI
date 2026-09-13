@@ -1,53 +1,53 @@
-# G1 接入与业务契约
+# G1 Integration and Business Contracts
 
-[文档导航](README.md) · [开发规范](../AGENTS.md)
+[Documentation](README.md) · [Development rules](../AGENTS.md)
 
-状态：2026-09-08 开始实施。用户已授权 G1，并确认下述右侧面板交互及 Low 分析默认方案。受管 Skill 纳入方式与未配置评测时的授权处理已向用户询问，尚未将建议写成已确认决定。本阶段不生成候选、不启用版本、不覆盖源目录。
+Historical status, 2026-09-08: G1 implementation was authorized, including the sidebar and Low analysis default. Enrollment and draft-only behavior without evaluation were initially proposed defaults; the later confirmation below records the user's decision. G1 does not generate candidates, activate versions, or overwrite sources.
 
-## 主页面右侧面板
+## Main-page sidebar
 
-- Harness 提供根作用域的可追加面板插槽；插件以稳定 ID 和标签注册 RSI 内容。原工具详情继续由原插件渲染，RSI 不导入或复制其组件。
-- 桌面端首次默认展开 RSI；用户手动收起或展开的选择在同一浏览器入口恢复。没有会话时仍可打开 RSI，当前会话用量明确显示未选择会话。
-- 右侧通过「RSI / 工具详情」切换。点击聊天中的工具条目沿用原来的选择动作并显示工具详情；RSI 后台状态不会因切换而取消。
-- 面板登记移除后，Harness 恢复原来的工具详情行为；不存在的页签不能保持为可见的空面板。
-- 面板开关与选中页签是浏览器显示偏好，不构成分析、修改或启用授权。存储不可用或偏好值损坏时采用首次显示规则，不改变宿主任务状态。
-- Token 用量读取宿主账本，当前日常会话与选定 RSI 任务分开。连接中断保留最后快照与时间，禁用依赖新鲜状态的写操作；重连获取完整快照，不累加收到的快照。
+- Harness exposes an appendable root-scoped panel slot. RSI registers a stable ID/label; native tool details remain owned/rendered by their original plugin.
+- Desktop defaults to RSI expanded when no preference exists. Restore the user's expand/collapse choice for the same browser entry. The panel works without a selected session and labels that usage state explicitly.
+- RSI and tool details share the right region through tabs. Clicking a chat tool entry retains native selection behavior. Switching tabs does not cancel RSI work.
+- Unregistering RSI restores native details behavior; missing tabs cannot remain as empty visible panels.
+- Browser panel preferences are display state, not analysis/edit/adoption permission. Invalid/unavailable storage falls back to initial display rules without changing host state.
+- Daily and selected-RSI tokens come from the host ledger. Disconnection retains the last snapshot/time and disables freshness-dependent writes. Reconnect reads a complete snapshot rather than summing arrivals.
 
-## 当前 Gate 的验收
+## Gate validation
 
-G0 补测已通过本地固定 Adapter → 生产计量 → 真实 RPC → 浏览器截图的显示链路，证据与适用限制见 G0-REPORT.md。G1 需额外验证默认展开、收起偏好恢复、无会话入口、工具详情共存和插件卸载；业务部分在对应字段与状态确定后验证未点击分析不调用模型、未授权不修改、机会去重、过期状态拒绝、取消与重启保留证据。
+The G0 follow-up measured fixed adapter → production accounting → real RPC → browser rendering; see [G0-REPORT.md](G0-REPORT.md). G1 additionally checks default expansion, restored collapse, no-session entry, coexistence, and uninstall. Business checks cover no model calls without analysis confirmation, no edits without authorization, deduplication, stale-state rejection, cancellation, and retained evidence after restart.
 
-## G1 业务字段与边界
+## Business fields and boundaries
 
-以下为当前实施默认方案；上述两项待确认取舍仍以用户后续回复为准。可执行定义放在 `src/g1-contracts.ts`，公共 UUID、时间、版本与未知用量规则沿用 CONTRACTS.md。
+`src/g1-contracts.ts` is authoritative. UUID/time/version/unknown-usage rules follow [CONTRACTS.md](CONTRACTS.md).
 
-| 对象 | 字段与含义 |
+| Object | Meaning |
 |---|---|
-| ManagedSkill | 宿主 UUID、修订、Harness 名称及 provider、已登记工作区 ID、纳入时的可选会话作用域 ID、完整来源快照、封存目录、观察开关、来源检查状态及原因、创建时间 |
-| Opportunity | 宿主 UUID、Skill ID/版本摘要、机械规则、证据数组、去重键、`open/snoozed/ignored`、暂缓截止时间、首次/末次时间及修订 |
-| Evidence | 原 Session ID、事件 seq、时间、信号类别和有长度限制的摘要。只表示观察到的现象，不证明 Skill 导致了问题 |
-| Analysis | 宿主 UUID、机会与 Skill/版本、冻结发送文本、分析系统指令及二者共同摘要、用户选定的调用预算、`prepared/running/succeeded/failed/cancelled/interrupted`、起止/截止时间、结果方向或错误 |
-| Direction | 主目标、标题、理由、拟改相对路径、必需保留信息和可省略信息；来自模型，结构校验与文件范围校验通过后才展示，不含宿主评分或批准 |
-| AuthorizationDraft | 宿主 UUID、修订、分析与方向引用、Skill/版本、用户核对的文件范围、必需/可选信息、优化预算、`draft/revoked`、创建时间。无正式评测时绝不能进入已授权状态 |
+| ManagedSkill | Host UUID/revision, Harness name/provider, registered workspace, optional enrollment session scope, complete source snapshot, sealed directory, observation switch, source state/reason, creation time |
+| Opportunity | UUID, Skill/version, mechanical rule, evidence, deduplication key, open/snoozed/ignored, snooze deadline, first/last time, revision |
+| Evidence | Native Session ID, event seq, time, signal kind, bounded summary; observed behavior does not prove Skill causation |
+| Analysis | UUID, opportunity and Skill/version, frozen input/system and joint digest, selected budget, prepared/running/succeeded/failed/cancelled/interrupted, timestamps/deadline, result or error |
+| Direction | Objective, title, rationale, proposed relative paths, required and optional information; validated model suggestion, not host approval/score |
+| AuthorizationDraft | UUID/revision, analysis/direction, Skill/version, reviewed paths and required/optional information, proposed budget, draft/revoked, creation time; never authorized without a formal evaluation contract |
 
-仅接受宿主已登记的工作区 ID；Skill 来源必须由 Harness 当前目录型 provider 枚举并重新解析，浏览器不能提交任意文件路径。纳入管理封存只读副本并记录摘要，不改源文件或注册新的日常有效版本。发现源摘要变化、目录不可读或 provider 改变时暂停相关分析和授权；G1 通过移除观察与重新核对处理，不静默换基线。文件只允许普通文件、拒绝符号链接；沿用有明确错误的 32 文件、单文件 256 KiB、总计 1 MiB 的首批上限，超过时先报告限制，不截断后标作完整 Skill。
+Only registered workspace IDs are accepted. Resolve directory Skills from the current Harness provider; Web input cannot name arbitrary disk paths. Enrollment seals a read-only copy and digest without editing sources or registering a new daily active version. Changed hashes/providers or unreadable directories pause related analysis/authorization. G1 does not silently rebase; preserve history and recheck sources. Reject symlinks and nonregular files. Initial limits: 32 files, 256 KiB per file, 1 MiB total. Fail explicitly rather than truncate a supposedly complete Skill.
 
-观察只处理纳入管理后的任务事件。脚本失败、重复读取、过量输出、重试簇和用户明确的简洁/成本要求作为候选信号；只有能核对工作区及所加载 Skill 版本时才建机会。多 Skill 归属歧义保留诊断，不选一个猜测。相同 Skill 版本与规则合并为一张卡，事件引用去重；保存至多 12 条有界摘要，忽略和暂缓不会被下一次同类事件覆盖。重试、输出量与重复读取阈值是宿主配置，不当作已标定的质量指标。
+Observe only events after enrollment. Script failures, repeated reads, large output, retry clusters, and explicit brevity/cost requests are signals, not calibrated quality scores. Create opportunities only with verified workspace and loaded Skill version. Retain ambiguity diagnostics for multiple Skills. Merge the same version/rule into one card, deduplicate event references, retain at most 12 bounded summaries, and preserve ignore/snooze choices. Thresholds are host configuration.
 
-分析先准备完整、可见的发送文本，排除明显凭据字段并限制总输入字节；前端预览后确认精确内容摘要与预算才进入 `running`。只有宿主固定路线的一次纯文本请求，不提供工具，不自动重试。输出需为完整 JSON，无法解析、出现范围外路径或被截断时记录失败与用量，不自动追加修复请求。每次请求沿用同一账本，派发前在事务中核对分析状态、路线、次数、未知用量与截止时间；G0 的已取消探针预算不能作为 G1 的预算，也不能被重置。
+Prepare a visible bounded analysis input, removing obvious credential fields. Only confirmation of its exact digest and budget enters running. Use one tool-free text request on the configured host route, with no retry. Require complete JSON and in-scope paths; malformed/truncated output records failure and usage without a repair call. Before dispatch, transactionally check state, route, request count, unknown usage, and deadline. G0's cancelled budget cannot become G1's budget.
 
-浏览器关闭不取消已确认的分析；取消或超时先 abort，最终结算保留已知用量及错误。宿主重启将 `running` 标为 `interrupted`，不重放；预览 `prepared` 可重新核对后由用户确认。原有分析与授权草稿不会因创建新分析而自动改绑版本。撤销草稿保留历史；正式评测契约尚未配置时，正式授权命令稳定返回 `evaluation_unavailable`，不将草稿交给候选执行器。
+Closing the browser does not cancel a confirmed analysis. Cancel/timeout aborts first, then retains known usage/errors. Restart marks running as interrupted without replay; prepared previews can be rechecked and confirmed. New analyses do not rebind older analyses/drafts. Revocation preserves history. Without evaluation configuration, formal authorization returns `evaluation_unavailable` and never reaches candidate execution.
 
-业务命令带 schemaVersion、operationId、expectedRevision、kind 与 payload。独立业务修订用于比较并写入；Token 推送不会令表单无故过期。同 ID 同内容重试返回原回执，不再次派发；不同内容拒绝。业务数据与操作回执同事务提交。G0 数据库迁移到版本 2 时只新增 G1 记录和回执表，保留 G0 状态、请求与预算；无法识别的数据拒绝读取，不删除或重建。
+Commands carry schemaVersion, operationId, expectedRevision, kind, payload. A separate business revision prevents token pushes from expiring forms. Same ID/content returns the original receipt without dispatch; changed content fails. State and receipt commit together. SQLite 2 adds G1 state/receipt tables while retaining G0 state, requests, and budgets. Unknown data fails rather than triggering deletion/recreation.
 
-## 首版适用上限
+## Initial limits and compatibility
 
-单机同步 SQLite 状态有界保存最多 64 个受管 Skill、512 张机会卡、256 次分析、256 张草稿及 1000 个归属会话；达到上限会拒绝新增并保留现有记录，不静默清空。每段仅检查最后 2000 个事件，超出会记录观察不完整的诊断。同一会话曾加载多个受管 Skill 时采用保守归属，不宣称找到了根因。暂缓期间保留新证据；截止后遇到下一条同类信号时恢复提示。
+Single-machine synchronous SQLite stores at most 64 Skills, 512 opportunities, 256 analyses, 256 drafts, and 1000 attributed sessions. Capacity failure retains existing data. Inspect only the last 2000 events per segment; record incomplete observation beyond that. Multiple loaded Skills use conservative attribution, not a root-cause claim. Snoozed cards retain evidence and return on the next matching signal after expiry.
 
-当前分析默认路线为 DeepSeek-V4-Flash / Low，上限为 1 请求、4096 输出 Token（包含推理）、32 KiB 展示输入、5 分钟，不重试。准备预览及确认派发时均须核对路线与当前宿主配置相同，数值预算不超过当前宿主上限。持久化仍接受历史 High 记录，不修改其预算或用量；宿主改为 Low 后，旧 High 预览不能直接派发，必须重新准备并确认。面板显示本次记录的实际路线，不能用当前默认值覆盖历史展示。此兼容调整不改变数据库版本或清空记录。
+Default analysis: DeepSeek-V4-Flash / Low, 1 request, 4096 output tokens including reasoning, 32 KiB visible input, 5 minutes, no retries. Check the route/configuration both when preparing and dispatching; budgets cannot exceed host limits. Historical High records retain their actual budgets/usage. After switching to Low, old High previews must be prepared and confirmed again. Display each record's actual route, not today's default. This compatibility change does not change database version or clear records.
 
-用户于 2026-09-08 确认上述默认方案并额外授权 1 次相同上限的 Low 真实验收，只发送专用测试 Skill 与固定简洁表达需求；消费后不得重放。优化草稿的 24 请求与 100000 Token 停止阈值是可调整的拟定值，不是消费授权。观察阈值和分析上限可经插件配置调低。来源发生变化后保留旧版本历史，G1 不提供静默重定基线；核对到原版本后可以重新启用观察，新基线管理留给版本 Gate。
+On 2026-09-08 the user confirmed these defaults and separately authorized one real Low acceptance call with the same caps, using only a dedicated test Skill and fixed brevity request. That batch cannot be replayed after consumption. Draft defaults of 24 requests and a 100000-token threshold are adjustable proposals, not permission to spend. Observation/analysis caps can be lowered in plugin configuration. A changed source remains historical; observation may resume after verifying the original version. New-baseline management belongs to the version Gate.
 
-G1 SQLite 版本 2 不能由只认识版本 1 的 G0 二进制直接读取。升级前在停止宿主时备份数据库；回退使用备份或独立测试目录，不删除新记录冒充迁移。G1 新字段尚无已发布历史格式，本轮开发中调整字段同步重建仅属于独立测试目录。
+G0 binaries supporting only SQLite 1 cannot read G1's version 2. Stop the host and back up before upgrading; use the backup or another test directory to roll back. Development-only fixture recreation is restricted to isolated test directories, not published historical data.
 
-后续前端准备将数据库升级为版本 3，并给历史分析补入空设计关联。新增命令与迁移规则见 [G2-CONTRACTS.md](G2-CONTRACTS.md)；本文件保留 G1 历史阶段的预算和验证语义。
+Later frontend preparation upgrades to SQLite 3 and adds null design links to historical analyses. See [G2-CONTRACTS.md](G2-CONTRACTS.md); G1's original budgets and validation semantics remain historical.

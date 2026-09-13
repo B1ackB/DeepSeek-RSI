@@ -1,58 +1,56 @@
-# G2 前置：前端设计准备验收
+# G2 Preparation: Frontend Design Validation
 
-最新实现：`0.0.0-g2.3` 已接入偏好与预算合并确认、独立候选生成和检查、人工启用及页面衔接。新流程、版本 5 迁移、当前验证与限制统一见 [主流程报告](MAINFLOW-REPORT.md)。以下 g2.0–g2.2 的实现与安装记录保留为历史；本轮未升级正在使用的 Harness profile，未新增真实付费调用。
+[Documentation](README.md) · [Contracts](G2-CONTRACTS.md) · [Development rules](../AGENTS.md)
 
-[文档导航](README.md) · [本阶段契约](G2-CONTRACTS.md) · [开发规范](../AGENTS.md)
+Historical report dated 2026-09-08, covering g2.0 preparation, g2.1 enrollment, and g2.2 unloaded-session checks. g2.3 later added combined confirmation, generation/checks, adoption, and dispatch; see [MAINFLOW-REPORT.md](MAINFLOW-REPORT.md). These preparation tests do not establish complete G2 isolation or an RSI cycle. No new real model calls occurred here.
 
-日期：2026-09-08。本报告保留 g2.0 前端准备的验收，并补充 g2.1 主动纳入交互及 g2.2 历史会话核对修复。不能据此宣称 G2 隔离单候选或完整 RSI 闭环通过。这些验证均未新增真实模型消费。
+## g2.1 / g2.2: Enrollment before work
 
-## g2.1 / g2.2：任务开始时主动纳入
+Implemented ordinary input → native RSI question → enroll/decline → continue. Manual registration is unnecessary; advanced forms default collapsed. The user confirmed task scope, continuous same-session reuse, and reconfirmation after a new session/manual end. One Skill is selected; enrollment does not permit rewriting/adoption.
 
-已实现普通任务输入 → 原生 RSI 问答 → 纳入或跳过 → 继续编写。无需手动登记；高级表单默认收起。用户已确认只覆盖本次任务，同会话连续修改沿用选择，新会话或手动结束后再问。每个任务只选择一个 Skill 作为迭代目标，纳入不开放改写或启用。
+- src/onboarding.ts uses agent/pre-step, tools/pre-execute, and userQuestions. Explicit frontend Skills or local request matches pause before the first call. Mid-run selection pauses only before Skill loading.
+- tests/onboarding.test.ts exercised the real Agent Loop: no dispatch before confirmation, selected-Skill injection, task-only observation, no repeat during continuous edits, repeat after end, decline without observation, cancellation without permission, and pre-load questions. Ten total tests and host/client types passed.
+- scripts/browser-onboarding.mjs used native input/questions to verify enrollment, continued editing, end/reask, and decline/continue. Four fixture calls including ordinary/auxiliary work, zero paid calls, no page errors.
+- SQLite 3 → 4 copy migration preserved three preferences, one frozen task, one analysis, one draft, and byte-equivalent ledger/receipt rows. Only empty enrollments were added; the real database was not changed during this copy test.
 
-- `src/onboarding.ts` 复用 `agent/pre-step`、`tools/pre-execute` 和 `userQuestions`。明确前端 Skill 或本地规则识别到的编写需求，在首次模型请求前确认；模型中途选 Skill 的补问只保证加载前暂停。
-- `tests/onboarding.test.ts` 通过真实 Agent Loop 验证确认前零派发、同意后注入已选 Skill、观察仅本次、连续修改不重问、结束后重问、拒绝后不追加观察、取消不产生授权、工具加载前补问。连同原测试共 10 项通过；宿主和客户端类型检查通过。
-- `scripts/browser-onboarding.mjs` 通过原生输入框和问答卡验证主动纳入、连续修改、结束后重问和拒绝继续。固定 Adapter 共 4 次调用，含普通编写与宿主辅助调用；真实付费请求为 0，无浏览器页面错误。
-- SQLite 3 → 4 的副本迁移保留 3 条偏好、1 份冻结任务、1 次分析及 1 份草稿，旧账本与回执逐行一致。新字段仅为空纳入记录，原用户数据库未在此副本验收中修改。
+Evidence: `.cache/onboarding-evidence/result.json`, question.png, included.png, migration.json. The user subsequently authorized stopping port 3080, backing up, upgrading, checking, and shutting down. Backup `.cache/g0.before-g2-onboarding.sqlite` held 102 requests, two analyses, and one frontend task.
 
-证据为 `.cache/onboarding-evidence/result.json`、`question.png`、`included.png`、`migration.json`。主动纳入交互在独立 profile 验证；用户随后明确允许停止其 3080 服务、备份、升级和检查后关闭。最新停机备份为 `.cache/g0.before-g2-onboarding.sqlite`，含 102 条请求、2 次历史分析及 1 份前端任务。
+g2.1 installation exposed a G1 bug: checking only loaded sessions incorrectly reported workspace conflicts for old unloaded sessions. g2.2 uses sessionPersistence.stat to verify persistent headers without changing ownership/history. Regression checks cover loaded, unloaded, mismatched, and missing sessions. The first install-check script also assumed flattened frontend fields; it was corrected to business.frontend. These failures were not passes.
 
-g2.1 安装检查发现旧会话未加载时，原 G1 代码仅查内存，误报工作区冲突。g2.2 改为复用 Harness `sessionPersistence.stat` 核对持久 header，不改写会话归属或历史快照。回归覆盖已加载、未加载、工作区不匹配及不存在的会话。首次安装验收脚本也曾错误使用扁平前端字段，已按 `business.frontend` 修正；这些失败不计为验收通过。
+Final g2.2 installation passed ten tests, host/client types, build, and packaging. Read-only browser verification on the actual profile found the task card, collapsed advanced settings, discoverable frontend Skill, and correct unloaded-session ownership. Two old test workspaces were removed from the native registry; workspace_missing remained correct without recreating them or deleting RSI history.
 
-最终已安装 `0.0.0-g2.2`，全部 10 项测试、宿主与客户端类型检查、构建和打包通过。实际开发 profile 的只读浏览器检查通过：右侧显示本次任务卡，高级设置默认收起，当前工作区的前端 Skill 可发现，尚未加载的历史会话也能核对归属。两个旧测试工作区已从 Harness 登记中移除，查询仍正确返回 `workspace_missing`，不自动恢复或删除其 RSI 历史。
+After shutdown, SQLite 4 retained 102 requests, two analyses, one frontend task, and identical old state/ledger/bindings/receipts. Business added only empty enrollments; three Skills matched sealed hashes. Evidence: installed.json, installed.png, installed-migration.json in the same evidence directory.
 
-停机后的真实数据库已为版本 4：102 条请求、2 次分析、1 份前端任务保留；旧状态、请求账本、绑定及操作回执逐行一致，业务仅增加空 enrollments，3 个原 Skill 与封存对象摘要一致。安装证据为 `.cache/onboarding-evidence/installed.json`、`installed.png`、`installed-migration.json`。
+Cleanup verified the authorized user PID 85387/3080 and test PIDs 86295, 89229, 89595/ports 62405, 63434, 64086 were stopped; ports/database handles released, browsers closed in finally. No Docker or paid calls. See cleanup.json. The host remained stopped; current startup instructions are in the [README](README.md#installation-upgrades-and-data).
 
-清理完成：用户授权停止的 PID 85387（3080），以及本轮测试 PID 86295、89229、89595（62405、63434、64086）均已停止，端口及数据库占用核对已释放。浏览器均通过 finally 关闭，未启动 Docker，真实付费调用为 0。证据为 `.cache/onboarding-evidence/cleanup.json`。升级后服务保持关闭，正常启动命令见 [README](README.md#本地安装包)。
+## g2.0 implementation
 
-## g2.0 历史实现
+- fixtures/frontend/v0/SKILL.md: neutral design procedure, confirmed context, required function/accessibility, verified delivery; no embedded personal style or answers. Originally enrolled manually.
+- src/frontend-contracts.ts / frontend.ts: six dimensions, two batches of at most three questions, task/project/personal scopes, frozen snapshot/digest. Silence is not consent. Preferences can be inspected/edited/disabled/removed; task overrides do not change memory.
+- src/client/frontend.tsx / panel.tsx: preparation/questions/forms, context copy, analysis preview, separate usage.
+- src/g1.ts: shared source checks, revisions, receipts, one-analysis flow. Direct design analysis has opportunityId=null rather than fictional observation evidence. Preparation/preview makes no calls; dependent running analysis prevents closure, and closed previews cannot start.
+- src/store.ts: transactional SQLite 2 → 3 validation/addition, rollback on corrupt records, no deleted history/budget reset.
 
-- `fixtures/frontend/v0/SKILL.md`：随包提供的中立设计流程，要求读取已确认上下文、保留功能与可访问性、核对实际交付；不预埋个人风格或评测答案。用户在工作区手动纳入管理。
-- `src/frontend-contracts.ts`、`src/frontend.ts`：六类偏好、两批至多三问、本次/项目/个人范围、固定快照与摘要；未回答不是同意。持久记忆可查看、修改、停用和移除；本次覆盖不改写记忆。
-- `src/client/frontend.tsx`、`src/client/panel.tsx`：右侧准备卡、固定问题和偏好表单、上下文复制、分析预览与既有独立用量卡。
-- `src/g1.ts`：来源检查、业务修订、操作回执和一次分析共用现有调用链。显式设计请求的机会 ID 为 null，不虚构日常观察证据。准备和预览不调用模型；运行中的分析不能直接关闭依赖上下文，关闭后的预览不能开始。
-- `src/store.ts`：SQLite 版本 2 → 3 在事务中校验旧记录并增加前端字段。损坏数据回滚；不删除历史或重置预算。
+## g2.0 validation
 
-## g2.0 历史验证结果
-
-| 验证 | 结果与适用范围 |
+| Check | Result and scope |
 |---|---|
-| 宿主和客户端 TypeScript strict | 通过，使用固定 Harness 源码的真实类型 |
-| Node 内置测试 | 9 项通过；新增作用域隔离、问题上限、跳过/无偏好、本次覆盖、冻结快照、迁移回滚；现有集成增加显式设计分析、取消、过期关联和重启保留 |
-| 隔离 Harness 浏览器流程 | 通过：初始 Skill 发现、两批问题、三种保存范围、偏好修改后快照不变、预览、固定响应分析、草稿和页面刷新 |
-| 用量展示 | 固定 Adapter 1 次响应，测试用量 130 Token；真实付费请求 0。浏览器无页面错误 |
-| 现有数据库副本升级 | 82 条请求记录、6 条 G0 回执、8 条 G1 回执、2 条历史分析全部保留；除规定的空设计关联和前端字段外，业务内容不变 |
-| 已安装版本启动 | 已将 g2.0 安装到 `/Users/black/.dsh-rsi-dev` Web profile；浏览器读取到新准备入口，账本仍为 82 条，未派发模型请求；停止后核对真实数据库版本 3，旧账本与回执逐行一致 |
-| 文档与打包 | 收尾时 12 份规范/文档的 77 个本地链接检查通过；构建及 npm pack 通过，包含初始 Skill 和 docs，不包含私有缓存或测试辅助模块。安装后的本机验收记录补写在仓库报告中 |
+| Strict host/client types | Passed against pinned native Harness types |
+| Node tests | Nine passed, including scopes, question caps, skip/no preference, overrides, freezing, rollback; integration added direct design analysis, cancel, stale links, restart |
+| Isolated browser | Discovery, two question batches, three scopes, frozen snapshots after edits, preview, fixture analysis, draft, reload passed |
+| Usage | One fixture call, 130 tokens, zero paid calls, no browser errors |
+| Database copy | All 82 request rows, six G0/eight G1 receipts, and two historical analyses retained; only specified empty design/frontend fields added |
+| Installed startup | g2.0 installed in the real development Web profile; browser saw preparation, 82-row ledger, no model calls; stopped database verified version 3 and identical old rows |
+| Docs/package | 77 local links in 12 documents passed; build/npm pack included initial Skill/docs, excluded caches/test helpers. Local installation evidence was appended to the repository report |
 
-浏览器首次运行在下拉框标签的精确匹配处超时，未开始模型分析；修正测试定位后以全新 profile 通过。没有将失败尝试删除或写成首次通过。
+The first browser run timed out on an exact dropdown-label match before analysis. Correcting the selector and using a fresh profile passed; the failure was retained.
 
-本机证据均相对仓库根目录：`.cache/frontend-evidence/result.json`、`questions.png`、`confirmed.png`、`failure.png`、`migration.json`。升级前备份为 `.cache/g0.before-g2-prep.sqlite`，迁移验证副本为 `.cache/frontend-migration.sqlite`。这些本机证据不进入 Git 或安装包；可重复的验证源码保留在 tests/ 和 scripts/。
+Local evidence: `.cache/frontend-evidence/` result.json, questions.png, confirmed.png, failure.png, migration.json. Backup: `.cache/g0.before-g2-prep.sqlite`; migration copy: `.cache/frontend-migration.sqlite`. These private local artifacts are excluded from Git/packages; repeatable source remains in tests/scripts.
 
-安装验收与清理证据为 `.cache/frontend-evidence/installed.json` 和 `cleanup.json`。本轮启动的 Harness PID 84110、84810、85149 均正常退出，端口 59914、60211、60781 已释放；每次浏览器运行通过 finally 关闭 Chrome。本轮未启动 Docker 容器，未关闭用户原有服务。测试后的正常启动命令见 [README 的本地安装包](README.md#本地安装包)。
+Install/cleanup evidence: installed.json and cleanup.json. Test PIDs 84110, 84810, 85149 exited; ports 59914, 60211, 60781 released; browsers closed in finally. No Docker or termination of existing user services. See current [installation instructions](README.md#installation-upgrades-and-data).
 
-## 适用限制与下一步
+## Historical limits and next step
 
-固定问题只在用户开始设计准备后按缺失维度提出；尚未自动理解任意聊天、截图或页面条件，也没有个性化模型追问。上下文需复制到普通 Harness 任务，当前没有自动向日常 Agent 注入。样例页面范围暂按虚构产品落地页、原生 HTML/CSS/JavaScript、无在线资产准备，仍是未获回复的实施假设。
+Fixed questions required explicit preparation and missing dimensions. There was no arbitrary chat/screenshot/page-condition understanding or personalized model questioning. Context had to be copied into ordinary tasks, not injected. Fictional landing pages with native HTML/CSS/JavaScript and no online assets remained an unconfirmed implementation assumption.
 
-下一段 G2 工作是冻结单候选可写文件、页面产物与固定检查清单、Docker 资源和工具边界，再实现授权后的隔离生成、封存与清理。当前没有生成、修改或启用任何 Skill 候选，也没有页面效果或性能改进证据；真实生成调用须另行确认其范围和预算。
+The next historical step was to freeze candidate paths, artifacts/checks, Docker/resources/tools, then implement authorized generation/sealing/cleanup. This preparation stage produced no candidate or page-effect/performance improvement evidence. Real generation required separate scope/budget confirmation.

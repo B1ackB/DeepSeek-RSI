@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { mainflowStateSchema, flowBudgetSchema } from './mainflow-contracts.ts';
+import { comparisonBudgetSchema } from './comparison-contracts.ts';
 import { integer, skillSnapshotSchema, snapshotSchema } from './contracts.ts';
 import { answerSchema, dimensionSchema, frontendStateSchema, preferenceText } from './frontend-contracts.ts';
 
@@ -53,6 +54,9 @@ export const g1CommandSchema = z.discriminatedUnion('kind', [
 	command('flow_answer', z.strictObject({ taskId: id, answers: z.array(z.string().max(2000)).min(1).max(3) })),
 	command('flow_choose', z.strictObject({ taskId: id, choice: z.enum(['candidate', 'baseline', 'stop', 'reject']), digest: digest.nullable() })),
 	command('flow_resume', z.strictObject({ taskId: id })),
+	command('flow_compare', z.strictObject({ taskId: id, candidateDigest: digest, budget: comparisonBudgetSchema })),
+	command('flow_cancel_comparison', z.strictObject({ taskId: id })),
+	command('flow_revise', z.strictObject({ taskId: id, feedback: text.trim().min(1), reference: z.enum(['baseline', 'candidate']) })),
 	command('manage', z.strictObject({ workspaceId: z.string().min(1), name: z.string().min(1).max(128), sessionId: z.string().min(1).nullable() })),
 	command('observe', z.strictObject({ skillId: id, enabled: z.boolean() })),
 	command('review_source', z.strictObject({ skillId: id })),

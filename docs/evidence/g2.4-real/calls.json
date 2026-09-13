@@ -1,0 +1,74 @@
+[
+	{
+		"kind": "skill-rewrite",
+		"sessionId": "rsi-generation/fb3fe270-10e9-467e-aaf0-6dbb351ea0b2",
+		"startedAt": 1788936516321,
+		"endedAt": 1788936521408,
+		"inputBytes": 4952,
+		"maxTokens": 4096,
+		"usage": {
+			"inputTokens": 1078,
+			"outputTokens": 344,
+			"totalTokens": 1422,
+			"cacheReadTokens": 0,
+			"reasoningTokens": 69
+		},
+		"finish": {
+			"kind": "stop"
+		}
+	},
+	{
+		"kind": "skill-rewrite-2",
+		"sessionId": "rsi-generation/5084dac9-d3c8-4c41-bc6e-e96a256b6884",
+		"startedAt": 1788936711784,
+		"endedAt": 1788936721535,
+		"inputBytes": 5322,
+		"maxTokens": 4096,
+		"usage": {
+			"inputTokens": 1157,
+			"outputTokens": 1124,
+			"totalTokens": 2281,
+			"cacheReadTokens": 0,
+			"reasoningTokens": 0
+		},
+		"finish": {
+			"kind": "stop"
+		}
+	},
+	{
+		"kind": "candidate-page",
+		"sessionId": "live-design-page-20260909-2",
+		"startedAt": 1788937109868,
+		"endedAt": 1788937128134,
+		"inputBytes": 11227,
+		"maxTokens": 16384,
+		"usage": {
+			"inputTokens": 2178,
+			"outputTokens": 3074,
+			"totalTokens": 5252,
+			"cacheReadTokens": 0,
+			"reasoningTokens": 287
+		},
+		"finish": {
+			"kind": "stop"
+		}
+	},
+	{
+		"kind": "baseline-page",
+		"sessionId": "live-design-baseline-20260909",
+		"startedAt": 1788937158945,
+		"endedAt": 1788937270448,
+		"inputBytes": 9189,
+		"maxTokens": 16384,
+		"usage": {
+			"inputTokens": 1722,
+			"outputTokens": 13153,
+			"totalTokens": 14875,
+			"cacheReadTokens": 0,
+			"reasoningTokens": 9060
+		},
+		"finish": {
+			"kind": "stop"
+		}
+	}
+]

@@ -1,40 +1,40 @@
-# 偏好驱动主流程实现与验收
+# Preference-Driven Main Flow: Implementation and Validation
 
-[文档导航](README.md) · [执行契约](G2-CONTRACTS.md)
+[Documentation](README.md) · [Contracts](G2-CONTRACTS.md)
 
-2026-09-08，版本 `0.0.0-g2.3`。用户批准实现已确认的新主流程。本次没有新增真实付费调用，也没有升级正在使用的 Harness profile。
+2026-09-08, version `0.0.0-g2.3`. The user authorized the documented flow. No new paid call or upgrade of the running user profile occurred in this stage.
 
-## 已实现
+## Implemented
 
-普通前端编写需求或显式 `/rsi-frontend-design` 在首次页面模型请求前暂停，在 RSI 右侧显示一张确认卡：完整页面需求与必需约束、自然语言偏好、作用域、可修改文件、完整输入文件及固定检查、模型与调用预算。提交此卡才形成持久修改授权。无需出现观察信号或先做一次建议分析。
+Ordinary frontend requests or explicit `/rsi-frontend-design` pause before the first page-model request. One sidebar card shows complete requirements/constraints, natural-language preferences, scope, editable files, full input/checks, and model/budget. Submission creates durable revision authorization without an observation signal or advice-only analysis.
 
-独立模型只返回结构化候选、具体澄清或无需修改，不获得宿主工具。宿主校验完整文件、允许路径与元数据，保留未修改文件，封存候选，记录检查与计量。澄清最多两批、每批三问，与生成共用原来的截止时间和最多三次调用，不自动重试。
+The separate model returns structured candidate, clarification, or unchanged, without host tools. The host checks complete files, allowed paths, and metadata, retains unchanged files, seals the candidate, and records checks/usage. Clarification is limited to two batches of three questions, sharing the original deadline and maximum three calls. No automatic retry.
 
-完整变更对照、理由、检查结果、候选摘要与消费在右侧审阅。只有单独确认精确候选后才启用。拒绝、无需修改、失败、未知用量与耗尽均等待用户选择旧版或停止，不自动回退。原 Skill 目录不覆盖。任务范围的启用不改变项目默认；项目与个人偏好范围的启用只更新当前工作区的有效版本指针，个人偏好本身可供其他工作区继承。
+Review shows full diffs, reason, checks, candidate digest (historical UI), and costs. Exact adoption is separate. Rejection, unchanged, failure, unknown usage, or exhaustion waits for baseline/stop choice, without automatic fallback. Source directories remain unchanged. Task adoption does not change defaults; project/personal preference scopes update the active Skill only for the current workspace, while personal preferences may be inherited elsewhere.
 
-首次页面请求替换待提交的同名 Skill 展开内容，将文本、脚本及资源绑定到同一封存摘要。已有会话用过不同版本时创建确定 ID 的关联新会话，继承日常模型路线、工作区、本次确认需求与偏好，不复制旧模型历史。旧会话保留原绑定。右侧提供关联会话入口。
+Before the first page request, replace pending same-name Skill expansion and bind text/scripts/resources to one sealed digest. Previously different-version sessions get a deterministic linked session with the daily route, workspace, and confirmed requirements/preferences, not old model history. Original bindings remain; sidebar navigation opens the linked session.
 
-SQLite 升到版本 5；版本 4 及更早业务补入空 `mainflow`，不补造授权、不修改旧账本和回执。重启将未完成运行标为失败，保留授权、响应、候选和消费；不会重发模型请求。已审阅候选仍可审阅；已经选择版本但未派发的恢复必须由用户操作触发。确定性关联 ID、持久投递标记与历史校验阻止重复创建或重放已进入会话的任务。
+SQLite 5 adds empty mainflow to earlier state without invented authorization or altered ledgers/receipts. Restart fails incomplete work while preserving authorization, responses, candidates, and costs. Review survives. Chosen-but-undispatched work requires a user recovery action. Deterministic IDs, persistent delivery markers, and history checks prevent duplicate creation/admitted-task replay.
 
-## 本轮验证
+## Validation
 
-- TypeScript strict 覆盖宿主与客户端；全部 13 项 Node 测试、构建与本地打包通过。
-- Node 内置测试覆盖真实 Harness Agent Loop 的确认前零调用、无观察信号生成、重复确认/回答幂等、明确预算、未知 usage、启用前零页面请求、旧展开文本移除、文本和资源一致绑定、关联新会话及旧绑定保留、取消不产生授权。
-- 文件检查覆盖越界和重复路径、空文件、元数据破坏、没有实际变化、持久输入与清单不符、保留未修改文件、取消与临时目录清理。
-- 存储检查覆盖中断后的未知消费、追加请求阻断、数据库版本 4 → 5 保留旧行与补空字段，以及损坏旧记录时回滚版本迁移。
-- 无头 Chrome 使用隔离 Harness profile 和固定 Adapter，验证输入框到合并确认卡、候选生成、完整对照、刷新不重放、单独启用、页面派发、第二轮关联新会话及打开入口。浏览器无页面错误，最终两轮流程固定 Adapter 共 5 次调用（含宿主辅助调用），真实付费调用为 0。截图及结果位于 `.cache/mainflow-evidence/`。
-- 脚本分支验证 Docker 不可启动时失败关闭，不在宿主执行候选，也不留下候选暂存目录。本轮 OrbStack 为停止状态，未声称已通过真实 Docker 成功执行验证。
+- Strict host/client types, all 13 Node tests, build, and local packaging passed.
+- Native Harness Agent Loop tests covered zero calls before confirmation, direct preference generation, duplicate confirmation/answers, budgets, unknown usage, no page request before adoption, old expansion removal, identical text/resource binding, linked sessions, retained old binding, and cancellation without authorization.
+- File checks covered out-of-scope/duplicate paths, emptiness, metadata corruption, no actual change, persisted-input/manifest mismatch, unchanged files, cancellation, and temporary-directory cleanup.
+- Storage checks covered interruption/unknown cost, blocked further requests, SQLite 4 → 5 row preservation/defaults, and migration rollback for corrupt state.
+- Isolated headless Chrome/fixed adapter passed composer → combined card → candidate → complete diff → reload without replay → adoption → dispatch → second linked session/navigation. Five fixture calls including host auxiliary calls, zero paid calls, no page errors. Evidence: `.cache/mainflow-evidence/`.
+- Script checks failed closed when Docker could not start, with no host execution or retained candidate staging. OrbStack was stopped; this was not a real successful Docker execution test.
 
-可重复入口：`npm run typecheck`、`npm test`、`npm run build`。浏览器验收使用 `node scripts/build.mjs --g1-fixture`、禁用真实 DeepSeek Adapter 的隔离 profile，以及 `node scripts/browser-mainflow.mjs <宿主日志>`；不能把 fixture 加载到正式 profile。
+Reproduction: npm run typecheck, npm test, npm run build. Browser helpers use `node scripts/build.mjs --g1-fixture`, an isolated profile with real DeepSeek disabled, and `node scripts/browser-mainflow.mjs <host-log>`. Never load the fixture into production.
 
-## 适用边界
+## Boundaries
 
-当前候选编辑支持总计最多 32 个文件的 UTF-8 文本 Skill 包，完整模型输入最多 64 KiB；超过限制或发现疑似凭据时明确停止，不截断后覆盖。不能新增/删除文件或更改可执行位；Python/Shell 和模板可以在原授权路径内替换。
+UTF-8 Skill packages: at most 32 files and 64 KiB complete model input. Oversize/suspected credentials stop explicitly, not by truncated overwrite. No creation/deletion/executable-bit changes; authorized existing Python/Shell/templates may be replaced.
 
-固定检查为路径、完整性、非空与原元数据保留，以及 Docker 内 Python AST/Shell `-n` 语法检查。脚本不会在检查时运行，候选也不能提供自报通过的检查器。非 Python/Shell 的模板仅做完整性检查。页面功能、审美、效率对照显示未评测，不是启用卡中的已通过项。
+Fixed checks cover paths, integrity, nonempty files, original metadata, and Docker Python AST/Shell -n. Scripts are not executed and candidates cannot self-certify checks. Other templates receive integrity checks only. Historical page function/aesthetics/efficiency were explicitly unevaluated.
 
-本轮未进行真实模型生成、页面产物对照、完整隔离攻击面验收、多轮优化或原目录覆盖，不宣称 G2–G4 全部通过。下一步真实试用需要在实际确认卡核对当批输入、模型与预算；历史探针授权不适用于新批次。
+No real generation, product output comparison, complete isolation attack-surface acceptance, multi-round search, or source overwrite occurred. This is not all of G2–G4. New real trials need their own confirmed model/input/budget.
 
-已有 Enrollment 保留“观察”的原义，不升级成修改授权；沿用中的旧任务仍按原选择继续。结束旧观察范围后开始的新前端任务进入主流程。模型在日常调用中途才决定加载 Skill 的路径仍使用原生观察确认，不能承诺此前没有模型消费。新版封存 Skill 的效果也不能由旧版 G1 观察结果证明。
+Existing enrollments stay observation-only and continue under old choices. After observation ends, new frontend tasks enter the main flow. A Skill chosen mid-run still uses native observation confirmation; earlier model cost cannot be ruled out. Old G1 observations cannot establish a new sealed version's effectiveness.
 
-清理已核实：本轮隔离 Harness 进程 96650（54166）和 97865（54484）均退出，两个测试端口已释放；浏览器在 finally 中关闭，未启动 Docker，现有 3080 服务未修改。证据为 `.cache/mainflow-evidence/cleanup.json`。初次启动遇到本地监听权限及端口占用，改用已授权的空闲本地端口后完成验收；没有将启动失败计为通过。
+Cleanup verified: PIDs 96650/97865, ports 54166/54484 exited/released; browsers closed in finally. No Docker started; the existing 3080 service remained untouched. Evidence: `.cache/mainflow-evidence/cleanup.json`. Initial listening-permission/port conflicts were resolved with an authorized free local port; failed starts were not counted as passes.

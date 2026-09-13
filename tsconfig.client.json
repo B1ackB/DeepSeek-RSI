@@ -1,5 +1,6 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": { "jsx": "react-jsx", "types": ["react"] },
+	"exclude": [],
 	"include": ["src/client/**/*.tsx", "src/contracts.ts"]
 }

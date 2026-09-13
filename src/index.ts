@@ -10,6 +10,7 @@ import type { Store } from './store.ts';
 import { observeUsage } from './usage.ts';
 import { integer, fault } from './contracts.ts';
 import { applyG1 } from './g1.ts';
+import { createScenarioRegistry } from './scenarios/index.ts';
 import { g1ConfigSchema } from './g1-contracts.ts';
 
 export const name = 'deepseek-rsi-g0';
@@ -21,6 +22,7 @@ declare module '@deepseek-ai/cordis' {
 
 export function apply(ctx: Context, input: unknown = {}) {
 	const config = g1ConfigSchema.parse(input);
+	ctx.provide('rsiScenarios', createScenarioRegistry());
 	const home = process.env.DSH_HOME;
 	if (!home) throw new Error('G0 requires an explicit DSH_HOME');
 	const store = openStore(join(home, 'rsi', 'g0.sqlite'));
@@ -28,13 +30,13 @@ export function apply(ctx: Context, input: unknown = {}) {
 	const active = new Set<AbortController>();
 	const probeSessions = new Set<string>();
 	const retries = new Map<string, string>();
-	const analysisSessions = new Map<string, string>();
+	const requestOwners = new Map<string, string>();
 	ctx.provide('rsiG0', { store, rsiSessions, probeSessions, active });
 	let closeBusiness: (() => Promise<void>) | undefined;
 	ctx.effect(() => async () => { for (const task of active) task.abort(); await closeBusiness?.(); store.close(); });
-	ctx.on('llm/stream', observeUsage(store, rsiSessions, probeSessions, retries, analysisSessions));
+	ctx.on('llm/stream', observeUsage(store, rsiSessions, probeSessions, retries, requestOwners));
 	ctx.inject(['skills', 'sessions', 'agents', 'workspaceRegistry', 'tools'], inner => {
-		const business = applyG1(inner, store, config, analysisSessions);
+		const business = applyG1(inner, store, config, requestOwners);
 		closeBusiness = business.dispose;
 		inner.provide('rsiG1', business);
 	});
