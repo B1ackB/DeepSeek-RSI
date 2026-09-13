@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { integer, skillSnapshotSchema } from './contracts.ts';
+import { comparisonSchema } from './comparison-contracts.ts';
+import { scenarioInfoSchema } from './scenarios/contracts.ts';
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 export const flowBudgetSchema = z.strictObject({
@@ -16,6 +18,11 @@ export const candidateResponseSchema = z.discriminatedUnion('kind', [
 	z.strictObject({ kind: z.literal('unchanged'), reason: z.string().min(1).max(4000) }),
 ]);
 export const flowTaskSchema = z.strictObject({
+	parentId: z.uuid().nullable().default(null),
+	scenario: scenarioInfoSchema.default({ id: 'frontend', version: '1', label: '网页单页', kind: 'html' }),
+	reference: z.strictObject({ snapshot: skillSnapshotSchema, root: z.string() }).nullable().default(null),
+	referenceFiles: z.array(fileSchema).max(32).default([]),
+	comparison: comparisonSchema.nullable().default(null),
 	id: z.uuid(), sessionId: z.string().min(1), turn: integer.min(1), workspaceId: z.string().min(1), skillId: z.uuid(), name: z.string(),
 	baseline: skillSnapshotSchema, baselineRoot: z.string(), files: z.array(fileSchema).min(1).max(32), brief: z.string().min(1).max(16000),
 	inherited: z.array(z.string().max(4000)).max(32), previewDigest: digest,
@@ -31,7 +38,7 @@ export const flowTaskSchema = z.strictObject({
 });
 export const mainflowStateSchema = z.strictObject({
 	tasks: z.array(flowTaskSchema).max(256),
-	preferences: z.array(z.strictObject({ scope: z.enum(['project', 'personal']), workspaceId: z.string().nullable(), value: z.string().max(4000) })).max(128),
+	preferences: z.array(z.strictObject({ scenarioId: z.string().default('frontend'), scope: z.enum(['project', 'personal']), workspaceId: z.string().nullable(), value: z.string().max(4000) })).max(128),
 	active: z.array(z.strictObject({ workspaceId: z.string(), skillId: z.uuid(), digest })).max(64),
 });
 export type FlowTask = z.infer<typeof flowTaskSchema>;

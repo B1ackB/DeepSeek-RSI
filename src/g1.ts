@@ -24,7 +24,7 @@ const ANALYSIS_SYSTEM = '你分析用户确认的 Skill 片段和任务线索。
 export { redact } from './text.ts';
 import { redact } from './text.ts';
 
-export function applyG1(ctx: Context, store: Store, config: G1Config, analysisSessions: Map<string, string>) {
+export function applyG1(ctx: Context, store: Store, config: G1Config, requestOwners: Map<string, string>) {
 	const frontendRoot = fileURLToPath(new URL('../fixtures/frontend/v0/', import.meta.url));
 	ctx.skills.register({ name: 'rsi-frontend-design', description: '根据明确需求与确认偏好设计前端页面，支持 RSI 版本对照。', source: 'rsi', content: readFileSync(join(frontendRoot, 'SKILL.md'), 'utf8'), resourceBase: { kind: 'directory', path: frontendRoot } });
 	const controllers = new Map<string, AbortController>();
@@ -99,7 +99,7 @@ export function applyG1(ctx: Context, store: Store, config: G1Config, analysisSe
 		const sealed = await sealFixture(definition.resourceBase.path, join(process.env.DSH_HOME!, 'rsi', 'objects'), id, workspace.path);
 		return { id, revision: 1, name: definition.name, provider: definition.provider, workspaceId: workspace.id, scopeSessionId: sessionId, snapshot: sealed.snapshot, objectRoot: sealed.root, observing: true, sourceState: 'matching', sourceError: null, createdAt: Date.now() };
 	}
-	const mainflow = applyMainflow(ctx, store, analysisSessions, (workspaceId, sessionId, name) => prepareManaged(workspaceId, sessionId, name, true), checkedSkill);
+	const mainflow = applyMainflow(ctx, store, requestOwners, (workspaceId, sessionId, name) => prepareManaged(workspaceId, sessionId, name, true), checkedSkill);
 	applyOnboarding(ctx, store, (workspaceId, sessionId, name) => prepareManaged(workspaceId, sessionId, name, true), mainflow.startPage);
 	async function prepareInput(skill: ManagedSkill, evidence: Evidence[], maxBytes: number, design: FrozenDesign | null = null) {
 		const excerpts: Array<{ path: string; excerpt: string; truncated: boolean }> = [];
@@ -118,7 +118,7 @@ export function applyG1(ctx: Context, store: Store, config: G1Config, analysisSe
 		const controller = new AbortController();
 		controllers.set(analysis.id, controller);
 		const sessionId = SessionId(`rsi-analysis/${analysis.id}`);
-		analysisSessions.set(sessionId, analysis.id);
+		requestOwners.set(sessionId, analysis.id);
 		const timer = setTimeout(() => controller.abort(new Error('分析超时')), Math.max(0, analysis.deadline! - Date.now()));
 		const work = (async () => {
 			try {
@@ -158,7 +158,7 @@ export function applyG1(ctx: Context, store: Store, config: G1Config, analysisSe
 					current.status = 'failed'; current.endedAt = Date.now();
 					current.error = error instanceof Error ? redact(error.message).slice(0, 4000) : '分析失败';
 				});
-			} finally { clearTimeout(timer); controller.abort(); controllers.delete(analysis.id); analysisSessions.delete(sessionId); }
+			} finally { clearTimeout(timer); controller.abort(); controllers.delete(analysis.id); requestOwners.delete(sessionId); }
 		})();
 		jobs.add(work);
 		void work.finally(() => jobs.delete(work)).catch(error => { ctx.logger.error('RSI analysis settlement failed: %s', String(error)); });

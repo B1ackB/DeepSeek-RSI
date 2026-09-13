@@ -1,0 +1,31 @@
+{
+	"date": "2026-09-09",
+	"plugin": "0.0.0-g2.4",
+	"harness": "d347e703908d0406b7a7ef80e3a0e594d86b2215 + right-panel patch",
+	"provider": "deepseek-official",
+	"model": "deepseek-v4-flash",
+	"reasoningEffort": "low",
+	"requests": 4,
+	"totalTokens": 23830,
+	"lifecycle": "real Skill rewrite and approved candidate binding reached actual page generation",
+	"quality": "candidate rejected by offline extra-interaction check; baseline passed this fixed sample",
+	"pageGenerationMode": "candidate: native Agent Loop; baseline: same Harness LLM request with only Skill instruction/resource replacement; both return HTML saved by test helper, no tool calls",
+	"ledger": "rewrite calls owner=rsi; candidate page and isolated baseline comparison owner=session. Baseline is a separate test session, not a production RSI evaluation ledger.",
+	"hashes": {
+		"candidate-page.html": "9c5d9b3fd6c3181bf8a99678a0c226b92e9d69388a27618bf927dbecb838c32c",
+		"baseline-page.html": "7589531f4c5467383fb637873ca62d08401118d3743e7e8fb6f32743a4781925",
+		"candidate-page-1440.png": "f086c27e4a361c95373d0016b431313037b69a6edceb85d9cafe2813b8375033",
+		"baseline-page-1440.png": "5e0775ea770d787df25200f28e6d06e19d879ddac91389f7e7c8f1f55a4723c7",
+		"candidate-page-390.png": "54f03d2c368dad8962a94d939e4ffbc4dfb8d2f0b834746a419c01e7d235cdc9",
+		"baseline-page-390.png": "8abe13d0046b35cfd66621d6791cdb65e966b8993a07ec7683ae608a3085f2bb",
+		"calls.json": "1caefb6e2020bf176b78915597a4bdad924df2b10db50506bae5a3c7b8030f07",
+		"page-checks.json": "5b10e3c1df29c04881e2e8b2387395c5ce067004b07ef18b06c04c28ff75a891",
+		"comparison.json": "c5ec87b22da3a171becd3ec659329edd765e04d2125dc8a035de273deee6e1e9",
+		"final-integrity.json": "54bd7f209582f54e5600ba6143a188af01c4df89b5307cb729349a40d87f7e76",
+		"skill-before.md": "8ed722e7fddb0ba7c829dd876f30ca97bace3d1edbe3876110bbd38f8e52879a",
+		"skill-after.md": "6f2fa4ffa710871da68a80f76e8d41416cac8cc4532803c68b204381ebd94e7e",
+		"confirmed-input.json": "7638d06cd6093cf9c35da4c71a7838965427fa4d611335a7d4bc83139c145bac",
+		"candidate-page-response.txt": "64af0f236be51226af00a78bf0235bc29bba27df1a701e9a5e368e5aac650f92",
+		"baseline-page-response.txt": "c5cc806e795593947f79d6be9d53537d463bd2aa9530117d7de5421b0e05ce01"
+	}
+}

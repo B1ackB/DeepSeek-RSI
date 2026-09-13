@@ -1,68 +1,68 @@
-# 前端设计首场景与偏好边界
+# Frontend Design Scenario and Preference Boundaries
 
-最新实现：`0.0.0-g2.3` 已接入偏好与预算合并确认、独立候选生成和检查、人工启用及页面衔接。新流程、版本 5 迁移、当前验证与限制统一见 [主流程报告](MAINFLOW-REPORT.md)。以下 g2.0–g2.2 的实现与安装记录保留为历史；本轮未升级正在使用的 Harness profile，未新增真实付费调用。
+Current comparison and iteration rules are in [EXTENSION-CONTRACTS.md](EXTENSION-CONTRACTS.md). Since 2026-09-13, compilation and user choice govern adoption; web design is one extensible scenario.
 
-[文档导航](README.md) · [开发规范](../AGENTS.md)
+[Documentation](README.md) · [Development rules](../AGENTS.md)
 
-日期：2026-09-08。用户已确认前端页面设计为首个完整 RSI 场景，代码仓库分析、日志分析及测试定位后续扩展。用户希望从初始设计 Skill 出发，根据反馈持续迭代，并主动询问以确认喜好。
+The following records the 2026-09-08 product decisions and g2.0–g2.3 progression. g2.3 added combined preference/budget confirmation, independent generation/checks, separate adoption, and ordinary-task handoff; see [MAINFLOW-REPORT.md](MAINFLOW-REPORT.md) for SQLite 5 and evidence. Its development did not upgrade the user's running profile or authorize new paid calls.
 
-用户已确认采用下述“轻量主动询问＋项目内记忆”，包括询问上限、调用边界、偏好作用域与冲突处理。本文件记录完整产品边界；当前实现了 G2 前置的初始 Skill、固定问题、偏好管理、冻结上下文和一次分析接入，字段见 [G2-CONTRACTS.md](G2-CONTRACTS.md)。尚未实现任意聊天或截图理解、自动语义冲突识别、页面生成、候选修改及效果比较；不改变已有的一次分析预算，也不提供新付费授权。
+The user selected frontend design as the first full scenario, with repository analysis, logs, and test diagnosis later. The goal is to start from an initial design Skill, improve it from feedback, and ask a small number of questions to establish preferences. Lightweight questions and project memory were confirmed, including limits, scope, and conflict handling. Early preparation implemented fixed questions, preferences, frozen context, and one analysis, not arbitrary chat/screenshot interpretation, semantic conflict detection, candidate editing, or output comparison.
 
-新增产品确认：将用户偏好与当前 Skill 发给独立模型，由模型生成 Skill 候选。偏好、修改范围和预算在同一张卡确认；检查后由用户另行确认启用，再用新版开始本次页面任务。这是下一段目标流程，具体输入、状态、绑定和待定项见 [偏好驱动修改契约](G2-CONTRACTS.md#偏好驱动的独立修改任务)。
+The later [direct revision flow](G2-CONTRACTS.md#preference-driven-independent-revision) sends preferences and the current Skill to a separate model after one card confirms editable scope and budget. Checks and separate adoption occur before the ordinary page task begins.
 
-## 1. 主动询问的范围
+## 1. Proactive questions
 
-g2.2 当前入口为用户直接提交前端编写需求；RSI 先通过 Harness 原生提问卡确认是否将本次选用的 Skill 纳入迭代，确认后自动登记。用户已确认仅本次生效，同会话连续修改沿用，新会话或手动结束后再次询问。这是已有任务纳入选择，不是修改授权。下一流程将偏好与修改授权前移到同一张主卡，不再要求进入高级表单或先产生观察信号；旧记录不能因此获得新增权限。
+The historical g2.2 entry uses normal chat and a native enrollment question before frontend writing. Enrollment applies to the current task, carries through continuous same-session edits, and asks again for a new session or after manual end. It authorizes observation only. The newer combined card moves preference/edit confirmation into the main flow without granting old records new permissions.
 
-首版采用轻量主动：未确认的关键偏好、用户明确表示不满意、已确认要求互相冲突时，在右侧面板提出少量问题。此前讨论的其他模式不作为首版必须实现的配置项。边界如下：
+Use lightweight questioning for important missing preferences, explicit dissatisfaction, or conflicting confirmed requirements:
 
-- 偏好澄清每批最多 3 问，每个优化任务最多主动提出 2 批，先问影响最大的未知项。此上限限制澄清问题；每轮候选仍有一次对照审阅，审阅不能隐含下一轮修改或最终启用的新权限。
-- 配色、信息密度、文字排版、组件形状、图片使用、动效强度六类保留为已有表单和提示示例。新流程接受完整的自然语言偏好，由模型围绕具体任务生成澄清，不要求将所有意见强行归入六类，不必每次全部问。
-- 不重复询问同一作用域中仍有效的已确认答案。反馈和约束发生冲突时指出具体矛盾，不静默覆盖；达到澄清上限后，关键冲突等待用户主动处理，不能猜测后继续依赖它的工作。
-- 每项可选择、自由补充、表示无偏好或跳过，也可关闭本任务的主动提问。跳过与沉默不是同意；未决审美项可使用明确展示的临时默认值，必需内容或交互未明确时只暂停相关生成/评估。
-- 在右侧面板展示，不弹出强制对话框，不抢聊天输入焦点。尚未绑定前端任务与受管 Skill 时不自动把日常反馈写成此 Skill 的偏好。
+- At most three questions per batch and two proactive batches per optimization task. A comparison review does not implicitly authorize another revision or adoption.
+- Color, density, typography, shape, imagery, and motion remain examples and historical form dimensions. New natural-language input is not confined to these six categories; do not ask every dimension every time.
+- Do not repeat still-valid answers. Identify concrete conflicts rather than overwriting silently. At the question limit, unresolved critical conflicts wait for user action rather than guesses.
+- Allow selection, free text, no preference, skip, and closing proactive questions. Silence/skip is not consent. Optional aesthetics may use explicitly shown temporary defaults; pause only dependent work when required content/interaction is unresolved.
+- Use the sidebar without forced dialogs or stealing chat focus. Do not turn daily feedback into a Skill preference before the task and managed Skill are bound.
 
-### 模型调用与问题的区别
+### Questions versus model calls
 
-现有本地规则根据明确输入、已记录状态和缺失字段选择固定问题卡；在已有页面预览上填写固定比较表单也不需要额外模型调用。新流程的自然语言理解与具体改写交给独立模型任务，在用户提交修改授权卡后派发；不能由本地观察静默开启新的模型消费。
+Local rules can choose fixed questions from known input/state without a model. Fixed comparison forms also need no call. Personalized clarification, free-text/reference-image interpretation, and generation can require model requests and therefore prior scope/budget confirmation.
 
-模型生成个性化追问、理解自由文本或参考图、生成候选页面都可能产生调用。用户先审阅发送范围与总预算；任务内的后续请求逐次计入同一已授权额度，并按分析、生成、评估分别展示。一次模型响应可以包含多问，用户回答后的再次处理也是一次新请求；问题数不等于调用数。当前 G1 的一次分析额度不能自动扩为多轮访谈。
+A response may contain several questions; processing subsequent answers is another request. Question count is not request count. Follow-up calls consume the same authorized budget and retain analysis/generation/evaluation attribution. A one-call G1 analysis cannot become an unlimited interview.
 
-单独回答问题、保存偏好、选择更喜欢的页面，都不等于授权修改或启用 Skill。用户明确提交显示修改范围和预算的合并确认卡时，同时确认偏好与本次修改授权；后续启用仍单独确认。等待必要回复时不派发新的依赖请求、不保留候选执行进程空等，也不自动延长既有任务截止时间。
+Answering, saving a preference, or selecting a preferred page is not edit/adoption authorization. Submitting the combined card explicitly grants the displayed revision scope/budget; adoption remains separate. While waiting, do not dispatch dependent calls, leave candidate processes idle, or extend deadlines automatically.
 
-## 2. 偏好的生效范围
+## 2. Preference scope
 
-| 范围 | 生效对象 | 例子 | 保存方式 |
+| Scope | Applies to | Example | Persistence |
 |---|---|---|---|
-| 本次页面/任务 | 当前需求 | “这个活动页用红色”“这次不要动效” | 默认临时约束，不自动影响以后页面 |
-| 当前项目（已确认的默认持久范围） | 同一已登记工作区中的后续设计任务 | “这个项目统一浅色”“后台页面紧凑一些” | 在标明作用域的偏好表单中确认；可附页面类型条件 |
-| 个人默认 | 未来其他项目的前端设计默认值 | “通常少用圆角”“默认避免强动效” | 用户明确选择保存为个人默认；不因多次选择而自动推广 |
+| Current page/task | This request | Red for this event page; no motion this time | Temporary by default |
+| Project (confirmed default persistent scope) | Later design work in the registered workspace | Light theme here; compact admin pages | Explicit scoped form; may express page-type conditions |
+| Personal default | Frontend defaults in other projects | Usually fewer rounded corners; avoid strong motion | Explicit selection only, never promoted from repeated choices |
 
-“项目内记忆”指已确认且作用域明确的偏好，而不是把每句聊天都永久记住。自然语言中范围不明的反馈先作为当前任务线索，不能自动扩大到项目或个人层面。个人偏好仅用于前端设计，由 RSI 宿主管理，不改写其他应用或 Codex 的记忆。
+Project memory means confirmed scoped preferences, not permanent storage of every message. Ambiguous scope starts as a current-task signal. RSI manages these frontend preferences; it does not alter other apps or Codex memory.
 
-对于相同且适用的偏好维度，采用：当前任务明确要求 → 项目偏好 → 个人默认 → Skill 基础默认。页面类型等条件不匹配的条目不参与合并。必需内容、明确的项目约束和已冻结检查始终必须满足；与本次要求冲突时向用户指出，不让审美偏好自动取消它们。
+For an applicable dimension: current explicit requirement → project preference → personal default → base Skill default. Inapplicable page conditions do not merge. Required content, project constraints, and frozen checks remain mandatory; aesthetics cannot cancel them silently.
 
-例如个人默认深色，而当前项目要求浅色：该项目采用浅色，个人默认保留。用户说“只有这个活动页使用红色”：仅当前任务覆盖配色，项目默认不变。
+For example, a light project overrides a dark personal default without deleting that default. Red for one event page changes only that task.
 
-用户可查看、修改、停用或移除偏好。新增或修改只影响后续任务；运行中的优化绑定已确认偏好快照，不能自动改写评测目标。若用户要求当前任务也采用新偏好，暂停受影响工作并重新核对授权及比较条件；旧结果保留其原始语境。
+Users can inspect, edit, disable, or remove preferences. Changes affect later work; active optimization retains its confirmed snapshot. Applying new preferences to an ongoing task requires pausing affected work and rechecking authorization/comparison conditions. Old results retain their original context.
 
-## 3. Skill 与验收的边界
+## 3. Skill and acceptance boundaries
 
-初始 Skill 负责理解页面用途、读取适用偏好、提出必要澄清、设计布局、生成可运行页面和核对要求。它不需要预先具备所有风格，也不故意制作低质量基线来制造提升。
+The initial Skill should understand purpose, read applicable preferences, ask necessary questions, design layout, generate a usable page, and check delivery. It need not contain every style or deliberately weak baseline behavior.
 
-偏好记录与 Skill 设计流程分别版本化。用户明确要求依据偏好修改并提交授权卡后，直接进入独立候选生成，不以反复失败或规则命中为前提。模型可以解释无需修改，但不能伪造新版；候选未被采用时保留旧版，用户选择“用旧版继续”或“停止本次任务”，不自动回退。个人化风格不会通过修改共享 Skill 的全局默认值绕过项目作用域。
+Preferences and Skill procedures are versioned separately. Explicit authorized preference edits can directly generate candidates without repeated failures. Models may explain why no edit is needed but cannot fabricate a new version. Unadopted candidates preserve the baseline; users choose baseline continuation or stop. Shared global defaults cannot bypass project scope.
 
-用户已确认先检查并确认候选，再用新版开始本次页面。当前会话若已经用过旧 Skill，则自动创建关联新会话，带入本次需求和确认偏好；旧会话及原版本保留，不把旧 Skill 指令带进新执行上下文。自动关联是同一任务的延续，继承本次选择；用户自行开始的新任务仍重新询问。
+The user confirmed candidate checks/adoption before the first page request. A session that already used the old Skill gets a linked session with current requirements/preferences and no old Skill instructions. Original bindings remain. This is a continuation of the same task, while independently started tasks reconfirm.
 
-候选只修改授权的 Skill 文本、模板或辅助脚本，页面文件属于产出与评测证据。固定检查器、任务要求、用户反馈、预算和有效版本指针不属于候选可写范围。
+Candidates edit only authorized Skill text, templates, and scripts. Pages are outputs/evidence. Fixed checkers, requirements, feedback, budgets, and ACTIVE are not writable by candidates.
 
-相同任务、偏好快照和执行条件下，比较当前 Skill 与一个候选生成的页面。关键功能与必需内容先通过固定检查，再由用户比较审美是否更合意；支持旧版更好、新版更好、相近、都不满意与无法判断。界面审阅保存具体反馈和版本引用，不伪装成模型确定的审美分数。
+Compare pages under the same task, preference snapshot, and execution conditions. Since 2026-09-13, compilation enables user choice without functional/aesthetic scoring. The sidebar shows previews, links, tokens, and time; the user chooses a version or provides further requirements.
 
-G3 再用未用于本轮改写反馈的页面任务检查适用性；一张页面获得偏好支持，只能证明该次适配。比较用量包含生成页面的完整执行，不能用最终说明的长度代替。换新偏好必须重新建立公平的比较条件，不能在看到失败后修改硬性要求来通过验收。
+A choice reflects that instance's preference, not general capability improvement. Count complete artifact requests, not just final-answer length. New requirements create a new task and comparison under new conditions; do not mix measurements from different conditions.
 
-## 4. 后续需要冻结的输入
+## 4. Inputs still requiring execution-time decisions
 
-- 询问上限、记忆范围、合并授权卡、“确认新版后开始本次页面”、自动关联新会话和失败后手动选择已确认；继续补齐当期可执行字段和受控验证。
-- 首批样例暂按“虚构产品落地页＋HTML/CSS/少量原生 JavaScript，无外部图片或在线字体”准备，用户尚未回复本轮选择问题，不能写成已确认。初始 Skill 保持技术栈中立；候选可修改文件和固定检查清单仍需在单候选执行前冻结。
-- G2 先验证隔离和单候选；G3 验证效果与偏好适配；G4 实现有上限的多轮与人工启用。沿用最多 3 轮、60 分钟的已确认约束，不因“不断迭代”获得无限后台运行权限。
-- 实际模型路线、输入、请求与输出预算在真实执行前明确；本文件不新增消费额度。
+- Question limits, scope, combined authorization, adoption-before-task, linked sessions, and manual fallback choices are confirmed; executable fields and controlled checks evolve per stage.
+- The initial sample assumption was a fictional landing page in HTML/CSS/vanilla JavaScript without online images/fonts; it was not a confirmed user selection at that time. Keep the initial Skill stack-neutral and freeze paths/checks before candidate execution.
+- The current flow uses user-started iterations with separate scope/budget confirmation, not unlimited background execution. Automatic search remains in the historical framework.
+- Confirm actual model route, input, request/output caps, and batch budget before real execution. This document adds no spending permission.

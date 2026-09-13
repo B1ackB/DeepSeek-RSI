@@ -1,0 +1,18 @@
+{
+	"status": "passed",
+	"paidRequests": 0,
+	"fixtureCalls": 8,
+	"checks": [
+		"composer pre-dispatch gate",
+		"combined preference authorization card",
+		"complete diff review",
+		"authenticated sandbox previews and token/time charts",
+		"sidebar feedback creates a new authorization without model calls",
+		"review reload without generation replay",
+		"separate activation",
+		"daily dispatch after exact approval",
+		"second iteration links clean session and opens it",
+		"readable sidebar without internal identifiers"
+	],
+	"browserErrors": []
+}

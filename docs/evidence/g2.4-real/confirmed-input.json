@@ -1,0 +1,25 @@
+{
+	"brief": "以下是候选获准启用后的页面阶段需求，不是要求 Skill 编辑器现在输出 HTML：设计一个虚构写作工具 Paperlane 的英文产品落地页。交付方式：在最终回复中直接给出一个完整 HTML 文档（可用一个 html 代码围栏），由验收器保存为文件，不要调用工具或要求读取项目。只用内联 CSS，无外部图片、字体、网络或依赖。必须包含一个 h1、明确标记 Fictional product / concept demo、三个产品特点、两个可展开的原生 details FAQ、指向 id=start 的主 CTA，以及对应的开始区域。没有真实注册后端，明确这是演示。适配 390px 和 1440px 宽度，避免横向溢出。代码简洁，正文短，不需要代码外解释。",
+	"preference": "Skill 编辑阶段：请修改完整 SKILL.md，将下述设计偏好落实为可复用规则，允许新增风格映射小节；保留 YAML 元数据，不把 Paperlane 品牌和固定测试内容写进通用 Skill。页面阶段再根据已确认需求生成 HTML。设计方向：杂志排版。使用醒目的标题、充足留白与明确阅读顺序，优先用排版和分隔线组织内容，减少重复圆角卡片。进一步要求：米白底色、黑色文字、少量橙红强调色；不使用渐变、阴影或卡片网格。桌面首屏左右分栏，移动端单栏，标题有编辑感。保留可访问性和全部必需交互。把这些偏好落实为本次 Skill 的具体可执行设计规则，避免只是附加一句偏好；保留原有元数据和功能边界。",
+	"scope": "task",
+	"allowedPaths": [
+		"SKILL.md"
+	],
+	"budget": {
+		"provider": "deepseek-official",
+		"model": "deepseek-v4-flash",
+		"reasoningEffort": "low",
+		"maxRequests": 3,
+		"maxOutputTokens": 4096,
+		"maxInputBytes": 65536,
+		"tokenStopThreshold": 32000,
+		"maxDurationMs": 300000
+	},
+	"authorization": {
+		"operationId": "97c28432-f841-4975-a3ce-6f9b709cfdef",
+		"digest": "354fd1947c4371ab51102c854971a51cdbea81140f1a1fe605b66364909d67a7",
+		"confirmedAt": 1788936711774
+	},
+	"chosenDigest": "440094f8f3a211593236e2c534805d5a1c03933a75d3088830b43482dcdfe961",
+	"approvedDigest": "440094f8f3a211593236e2c534805d5a1c03933a75d3088830b43482dcdfe961"
+}

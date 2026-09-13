@@ -63,7 +63,7 @@ test('generation budget, interruption and v4 migration preserve authorization an
 		const raw = new DatabaseSync(file); const before = JSON.parse(String(raw.prepare('SELECT data FROM g1_state').get()!.data)); delete before.mainflow;
 		raw.prepare('UPDATE g1_state SET data=?').run(JSON.stringify(before)); raw.exec('PRAGMA user_version=4'); const preserved = raw.prepare('SELECT data FROM attempts').get()!.data; raw.close();
 		store = openStore(file); assert.deepEqual(store.business().mainflow, { tasks: [], preferences: [], active: [] }); store.close();
-		const after = new DatabaseSync(file); assert.equal(after.prepare('PRAGMA user_version').get()!.user_version, 5); assert.equal(after.prepare('SELECT data FROM attempts').get()!.data, preserved);
+		const after = new DatabaseSync(file); assert.equal(after.prepare('PRAGMA user_version').get()!.user_version, 6); assert.equal(after.prepare('SELECT data FROM attempts').get()!.data, preserved);
 		assert.deepEqual(JSON.parse(String(after.prepare('SELECT data FROM g1_state').get()!.data)).mainflow, { tasks: [], preferences: [], active: [] });
 		after.exec('PRAGMA user_version=4'); after.prepare('UPDATE attempts SET data=?').run('{bad'); after.close();
 		assert.throws(() => openStore(file));
@@ -84,4 +84,24 @@ test('script candidates fail closed when Docker cannot start and never execute o
 		await assert.rejects(access(marker));
 		assert.equal((await readdir(join(dir, 'objects'))).some(p => p.startsWith('.candidate-')), false);
 	} finally { if (before === undefined) delete process.env.RSI_DOCKER_BIN; else process.env.RSI_DOCKER_BIN = before; await writable(dir); await rm(dir, { recursive: true, force: true }); }
+});
+
+test('v5 migration preserves old tasks and preferences while adding scenario defaults', async () => {
+	const dir = await mkdtemp(join(tmpdir(), 'rsi-v5-migration-')); const file = join(dir, 'state.sqlite');
+	let store = openStore(file);
+	try {
+		const task = await fixture(dir); task.status = 'stopped';
+		store.mutateBusiness(s => { s.mainflow.tasks.push(task); s.mainflow.preferences.push({ scenarioId: 'frontend', scope: 'project', workspaceId: 'workspace', value: '少用装饰' }); });
+		store.close(); const raw = new DatabaseSync(file);
+		const state = JSON.parse(String(raw.prepare('SELECT data FROM g1_state').get()!.data));
+		const historical = state.mainflow.tasks[0];
+		for (const key of ['parentId', 'scenario', 'reference', 'referenceFiles', 'comparison']) delete historical[key];
+		delete state.mainflow.preferences[0].scenarioId;
+		raw.prepare('UPDATE g1_state SET data=?').run(JSON.stringify(state)); raw.exec('PRAGMA user_version=5'); raw.close();
+		store = openStore(file); const migrated = store.business().mainflow.tasks[0]!;
+		assert.equal(migrated.scenario.id, 'frontend'); assert.equal(migrated.parentId, null); assert.equal(migrated.comparison, null);
+		assert.deepEqual(migrated.baseline, historical.baseline); assert.deepEqual(migrated.authorization, historical.authorization);
+		assert.equal(migrated.status, historical.status); assert.equal(store.business().mainflow.preferences[0]!.scenarioId, 'frontend');
+		assert.equal(store.business().mainflow.preferences[0]!.value, '少用装饰');
+	} finally { try { store.close(); } catch {} await writable(dir); await rm(dir, { recursive: true, force: true }); }
 });

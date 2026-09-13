@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, realpathSync, rmSync, readdirSync, chmodSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync, readdirSync, chmodSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Context } from '@deepseek-ai/cordis';
 import LlmRuntime, { LlmAdapter, ReasoningEffortId, ToolCallId, createUserMessage, type GenerateOptions, type StreamChunk } from '@deepseek-ai/dsh-llm';
@@ -16,6 +16,7 @@ import Skills from '@deepseek-ai/dsh-skill';
 import * as ToolSkill from '@deepseek-ai/dsh-tool-skill';
 import UserQuestions from '@deepseek-ai/dsh-user-questions';
 import * as plugin from '../src/index.ts';
+import { comparisonBudget } from '../src/comparison-contracts.ts';
 import type { applyG1 } from '../src/g1.ts';
 
 test('main flow gates real Harness dispatch, seals exact candidate, separates usage, and links an old session', { timeout: 15000 }, async () => {
@@ -27,7 +28,7 @@ test('main flow gates real Harness dispatch, seals exact candidate, separates us
 		hold = false; abortObserved = false; omitUsage = false; inputs: GenerateOptions[] = []; responses: unknown[] = [];
 		async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
 			this.inputs.push(options);
-			const text = options.sessionId?.startsWith('rsi-generation/') ? JSON.stringify(this.responses.shift()) : '固定页面响应';
+			const text = options.sessionId?.startsWith('rsi-generation/') ? JSON.stringify(this.responses.shift()) : options.sessionId?.startsWith('rsi-comparison/') ? String(this.responses.shift() ?? 'Preview') : '固定页面响应';
 			if (!this.omitUsage) yield { type: 'usage', usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 } };
 			this.omitUsage = false;
 			if (this.hold) { this.hold = false; await new Promise<void>((_resolve, reject) => { const abort = () => { this.abortObserved = true; reject(new Error('fixture aborted')); }; if (options.signal?.aborted) abort(); else options.signal?.addEventListener('abort', abort, { once: true }); }); }
@@ -140,6 +141,32 @@ test('main flow gates real Harness dispatch, seals exact candidate, separates us
 		assert.equal(latest().status, 'failed');
 		assert.equal(adapter.inputs.filter(i => i.sessionId === 'frontend-e').length, 0);
 		assert.equal(store.snapshot().attempts.filter(a => a.ownerId === latest().id).length, 1);
+
+		// 通用 Skill 走相同主流程；补充要求创建新确认卡，不花费、不自动启用。
+		const notesRoot = resolve('fixtures/frontend/v0');
+		ctx.skills.register({ name: 'rsi-notes', description: '整理读书笔记', source: 'fixture', content: readFileSync(join(notesRoot, 'SKILL.md'), 'utf8'), resourceBase: { kind: 'directory', path: notesRoot } });
+		const notes = await create('notes'); notes.agent.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: '/rsi-notes 将给定内容整理成笔记' }] }));
+		await until(() => latest().sessionId === 'notes'); assert.equal(latest().scenario.id, 'text');
+		assert.deepEqual(latest().inherited, [], 'frontend preferences do not leak into text skills');
+		adapter.responses.push({ kind: 'candidate', reason: '笔记结构', changes: [{ path: 'SKILL.md', content: latest().files.find(f => f.path === 'SKILL.md')!.content + '\nNOTE_CANDIDATE\n' }] });
+		await business.command(authorize()); await business.whenIdle();
+		const currentCandidate = latest().candidate!.snapshot.versionDigest;
+		adapter.responses.push('旧版文本', '');
+		await business.command(command('flow_compare', { taskId: latest().id, candidateDigest: currentCandidate, budget: comparisonBudget })); await business.whenIdle();
+		assert.equal(latest().comparison!.runs[1].status, 'failed');
+		await assert.rejects(choose('candidate', currentCandidate), /未编译通过/);
+		const parent = latest(); const callsBeforeRevision = adapter.inputs.length;
+		const revise = command('flow_revise', { taskId: parent.id, reference: 'candidate', feedback: '保留分段，再缩短句子' });
+		await business.command(revise); await business.command(revise); await notes.agent.whenIdle();
+		assert.equal(adapter.inputs.length, callsBeforeRevision); assert.equal(latest().authorization, null); assert.equal(latest().parentId, parent.id);
+		assert.match(latest().referenceFiles.find(f => f.path === 'SKILL.md')!.content, /NOTE_CANDIDATE/);
+		assert.equal(store.business().mainflow.tasks.find(t => t.id === parent.id)!.candidate!.snapshot.versionDigest, parent.candidate!.snapshot.versionDigest);
+		assert.equal(store.business().mainflow.active.some(a => a.skillId === parent.skillId), false);
+		adapter.responses.push({ kind: 'candidate', reason: '进一步修改', changes: [{ path: 'SKILL.md', content: original + '\nNOTE_REVISED\n' }] });
+		await business.command(authorize()); await business.whenIdle(); assert.equal(latest().status, 'review');
+		await choose('candidate', latest().candidate!.snapshot.versionDigest); await business.whenIdle(); await notes.agent.whenIdle();
+		assert.equal(latest().status, 'dispatched'); assert.equal(store.binding('notes', parent.skillId)!.versionDigest, latest().candidate!.snapshot.versionDigest);
+		await notes.dispose();
 
 	} finally {
 		await ctx.fiber.dispose();

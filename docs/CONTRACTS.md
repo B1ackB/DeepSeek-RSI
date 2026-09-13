@@ -1,186 +1,186 @@
-# DeepSeek RSI 核心规则与 G0 契约
+# Core Rules and G0 Contracts
 
-[文档导航](README.md) · [开发规范](../AGENTS.md)
+2026-09-13: the current product uses compilation/format thresholds and user choice. See [extension contracts](EXTENSION-CONTRACTS.md) for comparisons, later iterations, and SQLite 6 migration. G0 sections below describe the historical integration contract and do not authorize current spending.
 
-更新日期：2026-09-08。状态：G0 接入原型已实现，可执行字段定义在 src/contracts.ts，实际验证与剩余限制见 G0-REPORT.md。§8 保留实现前确认的首批预算，不能当作下一批消费授权。
+[Documentation](README.md) · [Development rules](../AGENTS.md)
 
-[FRAMEWORK.md](FRAMEWORK.md)负责产品范围与验收，[AGENTS.md](../AGENTS.md)负责开发规范。本文规定跨边界数据的含义及校验；不复制完整架构，不提前展开后续 Gate 的全部字段。
+Historical update: 2026-09-08. G0 integration was implemented with executable definitions in `src/contracts.ts`; evidence and remaining limitations are in [G0-REPORT.md](G0-REPORT.md). Section 8 retains the first approved batch, not a renewable budget.
 
-2026-09-08 用户已将首个完整场景改为前端页面设计，并确认采用“轻量主动询问＋项目内记忆”。产品规则见 [FRONTEND-SCENARIO.md](FRONTEND-SCENARIO.md)，当前任务纳入、前端准备字段、状态与 SQLite 版本 4 迁移见 [G2-CONTRACTS.md](G2-CONTRACTS.md)。当前 G1 的一次分析预算与既有字段保持原义；本节后面的 G0 历史方案也不因场景调整被改写或获得新额度。前端功能/内容检查与审美反馈分别定义，不以审美偏好抵消关键检查失败。
+[FRAMEWORK.md](FRAMEWORK.md) owns product scope and acceptance; [AGENTS.md](../AGENTS.md) owns development rules. This document defines cross-boundary data semantics and validation without duplicating the architecture or prebuilding later Gates.
 
-新增确认的偏好直接修改流程见 [G2 待实现契约](G2-CONTRACTS.md#偏好驱动的独立修改任务待实现)：同卡确认偏好、文件范围和预算后可直接调用模型生成候选，无须先进行建议分析；用户另行确认候选后，在首次页面请求前绑定并使用新版。此流程尚未改变当前字段或产生新消费授权。
+On 2026-09-08 the user selected frontend design as the first complete scenario, with lightweight proactive questions and project memory. See [frontend boundaries](FRONTEND-SCENARIO.md) and [G2 contracts](G2-CONTRACTS.md) for enrollment, preparation, and SQLite 4. G1's one-analysis budget and historical G0 budgets retain their original meaning. Content/function checks and aesthetic feedback were separate in that historical design.
 
-## 1. 全项目不变量
+The [preference-driven revision contract](G2-CONTRACTS.md#preference-driven-independent-revision) allows direct candidate generation after one card confirms preferences, paths, and budget, without a preliminary suggestion analysis. Exact candidate adoption remains separate and precedes the first ordinary task request. The g2.3 implementation details supersede the earlier proposal text; neither grants a new paid batch.
 
-以下规则已由需求确定，G0 的接口实验不能放宽它们：
+## 1. Project invariants
 
-1. 本地观察不自动产生模型费用；分析须由用户触发，分析操作不授权修改。
-2. 一次修改授权绑定一个 Skill、起始版本、范围、方向、评测条件与预算。默认最多 3 轮，每轮 1 个候选，60 分钟包含评测、重试和清理；用户可以调低上限。
-3. 模型只能修改授权候选。运行时、授权、预算、评分器、私有答案和有效版本指针不属于优化对象。
-4. 有效版本与搜索候选分离。用户另行批准精确候选后才能启用，旧会话继续使用已绑定版本；尚未使用目标 Skill 的当前页面任务可等待批准后首次绑定新版。覆盖原目录需要独立同意。
-5. 关键正确性检查必须通过，固定题集必需结论准确率不得下降。能力持平但满足简洁偏好可接受；没有完整计量不得宣称完整执行节省 Token。
-6. 连续两轮完整有效评测既无目标进展也未满足偏好时停止；无效评测不充当有效无改进轮次，但仍消耗轮次、调用与时间预算。
-7. 每次真实请求尝试只有一个用量记录与一个消费归属。日常会话和 RSI 分账；重试单独计数，重复事件不能重复累计。
-8. 未知计量、残缺评测、过期授权与清理失败必须显式保留；不能靠重启、异常捕获或 UI 状态重置预算与证据。
+1. Local observation does not create model spending. Analysis is user-triggered and does not authorize edits.
+2. Revision authorization binds one Skill, baseline, scope, requirements, checks, and budget. Each generation produces one candidate. Further requirements create a linked task with fresh authorization checks; old accounting is retained.
+3. Models edit authorized candidates only, never runtime code, permissions, budgets, compilers, or active pointers.
+4. Active and reference versions are separate. Activation requires separate approval of an exact candidate. Previously bound sessions retain their version; an unbound task may wait for approval before its first binding. Source overwrite requires separate consent.
+5. Scenario compilation/format checks are technical thresholds. Users judge output value; functional/aesthetic scores do not block their choice. Scope and integrity checks remain mandatory. Incomplete usage cannot establish complete-execution token savings.
+6. This version does not implement automatic score-driven search or stopping. Users continue, adopt, or stop. Revision and comparison budgets are separately confirmed; failed/interrupted work retains costs.
+7. Each actual request attempt has one usage record and one spending owner. Daily and RSI accounting are disjoint. Real retries count separately; duplicate events do not add cost.
+8. Unknown usage, incomplete evaluation, stale authorization, and cleanup failure remain explicit. Restart, exception handling, and UI resets cannot erase budgets or evidence.
 
-## 2. G0 的范围与公共约定
+## 2. G0 scope and common conventions
 
-G0 用人工准备的小型测试 Skill 和受控请求证明接入。下述对象是最小接入契约，不能作为生产修改授权、正式评测报告或启用批准。
+G0 uses a small manually prepared Skill and controlled requests to establish integration. These objects are not production editing authorization, formal evaluation reports, or activation approval.
 
-| 约定 | 草案定义 |
+| Convention | Definition |
 |---|---|
-| 版本 | 跨 Web 与持久边界的顶层对象带 `schemaVersion: 1`；不支持的版本拒绝读取或写入并报告原因，不静默重建数据库 |
-| ID | 插件创建的 ID 使用宿主生成的 UUID；Harness 的 Session/事件 ID 原样作为不透明字符串，不伪装成插件 ID |
-| 时间 | 持久与传输时间使用 UTC Unix 毫秒、安全非负整数；进程内超时使用单调时钟，恢复依据持久截止时间，不重新给满预算 |
-| 数字 | 计数为非负安全整数；不接受 NaN、Infinity、负数或数值字符串 |
-| 空值 | `null` 表示明确未知或未取得；字段缺失不自动等同于零。各对象列明可空字段，其余字段必填 |
-| 修订 | 可变记录 `revision` 从 1 开始，每次有效修改递增；旧修订不能覆盖新记录 |
-| 写入输入 | 拒绝未定义的命令字段；宿主自行生成身份、时间、权限与结果字段，浏览器或模型不能指定 |
-| 错误 | 返回稳定的错误码和可读说明；区分校验失败、状态冲突、能力缺失、执行失败、计量未知和清理待完成 |
+| Schema version | Top-level Web/persistence objects carry `schemaVersion: 1`; unsupported versions fail with a reason, without rebuilding the database |
+| IDs | Plugin IDs are host-generated UUIDs; native Session/event IDs remain opaque native strings |
+| Time | UTC Unix milliseconds, safe nonnegative integers; monotonic process timers; recovery uses persisted deadlines without restoring the full window |
+| Numbers | Nonnegative safe integers; reject NaN, Infinity, negatives, and numeric strings |
+| Nullability | `null` means explicitly unknown/unavailable, not zero; other required fields cannot be omitted |
+| Revisions | Mutable records start at 1 and increment on effective changes; old revisions cannot overwrite new records |
+| Write input | Reject undefined fields; host creates identities, timestamps, authority, and results |
+| Errors | Stable codes plus readable reasons; distinguish validation, conflict, missing capability, execution, unknown usage, and pending cleanup |
 
-G0 先用一张探针状态记录验证事务与比较修订写入，不按这些概念预建完整业务表。数据库布局在最小实现时确定；对外字段与数据库列不要求逐项相同。
+G0 initially uses one probe-state record to verify transactions and revision comparison, without full business tables. Wire fields need not map one-to-one to database columns.
 
-## 3. Skill 与会话绑定
+## 3. Skill and session binding
 
-### 3.1 测试版本描述 `SkillSnapshot`
+### 3.1 SkillSnapshot
 
-| 字段 | 类型与约束 |
+| Field | Type and constraints |
 |---|---|
-| `skillId` | 插件 UUID；同名 Skill 不视为同一受管对象 |
-| `workspaceRoot` | 宿主解析后的规范绝对路径；浏览器不能以任意路径建立绑定 |
-| `sourceRoot` | 测试 Skill 的规范绝对路径，仅作为来源记录，执行资源使用封存副本 |
-| `versionDigest` | 完整文件清单的 SHA-256，小写 64 位十六进制 |
-| `files` | 按相对路径 UTF-8 字节序排列的非空清单；每项为 `path`、`contentDigest`、`executable` |
+| skillId | Plugin UUID; identical names do not imply the same managed object |
+| workspaceRoot | Host-resolved canonical absolute path; browsers cannot bind arbitrary paths |
+| sourceRoot | Canonical test Skill source path, retained as provenance; execution uses sealed resources |
+| versionDigest | SHA-256 of the complete manifest, 64 lowercase hexadecimal characters |
+| files | Nonempty list ordered by relative-path UTF-8 bytes; each item has path, contentDigest, executable |
 
-清单只包含普通文件，必须有 `SKILL.md`。路径使用 `/`，禁止绝对路径、空段、`.`、`..`、反斜杠与重复路径；拒绝符号链接和特殊文件。G0 封存前停止写入，逐文件校验读取范围，封存后不再修改。
+Require regular files and SKILL.md. Paths use `/`; reject absolute paths, empty segments, `.`, `..`, backslashes, duplicates, symlinks, and special files. Stop writers before sealing, validate reads, and never mutate sealed content.
 
-内容摘要对文件原始字节计算，不规范化换行。版本摘要对紧凑 JSON 数组 `[[path, contentDigest, executable], ...]` 的 UTF-8 字节计算，不带末尾换行。`executable` 为布尔值，表示该文件是否作为可执行文件保存；G0 副本统一普通文件权限并移除特殊权限。源目录位置与时间戳不参与版本摘要。该规则为待检查的插件格式，不声称 Harness 原生使用相同摘要。
+Content hashes use raw bytes without newline normalization. The version hash uses UTF-8 bytes of compact JSON `[[path, contentDigest, executable], ...]`, without a trailing newline. Executable is a boolean; copies normalize ordinary permissions and remove special bits. Source location and timestamps do not affect the hash. This is a plugin format, not a claim about native Harness hashing.
 
-### 3.2 会话绑定 `SessionSkillBinding`
+### 3.2 SessionSkillBinding
 
-字段为 `schemaVersion`、`sessionId`、`skillId`、`versionDigest`、`boundAt`。键为 `(sessionId, skillId)`，首次使用前由宿主创建；在会话存续与恢复期间不可切换到另一摘要。
+Fields: schemaVersion, sessionId, skillId, versionDigest, boundAt. The host creates the `(sessionId, skillId)` binding before first use; it cannot change during the session or recovery.
 
-- 同键同摘要重复绑定返回已有记录；同键不同摘要拒绝。
-- 当前有效版本改变后，新会话以及尚未绑定目标 Skill 的会话可在首次使用前取得新摘要；已经绑定或向模型发送过旧版的会话保持旧版。
-- 偏好修改流程在首次页面派发前等待候选检查和用户确认，再建立绑定；不能先发送旧版，再把同一绑定改为新版。用户已确认，已有旧版历史时自动创建关联新会话，带入本次需求和确认偏好，保留旧会话；关联与首次派发必须幂等，详细约束见 G2 待实现部分。
-- 文本、Python/Shell 脚本和参考文件必须全部从同一封存版本解析。
-- 找不到指定版本或资源时明确失败，不退回另一个同名 Skill。
-- Harness 是否能在首次加载前完成绑定、恢复时是否保留作用域，必须通过 G0 验证；失败则报告接口缺口。
+- Same key/digest is idempotent; same key/different digest fails.
+- New or unbound sessions may obtain the current version before first use. Sessions already bound or sent old instructions retain the old version.
+- Preference-driven tasks wait for checks and user adoption before binding. Do not send the baseline and then rewrite the same binding. When old history exists, create a linked session with confirmed requirements/preferences, preserving the original. Creation and dispatch must be idempotent; see G2.
+- Text, scripts, and references resolve from the same sealed version.
+- Missing pinned versions/resources fail; never fall back to another same-name Skill.
+- G0 must verify pre-load binding and restored scope; report an API gap if they fail.
 
-## 4. 请求用量 `UsageAttempt`
+## 4. UsageAttempt
 
-每次真正向模型供应商发起的尝试创建一条记录；顶层 Agent 步骤、重试策略 ID、供应商请求 ID 都不能替代插件的 `attemptId`。
+Create one record per actual provider request attempt. Agent steps, retry-policy IDs, and provider request IDs cannot replace attemptId.
 
-| 字段 | 类型与约束 |
+| Fields | Meaning |
 |---|---|
-| `schemaVersion`、`attemptId`、`revision` | 使用公共约定 |
-| `owner` | `session` 或 `rsi`；日常记录无法归属时可为 `unresolved`，单列待核实；RSI 请求派发前必须已确定归属 |
-| `ownerId` | 日常为 Harness Session ID；RSI 为分析/优化任务 ID，G0 使用探针 UUID；仅 `unresolved` 可为 `null` |
-| `sessionId` | 关联 Harness Session ID，可为 `null`；只用于追溯，不能据此再次累计 RSI 用量 |
-| `purpose` | `daily`、`analysis`、`baseline`、`generation`、`evaluation`、`final_check` 或 `probe` |
-| `callKind` | `agent`、`compression` 或 `judge`；重试继续保留实际用途与调用类型 |
-| `retryOfAttemptId` | 前次尝试 UUID 或 `null`；仅实际重试填写，不把普通后续调用串为重试 |
-| `provider`、`model` | 实际派发的供应商和模型标识；不依靠用户展示名猜测 |
-| `providerRequestId` | 供应商返回的标识或 `null`，只作为关联证据 |
-| `state` | `reserved`、`in_flight`、`succeeded`、`failed`、`cancelled`、`interrupted` 或 `not_sent` |
-| `createdAt`、`startedAt`、`endedAt` | UTC 毫秒；后两项尚未发生或无法确定时为 `null` |
-| `usageState` | `pending`、`partial`、`confirmed` 或 `unknown`，与请求成功失败独立 |
-| `tokens` | `inputUncached`、`inputCacheRead`、`inputCacheWrite`、`output`、`reasoning`、`total`；每项为非负安全整数或 `null` |
-| `usageSource` | 供应商经适配器返回时为 `provider`；按已验证字段关系推导时为 `derived`；没有数据为 `null` |
-| `diagnostic` | `null` 或宿主记录的计量冲突原因；冲突暂停探针追加调用 |
+| schemaVersion, attemptId, revision | Common conventions |
+| owner | session/rsi, or unresolved for unassignable daily work; RSI ownership must be known before dispatch |
+| ownerId | Daily Session ID or RSI analysis/revision ID; G0 uses a probe UUID. Null only when unresolved |
+| sessionId | Nullable native association for tracing, never a second accounting owner |
+| purpose | daily, analysis, baseline, generation, evaluation, final_check, probe |
+| callKind | agent, compression, judge; retries preserve actual purpose/kind |
+| retryOfAttemptId | Prior attempt UUID only for an actual retry, otherwise null |
+| provider, model | Actual dispatched identifiers, not inferred display names |
+| providerRequestId | Nullable provider-returned correlation evidence |
+| state | reserved, in_flight, succeeded, failed, cancelled, interrupted, not_sent |
+| createdAt, startedAt, endedAt | UTC milliseconds; latter two nullable until known |
+| usageState | pending, partial, confirmed, unknown; independent of request success |
+| tokens | inputUncached, inputCacheRead, inputCacheWrite, output, reasoning, total; each a safe nonnegative integer or null |
+| usageSource | provider, derived from verified field relationships, or null |
+| diagnostic | Nullable host-recorded accounting conflict; conflicts pause further probe calls |
 
-状态转换与结算规则：
+Lifecycle and settlement:
 
-- 派发前在本地事务中登记 `reserved` 并占用请求额度，再进入 `in_flight`。仅在能够证明未派发时转 `not_sent`；无法确认则为 `interrupted`，保留额度占用与未知计量。
-- `in_flight` 可结束为成功、失败、取消或中断。失败与取消也可能产生用量；供应商迟到的 usage 可修订已结束记录，不将请求重新变为运行中。
-- `pending` 表示仍在等待计量；`partial` 表示已有部分权威字段但缺少可靠总数；`confirmed` 表示可靠总数可用，不要求供应商支持所有明细；结束且无法确认总数时为 `unknown`，已取得的部分值保留。
-- 收到重复事件不增加修订或消费；同一尝试的更新覆盖其计量快照，聚合读取最新修订。乱序或互相矛盾的更新无法判断新旧时保留冲突诊断，不能简单相加或取最大值。
-- `reasoning` 可能已包含在 `output` 中，禁止直接再次相加。缓存输入的关系按当前适配器核实；有可靠总数优先使用总数，推导必须有已验证的非重叠字段关系。
-- 真实重试生成新 `attemptId`；继承归属并重新占用额度。RSI 用量无法可靠归属或结算时暂停追加付费调用；不因此取消日常会话。
-- G0 的内部重试、压缩、子调用能否在实际派发前登记，是待验证能力；只在事后观察到用量不算满足预算控制契约。
+- Reserve and consume a request slot transactionally before dispatch, then mark in_flight. Use not_sent only with proof; uncertain dispatch becomes interrupted with reserved capacity and unknown usage retained.
+- In-flight attempts can succeed, fail, cancel, or interrupt. Failed/cancelled calls can cost tokens. Late authoritative usage may revise a terminal record without restarting it.
+- Pending waits for usage; partial has authoritative fields without a reliable total; confirmed has a reliable total even if some details are unsupported; ended attempts without a reliable total become unknown while preserving partial fields.
+- Duplicate events change neither revision nor cost. Updates replace the attempt's measurement snapshot; aggregation uses its latest revision. Contradictory/out-of-order updates with uncertain ordering retain a diagnostic rather than being summed or maximized.
+- Reasoning may already be included in output; never double-count. Verify cache relationships against the adapter. Prefer a reliable provider total; derive only from verified nonoverlapping fields.
+- A real retry gets a new attemptId, inherited ownership, and a new request slot. Unreliable RSI attribution/settlement blocks additional paid RSI calls, not unrelated daily sessions.
+- Whether internal retries, compression, and subcalls can be registered before dispatch is a G0 integration question. After-the-fact observation alone does not establish budget enforcement.
 
-本节确定账本语义，不预先承诺供应商逐 Token 返回数据。G0 至少验证成功、重复回调、无 usage 的中断、可控重试与压缩归属；可以用固定事件检查归并逻辑，真实链路证据需另行标记。
+The ledger does not promise provider usage per streamed token. G0 covers success, duplicates, interruption without usage, controlled retry, and compression attribution. Fixed-event merge tests and real-chain evidence are labeled separately.
 
-## 5. G0 Web 操作与实时快照
+## 5. G0 Web operations and snapshots
 
-G0 仅提供读取状态、写入无副作用的测试标记和取消本次探针的操作；不提供启用、覆盖、修改正式授权等命令。付费探针通过预先审阅的本地测试配置启动，不因打开面板自动执行。
+G0 permits status reads, harmless marker writes, and cancellation of its own probe. It has no production activation, overwrite, or revision authorization commands. Paid probes use reviewed local test configuration; opening a panel does not launch them.
 
-写操作请求为 `schemaVersion`、`operationId`、`kind`、`probeId`、`expectedRevision`、`payload`：
+Write envelope: schemaVersion, operationId, kind, probeId, expectedRevision, payload.
 
-- `kind` 为 `set_marker` 时，`payload` 仅含最长 128 个 Unicode 码点的 `marker`；用于验证 Web → 宿主 → 持久状态链路。
-- `kind` 为 `cancel_probe` 时，`payload` 为空对象；宿主停止本探针派发并清理所属资源，不操作其他用户任务。
-- 同操作 ID 与相同内容重复提交返回原结果；相同 ID 不同内容拒绝；不满足预期修订时返回状态冲突。
-- 宿主验证调用来自有效的 Harness Web 通道且属于当前探针；幂等 ID 不是权限证明。无法建立可信调用来源时不开放写操作。
+- set_marker accepts only a marker of at most 128 Unicode code points to test Web → host → persistence.
+- cancel_probe accepts an empty payload; stop and clean only the current probe's resources.
+- Same operation ID/content returns the original result; different content or stale revision fails.
+- Validate the authenticated Harness channel and current probe. Idempotency IDs are not credentials. Do not expose writes without a trusted caller boundary.
 
-快照含 `schemaVersion`、`snapshotRevision`、`updatedAt`、当前 Session ID、探针状态和三个用量区：当前日常会话、选定 RSI 探针、待核实归属。各区展示已确认总数、在途数量、未结算数量及完整性；没有已确认数据时显示“尚无已确认用量”，不能暗示实际费用为零。
+Snapshots include schemaVersion, snapshotRevision, updatedAt, selected Session ID, probe state, and daily-session/selected-RSI/unresolved usage sections. Show confirmed totals, in-flight and unsettled counts, and completeness. No confirmed data means no confirmed usage, not free execution.
 
-快照序号跨宿主重启不倒退；前端只接受更新的完整快照，不累加快照计数。重连先取完整快照，连接中断保留最后更新时间并标为过期。Harness Web 的具体传输 API 由 G0 决定，不增加独立 Web 服务。已收到的权威计量在正常本机连接下 1 秒内显示是验收目标，需实测。
+Snapshot sequence never decreases across restart. Clients accept newer full snapshots without summing totals. Reconnect fetches a full snapshot; disconnection retains the last timestamp and marks data stale. Use native Web transport, not a second server. Displaying received authoritative usage within one second on a healthy local connection is a measured acceptance target.
 
-## 6. G0 验证记录与清理
+## 6. Probe evidence and cleanup
 
-`ProbeResult` 含 `schemaVersion`、`probeId`、`check`、`status`、`startedAt`、`endedAt`、`evidence`、`failureReason`、`cleanup`。
+ProbeResult fields: schemaVersion, probeId, check, status, startedAt, endedAt, evidence, failureReason, cleanup.
 
-- `check`：`package_web`、`skill_identity`、`session_binding`、`storage_transaction`、`usage_attribution`、`tool_boundary` 或 `docker_lifecycle`。
-- `status`：`pending` → `running` → `passed` / `failed` / `blocked`。跳过的项目保留 `blocked` 与原因，不能计为通过；终态后重跑创建新探针 ID。
-- `evidence`：证据引用数组，每项含项目内报告或受控证据目录中的相对路径，以及 `static`、`fixture` 或 `live` 类型。禁止含凭据；实测报告记录底座提交、运行环境、命令、预期和实际结果。
-- `failureReason`：失败/受阻必填，其他状态为 `null`；`endedAt` 在运行中为 `null`。
-- `cleanup`：`not_required`、`pending`、`complete` 或 `failed`。功能成功但清理失败时不能宣称本次验证全部完成。
+- check: package_web, skill_identity, session_binding, storage_transaction, usage_attribution, tool_boundary, docker_lifecycle.
+- status: pending → running → passed/failed/blocked. Skipped checks stay blocked with a reason; rerunning a terminal check creates another probe ID.
+- evidence: repository-relative report/evidence paths with static/fixture/live classification. Exclude credentials; record host commit, environment, commands, expectations, and results.
+- failureReason is required for failed/blocked checks, otherwise null. endedAt is null while running.
+- cleanup: not_required, pending, complete, failed. Functional success plus cleanup failure is not a completed validation.
 
-记录本次创建的子进程身份与启动证据、容器 ID/标签、端口与临时目录；不能仅凭一个可能复用的 PID 杀进程。取消先停止派发，再结束所属资源，再检查退出和资源释放。宿主重启后不盲目重放付费探针。
+Record subprocess identity/start evidence, container IDs/labels, ports, and temporary directories. A reusable PID alone is insufficient ownership proof. Cancel dispatch, stop owned resources, then verify release. Never replay paid probes blindly after restart.
 
-SQLite 事务探针检查失败回滚、修订冲突与重复操作；文件封存采用先完成文件校验再提交引用。Docker 探针检查小型脚本、限制、超时与清理；单命令成功只证明执行链路，不代表 G2 的完整隔离检查已完成。
+Transaction probes cover rollback, revision conflicts, and duplicates. Seal and validate files before committing references. Docker probes cover fixed scripts, limits, timeout, and cleanup; one successful command is not complete G2 isolation evidence.
 
-## 7. 后续 Gate 才展开的 schema
+## 7. Later Gate schemas
 
-| Gate | 开始实现前补齐 |
+| Gate | Define before implementation |
 |---|---|
-| G1 | 机会、分析、正式受管 Skill、授权及预算的完整字段和撤销规则 |
-| G2 | 候选写入范围、容器资源、产物封存和单轮结果 |
-| G3 | 评测契约、逐题结果、基线、回归/保留题与偏好接受条件 |
-| G4 | 多轮任务、停止原因、启用批准、回退及完整恢复状态 |
-| G5 | 源目录覆盖事务、冲突与恢复、安装升级兼容 |
+| G1 | Opportunities, analysis, managed Skills, authorization/budget fields, revocation |
+| G2 | Candidate writable scope, container resources, artifacts, single-round result |
+| G3 | Output comparison, compilation, user choice; current fields are in EXTENSION-CONTRACTS.md |
+| G4 | Iterations, stop reasons, adoption, rollback, complete recovery |
+| G5 | Source-overwrite transaction/conflicts/recovery, install/upgrade compatibility |
 
-G0 的真实测试模型与消费上限、测试 Skill 和容器运行时选择见 §8；具体镜像摘要及运行环境仍在执行前核实。实现时将本阶段 schema 与实际 Harness 映射核对，契约调整记录原因和受影响检查。技术适配可以迭代，改变用户已确认的权限、预算或验收要求需先向用户确认。
+Section 8 records G0 model/budget/Skill/runtime choices; verify exact image and environment before execution. Map schemas to actual Harness APIs, recording adjustments and affected checks. Technical adaptation may iterate; changing user-approved permissions, budgets, or acceptance needs confirmation.
 
-## 8. G0 执行输入草案（2026-09-08）
+## 8. Historical G0 execution inputs (2026-09-08)
 
-本节保留实施前的环境快照及用户批准的执行方案。G0 实施已使用这些授权；OrbStack、实际请求和清理结果见 G0-REPORT.md。超出本批预算或改变范围需重新确认。
+This section preserves the pre-implementation environment and authorized first batch. Those approvals were consumed by G0. See its report for actual requests, OrbStack, and cleanup. A new batch or changed scope needs fresh authorization.
 
-### 8.1 已核对的环境与实施选择
+### 8.1 Environment and implementation choices
 
-- Harness 提交仍为 `d347e703908d0406b7a7ef80e3a0e594d86b2215`，工作区无修改，`packageManager` 为 `pnpm@11.7.0`。
-- 本机为 arm64、macOS 26.6.2；当前终端默认 Node 为 24.14.0，上次安装所用的 `/opt/homebrew/bin/node` 仍为 25.8.1。G0 初次运行显式使用后者，不全局修改用户默认 Node；正式发布支持版本另行验证。
-- 保留独立 `DSH_HOME=/Users/black/.dsh-rsi-dev`，复用 Harness 凭据管理；本次没有读取密钥或重新验证在线凭据。
-- 当前 PATH 未找到 `docker`、`colima`、`orb`；`/Applications` 常见位置没有 Docker.app/OrbStack.app。这是本次检测范围内的结论，不排除用户自定义安装位置。
-- 本次检查 3080 无监听。没有启动 Harness、模型调用或容器。
-- 类型检查优先 TypeScript strict；少量逻辑检查优先 Node 内置测试能力。宿主已有 Vitest、tsdown、oxlint，但不会把整个宿主开发工具链直接搬入插件；外部 Web 构建与运行时 schema 依赖以实际可安装性验证后决定。
+- Harness `d347e703908d0406b7a7ef80e3a0e594d86b2215`, clean working tree, packageManager pnpm@11.7.0.
+- arm64 macOS 26.6.2; terminal default Node 24.14.0, previous installation binary `/opt/homebrew/bin/node` 25.8.1. G0 explicitly uses the latter without changing global defaults; release compatibility remains to be checked.
+- Dedicated `DSH_HOME=/Users/black/.dsh-rsi-dev`, native credential management. No secret reading or online credential revalidation during this inspection.
+- No docker/colima/orb in inspected PATH and no Docker.app/OrbStack.app in common application locations; custom installations were not ruled out.
+- Port 3080 had no listener. No host, model request, or container was started by that inspection.
+- Strict TypeScript and Node tests preferred. Do not copy all of Harness's Vitest/tsdown/oxlint toolchain. Verify dependency installability before choosing external Web/schema tools.
 
-### 8.2 用户已确认的三项
+### 8.2 Approved choices
 
-| 决策 | 确认方案 | 状态 |
+| Decision | Approved plan | Historical status |
 |---|---|---|
-| 测试 Skill | 人工编写专用 `g0-probe`，含 SKILL.md、Python/Shell 各一脚本、一份参考文件；两个版本分别输出固定版本标记。正式仓库分析 Skill 在 G2/G3 再确定 | 已确认 |
-| 首批真实调用 | 沿用本地底座支持且此前成功的 `deepseek-official / deepseek-v4-flash / high`；最多 8 次实际请求，每次 `maxTokens=4096`，已确认总用量达 100000 Token 停止追加请求，测试窗口最多 20 分钟 | 已确认 |
-| 本机容器环境 | 使用 OrbStack 提供本机 Docker 执行环境；用户已要求后续由助手安装 | 方案与后续安装已确认，尚未安装 |
+| Test Skill | Dedicated g0-probe with SKILL.md, one Python and one Shell script, one reference; two fixed-output versions. Formal analysis Skill deferred to G2/G3 | Confirmed |
+| First real batch | deepseek-official / deepseek-v4-flash / high; at most 8 actual requests, maxTokens=4096 each, stop dispatch at 100000 confirmed tokens, 20 minutes | Confirmed |
+| Containers | OrbStack for local Docker; assistant to install afterward | Plan/install authorized, not yet installed at this snapshot |
 
-测试预算覆盖整批实际请求，包括模型工具往返、压缩和重试；8 次不是 8 个用户任务。默认串行，先证明能够在真实派发前计数，再开展剩余在线探针；若底座内部调用可绕过限制，停止在线测试并记录缺口。未知用量暂停追加调用，达到任一上限即停止，清理时间计入测试窗口并提前预留。100000 是停止阈值，进行中的请求可能使其超出，不能承诺账单硬上限；额度不足以覆盖所有项目时保留未完成项，不自动增加预算。
+Budget covers the entire batch, including tool round trips, compression, and retries: eight requests are not eight user tasks. Run serially, prove pre-dispatch counting first, and stop if internal calls bypass it. Unknown usage or any reached limit stops new requests. Reserve cleanup time within the window. The token figure is a stop threshold, not a hard billing cap; an in-flight request may exceed it. Retain unfinished checks rather than increasing the budget.
 
-这组数字是 G0 首批接入测试的已确认预算，与产品单次优化任务的 3 轮、60 分钟上限分开。长度截断是调用限制证据，不作为 Skill 能力缺陷；不要因截断自动提高输出上限或换模型。当前不做模型价格估算，也不承诺这组额度足以完成所有真实链路检查。
+This batch is separate from the historical product proposal of three rounds/60 minutes. Truncation is a call-limit result, not automatically a Skill defect; do not raise caps or switch models without authorization. No pricing estimate or guarantee that every live check fits was made.
 
-OrbStack 支持运行 Docker 容器，安装入口见[官方文档](https://docs.orbstack.dev/)。执行阶段核对安装及启动方式，不启用开机自启，不额外创建通用 Linux 虚拟机或启用 Kubernetes。若本次为测试启动整个容器运行时，结束后在确认没有用户其他工作负载时一并退出；原本运行中的环境只清理本次资源。具体系统权限或安装阻碍若不能自主处理，再说明实际原因，不预先重复索取安装授权。
+[OrbStack documentation](https://docs.orbstack.dev/) is the installation reference. Verify installation/startup during execution. Do not enable startup login, Kubernetes, or extra Linux machines. If the whole runtime was started solely for testing, quit it afterward once other user workloads are ruled out. Otherwise clean only owned resources. Explain actual system-permission blockers without re-requesting already granted installation consent.
 
-### 8.3 最小探针与通过条件
+### 8.3 Minimal probes and pass evidence
 
-| 探针 | 输入与动作 | 通过证据 |
+| Probe | Input/action | Required evidence |
 |---|---|---|
-| 外部包与 Web | 独立包挂载一个最小面板，提交测试标记，刷新/重启后读取 | 标记持久保留；旧修订拒绝；重复提交没有第二次副作用 |
-| Skill 身份 | 人工测试包与同名干扰版本 | 受管对象明确解析，缺失指定版本时不回退同名 Skill |
-| 会话固定版本 | A 会话绑定 v1；测试夹具把新会话入口改指 v2；B 会话新建，再恢复 A | A 的文本、脚本、参考文件全部来自 v1；B 全部来自 v2。夹具切换不暴露生产启用 API |
-| 本地事务 | 注入一次事务内失败，重复操作 ID 与过期修订 | 无半写状态；重启读取一致；幂等与冲突可复现 |
-| 请求归属 | 固定事件检查归并；预算允许时进行日常/RSI 请求与受控重试、压缩 | 一次尝试一条记录，互斥分账；事前限额成立。固定事件与真实证据分别记录，不用前者替代后者 |
-| 工具边界 | 在工作 Agent 初始化与首次调用前核对实际可用工具，尝试固定的禁止入口 | 未授权宿主执行入口不能借作用域或工具组合重新获得；发现旁路即记录缺口 |
-| Docker 生命周期 | 固定测试脚本、只读测试版本、独立临时输出目录、受控超时 | 能执行、取消、清理并确认容器与子进程退出；不据此宣称 G2 完整隔离通过 |
+| External package/Web | Mount panel, write marker, refresh/restart | Persistence, stale revision rejection, idempotency |
+| Skill identity | Test Skill plus same-name interference | Exact managed resolution; no missing-version fallback |
+| Session binding | A=v1, fixture switches new-session entry to v2, create B and resume A | All A resources remain v1, all B resources v2; no production activation API |
+| Transactions | Inject failure, duplicate operation, stale revision | No partial writes, restart consistency, reproducible conflict |
+| Attribution | Fixed events, then budgeted daily/RSI/retry/compression requests | One attempt/owner, pre-dispatch limits; fixture and live evidence separate |
+| Tool boundary | Inspect tools before first call; attempt fixed forbidden entries | No scope/composition bypass; record gaps |
+| Docker lifecycle | Fixed scripts, read-only version, temporary output, timeout | Execute/cancel/clean and verify exit; not full G2 acceptance |
 
-测试 Skill 仅用 Python 标准库与 `/bin/sh`，避免包安装和外部网络。容器镜像在执行前确认本机架构并固定 digest；探针拟采用非 root、禁网络、只读根目录、独立限额临时空间、1 CPU、256 MiB 内存、64 PID 和单脚本 10 秒超时。资源参数用于小样例，实际不兼容时记录原因再调整，不延伸为正式评测默认值。容器不挂宿主凭据、完整用户目录或 Docker socket。
+Use Python's standard library and `/bin/sh` only. Verify architecture and pin image digest. Proposed limits: non-root, no network, read-only root, bounded temporary storage, 1 CPU, 256 MiB, 64 PIDs, 10 seconds per sample. Record reasons for necessary adjustments; these are not formal evaluation defaults. Never mount credentials, full user directories, or the Docker socket.
 
-实施顺序为无付费的外部包/Web/事务与静态版本探针，再做本机 Docker 探针，最后在已确认预算内验证真实调用。Docker 尚未就绪时可完成独立接入项，但 G0 整体验收仍保留缺项；正式题集、能力提升实验与多轮优化不进入 G0。
+Order: no-cost package/Web/transaction/static binding probes, Docker, then authorized live calls. Independent integration can proceed without Docker, but incomplete G0 checks remain open. Formal datasets, improvement experiments, and multi-round optimization are outside G0.

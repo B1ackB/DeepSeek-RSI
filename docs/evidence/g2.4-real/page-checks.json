@@ -1,0 +1,99 @@
+[
+	{
+		"name": "candidate-page",
+		"status": "failed",
+		"requiredChecks": "passed",
+		"extraInteraction": {
+			"status": "failed",
+			"detail": "输入合法测试邮箱并点击启用的提交按钮后，没有可见反馈、导航或请求"
+		},
+		"sha256": "9c5d9b3fd6c3181bf8a99678a0c226b92e9d69388a27618bf927dbecb838c32c",
+		"structure": {
+			"h1": true,
+			"product": true,
+			"fictional": true,
+			"faq": true,
+			"cta": true,
+			"noScripts": true,
+			"headings": [
+				"01Distraction-free editor",
+				"02Editorial view",
+				"03Leaves your files alone",
+				"Start your draft",
+				"Questions"
+			]
+		},
+		"screens": [
+			{
+				"width": 1440,
+				"noHorizontalOverflow": true
+			},
+			{
+				"width": 390,
+				"noHorizontalOverflow": true
+			}
+		],
+		"faqKeyboard": true,
+		"ctaAnchor": true,
+		"extraControls": {
+			"forms": 1,
+			"buttons": [
+				{
+					"text": "Get the demo",
+					"type": "submit",
+					"disabled": false
+				}
+			]
+		},
+		"blockedRequests": []
+	},
+	{
+		"name": "baseline-page",
+		"status": "passed",
+		"requiredChecks": "passed",
+		"extraInteraction": {
+			"status": "not_applicable",
+			"detail": "没有启用的额外表单提交按钮"
+		},
+		"sha256": "7589531f4c5467383fb637873ca62d08401118d3743e7e8fb6f32743a4781925",
+		"structure": {
+			"h1": true,
+			"product": true,
+			"fictional": true,
+			"faq": true,
+			"cta": true,
+			"noScripts": true,
+			"headings": [
+				"Three habits this tool is built around",
+				"No toolbars while drafting",
+				"Cuts are reversible folds",
+				"Formatting waits until export",
+				"Start the first page",
+				"Asked & answered"
+			]
+		},
+		"screens": [
+			{
+				"width": 1440,
+				"noHorizontalOverflow": true
+			},
+			{
+				"width": 390,
+				"noHorizontalOverflow": true
+			}
+		],
+		"faqKeyboard": true,
+		"ctaAnchor": true,
+		"extraControls": {
+			"forms": 0,
+			"buttons": [
+				{
+					"text": "Start writing — demo only",
+					"type": "button",
+					"disabled": true
+				}
+			]
+		},
+		"blockedRequests": []
+	}
+]
