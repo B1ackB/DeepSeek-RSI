@@ -1,0 +1,26 @@
+{
+	"runtime": "v25.8.1",
+	"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+	"tests": 24,
+	"passed": 24,
+	"addedTests": 7,
+	"nativeSdkTestRuns": 15,
+	"sampleRequests": 3,
+	"sampleToolResults": 2,
+	"paidRequests": 0,
+	"existingFilesUnchanged": [
+		"src/client/mainflow.tsx",
+		"src/mainflow.ts",
+		"src/text.ts",
+		"tests/mainflow.test.ts",
+		"docs/EVOLUTION-PILOT-PLAN.md",
+		"docs/evidence/evolution-feasibility/README.md",
+		"docs/evidence/evolution-feasibility/probe.mjs",
+		"docs/evidence/evolution-feasibility/result.json"
+	],
+	"existingReadmeWorkPreserved": true,
+	"harnessDiffUnchanged": true,
+	"remainingOwnedTemporaryDirectories": 0,
+	"liveDatabaseOpened": false,
+	"databaseMigrationPerformed": false
+}

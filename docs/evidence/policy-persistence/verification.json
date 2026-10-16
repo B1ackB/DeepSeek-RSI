@@ -1,0 +1,67 @@
+{
+	"runtime": "v25.8.1",
+	"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+	"tests": 35,
+	"passed": 35,
+	"addedPersistenceTests": 11,
+	"nativeSdkTestRuns": 15,
+	"additionalSampleRuns": 1,
+	"sampleRequests": 3,
+	"sampleToolResults": 2,
+	"sampleSyntheticTokens": 45,
+	"paidRequests": 0,
+	"liveDatabaseOpened": false,
+	"liveDatabaseMigrated": false,
+	"temporaryFixtureSchema": 7,
+	"sourceDigests": {
+		"src/store.ts": "54ac92a7f99d8fc3ddff4290dbb81cc526f20952fa19d8f88c4c0131ce016cd9",
+		"src/usage.ts": "e8021e74007633652ab2848ebcdebbce9e58492e818b00e2adaac7700ddbbf42",
+		"src/policy-contracts.ts": "069a58168f84820cdf14221c82927db8d8fb64f4a14aec08fd369dd652929796",
+		"src/policy-versions.ts": "91249e5c060836523d905a56a71bfec809b9b2c13ddd9090f8b8e548784ff0b5",
+		"src/policy.ts": "2dde2225df871a9eebf5f5f4528d1c7d50e2b29cbc136cf3afc02f6637782d91",
+		"scripts/policy-fixture-worker.ts": "1a2182b543178d9b742344f7d492bf850b309d99cb778a77c920da107cdaee06",
+		"scripts/policy-fixture.ts": "9273f116cd78ea92a5906bc2ae27c4198b2180b69166dc9a686adaf2e52ea76d",
+		"tests/policy-persistence.test.ts": "1a8cba9d9718929b3e1de4d7c9d341f50c7fb12b9c126a0db07756c4bf4d3c14",
+		"tests/policy.test.ts": "9f5598ee2b0dd560d846a8749ba8156a771757e8dae141fb778d9e81eebdd706"
+	},
+	"preservation": {
+		"originalFiles": 25,
+		"unchangedFiles": [
+			"package.json",
+			"src/client/mainflow.tsx",
+			"src/mainflow.ts",
+			"src/text.ts",
+			"docs/evidence/evolution-feasibility/README.md",
+			"docs/evidence/evolution-feasibility/probe.mjs",
+			"docs/evidence/evolution-feasibility/result.json",
+			"docs/evidence/policy-gate/README.md",
+			"docs/evidence/policy-gate/check.txt",
+			"docs/evidence/policy-gate/complete.json",
+			"docs/evidence/policy-gate/verification.json"
+		],
+		"intentionallyUpdatedFiles": [
+			"docs/ARCHITECTURE.md",
+			"docs/CONTRACTS.md",
+			"docs/EXTENSION-CONTRACTS.md",
+			"docs/FRAMEWORK.md",
+			"docs/README.md",
+			"tests/mainflow.test.ts",
+			"docs/EVOLUTION-PILOT-PLAN.md",
+			"docs/POLICY-CONTRACTS.md",
+			"docs/POLICY-REPORT.md",
+			"scripts/policy-fixture-worker.ts",
+			"scripts/policy-fixture.ts",
+			"src/policy-contracts.ts",
+			"src/policy.ts",
+			"tests/policy.test.ts"
+		],
+		"mainflowTestOnlySchemaExpectationChanged": true,
+		"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+		"harnessPatchUnchanged": true
+	},
+	"sampleCleanup": {
+		"processExited": true,
+		"temporaryRoot": "/var/folders/g3/tfm273_n6p9crqmm1s82jnj40000gn/T/rsi-policy-sdk-9AGrbP",
+		"directoryRemoved": true
+	}
+}

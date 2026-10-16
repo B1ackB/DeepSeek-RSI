@@ -1,0 +1,3 @@
+# Preserve original terminal/model evidence bytes without changing source whitespace checks.
+docs/evidence/**/*.txt -whitespace
+docs/evidence/**/*.log -whitespace

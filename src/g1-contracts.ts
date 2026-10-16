@@ -3,6 +3,7 @@ import { mainflowStateSchema, flowBudgetSchema } from './mainflow-contracts.ts';
 import { comparisonBudgetSchema } from './comparison-contracts.ts';
 import { integer, skillSnapshotSchema, snapshotSchema } from './contracts.ts';
 import { answerSchema, dimensionSchema, frontendStateSchema, preferenceText } from './frontend-contracts.ts';
+import { policyCommands, policyReviewSnapshotSchema } from './policy-review-contracts.ts';
 
 const id = z.uuid();
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
@@ -50,6 +51,7 @@ export const g1ConfigSchema = z.strictObject({
 const envelope = { schemaVersion: z.literal(1), operationId: id, expectedRevision: revision };
 const command = <K extends string, S extends z.ZodType>(kind: K, payload: S) => z.strictObject({ ...envelope, kind: z.literal(kind), payload });
 export const g1CommandSchema = z.discriminatedUnion('kind', [
+	...policyCommands,
 	command('flow_authorize', z.strictObject({ taskId: id, previewDigest: digest, brief: z.string().trim().min(1).max(16000), preference: text.trim().min(1), scope: z.enum(['task', 'project', 'personal']), paths: z.array(z.string()).min(1).max(32), budget: flowBudgetSchema })),
 	command('flow_answer', z.strictObject({ taskId: id, answers: z.array(z.string().max(2000)).min(1).max(3) })),
 	command('flow_choose', z.strictObject({ taskId: id, choice: z.enum(['candidate', 'baseline', 'stop', 'reject']), digest: digest.nullable() })),
@@ -85,7 +87,7 @@ export type Analysis = z.infer<typeof analysisSchema>;
 export type G1Command = z.infer<typeof g1CommandSchema>;
 export type G1Config = z.infer<typeof g1ConfigSchema>;
 export type Enrollment = z.infer<typeof enrollmentSchema>;
-export const g1SnapshotSchema = snapshotSchema.extend({ business: g1StateSchema, config: g1ConfigSchema });
+export const g1SnapshotSchema = snapshotSchema.extend({ business: g1StateSchema, config: g1ConfigSchema, policy: policyReviewSnapshotSchema.default({ choices: [], sessions: [], reviews: [], sources: [] }) });
 export type G1Snapshot = z.infer<typeof g1SnapshotSchema>;
 export const catalogSchema = z.array(z.strictObject({ name: z.string(), description: z.string(), provider: z.string(), supported: z.boolean() }));
 export const receiptSchema = z.strictObject({ revision, focusId: id.nullable() });

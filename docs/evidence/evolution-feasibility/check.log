@@ -1,0 +1,41 @@
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 check
+> npm run typecheck && npm test && npm run build
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.client.json
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 test
+> node --test tests/*.test.ts
+
+✔ comparison freezes inputs, compiles both artifacts, preserves unknown usage and never selects ACTIVE (238.897167ms)
+✔ trusted scenarios extend matching and compilation without host decision authority (0.330292ms)
+✔ frontend preferences stay scoped, ask at most two bounded batches, and freeze task overrides (8.545708ms)
+✔ version 2 migration preserves receipts, rolls back invalid data, and persists preference commands atomically (17.687584ms)
+✔ G1 native observation, explicit one-shot analysis, scope guards, cancellation and restart (235.494959ms)
+✔ real Harness Skill registry pins text and resources across durable bindings (86.759917ms)
+✔ real Harness monotonic guard blocks a later scope-local tool and leaves daily tools available (4.884708ms)
+✔ Harness structured cancellation remains readable without leaking raw objects or credentials (0.819709ms)
+✔ candidate rejects missing, corrupt, duplicate and unauthorized replacements while preserving complete baseline (68.199625ms)
+✔ generation budget, interruption and v4 migration preserve authorization and uncertain usage (26.503667ms)
+✔ script candidates fail closed when Docker cannot start and never execute on the host (17.620666ms)
+✔ v5 migration preserves old tasks and preferences while adding scenario defaults (9.762458ms)
+✔ main flow gates real Harness dispatch, seals exact candidate, separates usage, and links an old session (313.852041ms)
+✔ native Agent Loop retry records two attempts and links the actual retry event without network (25.941458ms)
+✔ Web commands persist, reject stale/conflicting writes, and roll back failure (1077.228333ms)
+✔ unknown requests survive restart, block RSI, and do not block daily sessions (17.230708ms)
+✔ stream ledger separates owners, deduplicates usage and pauses on conflicting or missing usage (17.041792ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1394.762625
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 build
+> node scripts/build.mjs
+

@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "modelRequestsAfterRestart": 0,
+  "sources": 3,
+  "sessions": 5,
+  "preservedDailyAttempts": 9,
+  "oldSessionSource": "snapshot 2",
+  "browserErrors": []
+}

@@ -1,0 +1,5 @@
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 policy:snapshot
+> node scripts/policy-snapshot.ts --verify /Users/black/Documents/ChatGPT/DeepSeek-RSI src/policy.ts src/client/model.ts
+
+Sealed; offline fixed responses only; retained /Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-snapshot-7klzG8

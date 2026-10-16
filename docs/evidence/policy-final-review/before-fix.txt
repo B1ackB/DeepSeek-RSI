@@ -1,0 +1,43 @@
+✖ an intact approved baseline can be restored and bound after the other candidate object is lost (726.412042ms)
+✖ native UI-style resume preserves the cap and original binding before the session first request (89.214875ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1105.872834
+
+✖ failing tests:
+
+test at tests/policy-review.test.ts:63:1
+✖ an intact approved baseline can be restored and bound after the other candidate object is lost (726.412042ms)
+  SyntaxError: Unexpected token 'd', "damaged candidate" is not valid JSON
+      at JSON.parse (<anonymous>)
+      at readPolicy (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/src/policy-versions.ts:24:49)
+      at policyContent (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/src/store.ts:205:10)
+      at checkedPolicyReview (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/src/store.ts:136:49)
+      at file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/src/store.ts:173:20
+      at transaction (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/src/store.ts:405:24)
+      at Object.policyCommand (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/src/store.ts:157:10)
+      at TestContext.<anonymous> (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/tests/policy-review.test.ts:71:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+
+test at tests/policy-review.test.ts:142:1
+✖ native UI-style resume preserves the cap and original binding before the session first request (89.214875ms)
+  AssertionError [ERR_ASSERTION]: {"type":"turn/end","seq":11,"time":1792111376213,"data":{"turn":1,"reason":{"kind":"error","error":{"message":"只读会话的策略、权限、路线或预算与绑定不符","code":"UNKNOWN"}}}}
+  
+  0 !== 3
+  
+      at TestContext.<anonymous> (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/tests/policy-review.test.ts:150:11)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

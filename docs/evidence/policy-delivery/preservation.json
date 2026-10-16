@@ -1,0 +1,12 @@
+{
+  "initialDirtyFiles": 114,
+  "unchangedFiles": 113,
+  "intentionallyExtended": [
+    "docs/POLICY-FINAL-REVIEW.md"
+  ],
+  "missingFiles": [],
+  "sourceCodeUnchangedDuringFinalValidation": true,
+  "harnessPatchUnchanged": true,
+  "originalBackup": "/tmp/rsi-release-20261016-104058",
+  "historicalFeasibilityLogSha256": "196c93b5f12108c3bb1aec2e78a426b7b03c67fc3edbedb8855db44789e5685b"
+}

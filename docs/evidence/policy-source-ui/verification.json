@@ -1,0 +1,131 @@
+{
+	"date": "2026-10-16",
+	"root": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-xdRa88",
+	"head": "a867eda6953121f1b893f3846ee42bd26df50f91",
+	"node": "v25.8.1",
+	"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+	"sqliteVersion": 7,
+	"sourceRecords": [
+		{
+			"id": "373700c1-76a8-4d4b-b8d0-a14111e1b9e3",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"status": "preview",
+			"snapshotDigest": "08e65f54c3c50e2cbcd408cc76c80737c3a0894d5714c051c61e5e17bd39ce5a",
+			"conditionsDigest": "2486492fde3d3add9a666cfcacbcae3802652f9d838f1bf6e1bf2f05029b4c75",
+			"paths": [
+				"evidence.ts"
+			]
+		},
+		{
+			"id": "637f5c9b-fe38-4278-8b97-af098fca52af",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"status": "sealed",
+			"snapshotDigest": "9a4ab268e4053e5db2686ed8b553ce6d09df38583db150013e09c29e08bca9ba",
+			"conditionsDigest": "d435cbf93818d437f5e3fb92c2f638f42d41e3f7213d4e93be19ae18fad03529",
+			"paths": [
+				"evidence.ts"
+			]
+		},
+		{
+			"id": "7e0ff2df-59a2-475e-b7d9-bb2211524254",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"status": "sealed",
+			"snapshotDigest": "9efe34e8217254815b4b2fa1df99e5bbcb3f33a6dfcb59077720fae83f14c0a8",
+			"conditionsDigest": "788ccefe414416973e2e0a05128159bdea2f72afb894aed794c3f148e1d8441a",
+			"paths": [
+				"evidence.ts"
+			]
+		},
+		{
+			"id": "56dc5f7a-6085-4808-bb56-9654dd1dcdc8",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"status": "sealed",
+			"snapshotDigest": "3f030fd558b355002d8c512cd6eae45fb675a4ab1a30a1501f4c0f3eb42b0479",
+			"conditionsDigest": "e3c53fa0ad8e7367ac478d79aeb8f17e256c51ba9b3df5045782b9167da356bc",
+			"paths": [
+				"evidence.ts"
+			]
+		}
+	],
+	"sessions": [
+		{
+			"sessionId": "rsi-policy/38cc0d39-51e6-4301-8264-5e0680947d44",
+			"choiceId": "f0650044-0281-4814-a6d4-4d191140714a",
+			"workspaceId": "95f189ca-2ceb-4994-8ed3-5c429a2636f9",
+			"workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-xdRa88/policy-review-home/workspace",
+			"policyId": "77de807e-68e7-4e08-8fc6-f3493566c85a",
+			"policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+			"batchId": "97d9253f-7fea-4e52-8561-76e08c56e5e0",
+			"conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+			"createdAt": 1792114547475
+		},
+		{
+			"sessionId": "rsi-policy/fe3ff68d-fc2a-4306-ba2b-9e0ae176aec0",
+			"choiceId": "bcc78e75-dd61-48b1-8983-b6a2ad286abe",
+			"workspaceId": "95f189ca-2ceb-4994-8ed3-5c429a2636f9",
+			"workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-xdRa88/policy-review-home/workspace",
+			"policyId": "77de807e-68e7-4e08-8fc6-f3493566c85a",
+			"policyDigest": "e206f417b110f7f1776cbd764d3eb63631230fb70a7416569ad0b24f961b3597",
+			"batchId": "97d9253f-7fea-4e52-8561-76e08c56e5e0",
+			"conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+			"createdAt": 1792114547640
+		},
+		{
+			"sessionId": "rsi-policy/c206f75e-7b94-414d-9906-eab3f44c078e",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"workspaceId": "95f189ca-2ceb-4994-8ed3-5c429a2636f9",
+			"workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-xdRa88/policy-review-home/workspace",
+			"policyId": "77de807e-68e7-4e08-8fc6-f3493566c85a",
+			"policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+			"batchId": "97d9253f-7fea-4e52-8561-76e08c56e5e0",
+			"conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+			"createdAt": 1792114548594
+		},
+		{
+			"sessionId": "rsi-policy/374ab184-fb3b-4b35-a96f-7c998fd955c1",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"workspaceId": "95f189ca-2ceb-4994-8ed3-5c429a2636f9",
+			"workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-xdRa88/policy-review-home/workspace",
+			"policyId": "77de807e-68e7-4e08-8fc6-f3493566c85a",
+			"policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+			"batchId": "97d9253f-7fea-4e52-8561-76e08c56e5e0",
+			"conditionsDigest": "d435cbf93818d437f5e3fb92c2f638f42d41e3f7213d4e93be19ae18fad03529",
+			"createdAt": 1792114549331,
+			"sourceId": "637f5c9b-fe38-4278-8b97-af098fca52af"
+		},
+		{
+			"sessionId": "rsi-policy/3f747cdf-a708-40bb-88f8-6f8b4196054d",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"workspaceId": "95f189ca-2ceb-4994-8ed3-5c429a2636f9",
+			"workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-xdRa88/policy-review-home/workspace",
+			"policyId": "77de807e-68e7-4e08-8fc6-f3493566c85a",
+			"policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+			"batchId": "97d9253f-7fea-4e52-8561-76e08c56e5e0",
+			"conditionsDigest": "788ccefe414416973e2e0a05128159bdea2f72afb894aed794c3f148e1d8441a",
+			"createdAt": 1792114549659,
+			"sourceId": "7e0ff2df-59a2-475e-b7d9-bb2211524254"
+		},
+		{
+			"sessionId": "rsi-policy/9eedbe0d-91b5-41c5-b65b-2b27f31d1521",
+			"choiceId": "034fe5c8-d240-4d26-b605-85e0925886a3",
+			"workspaceId": "95f189ca-2ceb-4994-8ed3-5c429a2636f9",
+			"workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-xdRa88/policy-review-home/workspace",
+			"policyId": "77de807e-68e7-4e08-8fc6-f3493566c85a",
+			"policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+			"batchId": "97d9253f-7fea-4e52-8561-76e08c56e5e0",
+			"conditionsDigest": "e3c53fa0ad8e7367ac478d79aeb8f17e256c51ba9b3df5045782b9167da356bc",
+			"createdAt": 1792115251699,
+			"sourceId": "56dc5f7a-6085-4808-bb56-9654dd1dcdc8"
+		}
+	],
+	"choices": 3,
+	"dailyRequests": 12,
+	"dailySyntheticTokens": 180,
+	"totalRecordedAttempts": 19,
+	"totalRecordedSyntheticTokens": 283,
+	"allUsageConfirmed": true,
+	"originalFiveSessionBindingsUnchanged": true,
+	"paidCalls": 0,
+	"seedChildPidsAbsentAndHomesRemoved": true,
+	"harnessPatchUnchanged": true
+}

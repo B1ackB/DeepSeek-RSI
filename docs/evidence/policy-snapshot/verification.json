@@ -1,0 +1,83 @@
+{
+	"date": "2026-10-16",
+	"repositoryHead": "a867eda6953121f1b893f3846ee42bd26df50f91",
+	"node": "v25.8.1",
+	"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+	"snapshot": {
+		"digest": "cf1843d08b0d925cacd0914375e6b7e390565bb7eea1f79fca706d3f7ff7f21f",
+		"root": "/Users/black/Documents/ChatGPT/DeepSeek-RSI",
+		"files": [
+			{
+				"path": "src/client/model.ts",
+				"bytes": 2765,
+				"contentDigest": "654b1d4d0a2ed573f426fb9fd75c60c3bf6f89192a951aa0aa7cbdc201fc94b8"
+			},
+			{
+				"path": "src/policy.ts",
+				"bytes": 5243,
+				"contentDigest": "d948dc7a655fdd2f74497165cd89a651dcaeb7b6f50f5a1b2db8dd7f534bee47"
+			}
+		]
+	},
+	"conditionsDigest": "7f5dfb4dccc5fec90693d4f73f1ca7677fc29648660055725cb32651cd7ecf8d",
+	"runtimeDigest": "907dc224d1fc8938309cc6c561223abbb8f9f877ff1820fc940e146cbcf24f81",
+	"actualCheckoutFixture": {
+		"output": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-snapshot-7klzG8",
+		"status": "completed",
+		"selectedTrackedModifiedFile": "src/client/model.ts",
+		"selectedUntrackedFile": "src/policy.ts",
+		"readsFromSealedText": true,
+		"requests": 3,
+		"toolCalls": 2,
+		"toolResults": 2,
+		"syntheticTokens": 45,
+		"usageStates": [
+			"confirmed",
+			"confirmed",
+			"confirmed"
+		],
+		"owners": [
+			{
+				"attemptId": "9f5101cc-1f81-4925-877c-7ee9fb0dfe14",
+				"owner": "rsi",
+				"ownerId": "1fcdd5c5-c85d-4ee7-9865-3a330de27f58",
+				"sessionId": "7ca3d60b-db8d-438d-b950-1c1954e6b928"
+			},
+			{
+				"attemptId": "b2ad1450-1604-423d-9b17-3a2af2ddc64e",
+				"owner": "rsi",
+				"ownerId": "1fcdd5c5-c85d-4ee7-9865-3a330de27f58",
+				"sessionId": "7ca3d60b-db8d-438d-b950-1c1954e6b928"
+			},
+			{
+				"attemptId": "9f012837-c7e6-4c1c-9093-65f9c9505abc",
+				"owner": "rsi",
+				"ownerId": "1fcdd5c5-c85d-4ee7-9865-3a330de27f58",
+				"sessionId": "7ca3d60b-db8d-438d-b950-1c1954e6b928"
+			}
+		],
+		"cleanup": {
+			"processExited": true,
+			"temporaryRoot": "/var/folders/g3/tfm273_n6p9crqmm1s82jnj40000gn/T/rsi-policy-sdk-T885Zd",
+			"directoryRemoved": true,
+			"agentsDisposed": true,
+			"forbiddenExecutions": 0,
+			"pidAbsentRechecked": true,
+			"workerPid": 99266,
+			"credentialsAbsent": true
+		}
+	},
+	"deniedActualCheckoutSelection": {
+		"paths": [
+			"src/policy.ts",
+			".env"
+		],
+		"status": "failed",
+		"snapshotDigest": null,
+		"objectsDirectoryCreated": false,
+		"modelRequests": 0
+	},
+	"paidCalls": 0,
+	"sourceHashesAfterFixtureMatchManifest": true,
+	"harnessPatchUnchanged": true
+}

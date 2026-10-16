@@ -1,10 +1,12 @@
 # Current DeepSeek RSI Framework
 
-Updated 2026-09-13. This document describes the current product direction. The previous design is [archived](HISTORY-FRAMEWORK-G2.4.md); implementation and validation are recorded in the [delivery report](COLLABORATION-REPORT.md).
+Updated 2026-10-16. The product direction is user-controlled evolution of explicitly authorized Agent behavior and components. The existing Skill workflow is recorded in the [delivery report](COLLABORATION-REPORT.md); the first additional object's [contract](POLICY-CONTRACTS.md) and [gate report](POLICY-REPORT.md) distinguish its implemented boundary. The previous design is [archived](HISTORY-FRAMEWORK-G2.4.md).
 
 ## Purpose and editable scope
 
-Provide user-directed Skill evolution inside DeepSeek Harness. The editable object is one authorized directory-backed Skill: SKILL.md, text references, and Python/Shell helpers. Webpages and text are outputs used to choose a version. Model weights, controllers, compilers, authorization, and budgets are outside candidate scope.
+Provide user-directed evolution inside DeepSeek Harness. The current user-facing workflow edits one authorized directory-backed Skill: SKILL.md, text references, and Python/Shell helpers. Webpages and text are outputs used to choose a version. Model weights, controllers, compilers, evaluators, authorization, budgets and active pointers remain outside candidate scope.
+
+The first additional object is `repository-evidence-policy`: one bounded literal instructions field guiding read-only repository questions. Its developer path includes separately authorized generation, literal scope validation, sealed lineage, v7 persistence, cumulative accounting, independent child execution and six fixed full-task checks. Proposers receive independent development material while evaluation cases/answers remain outside their request view. The existing sidebar now supports explicit review, workspace adoption/restoration and immutable dedicated pilot-session bindings. New pilot sessions use the selected batch snapshot or a separately previewed and confirmed real-worktree snapshot, under the fixed response route; ordinary chats remain outside this entry. Candidate component code, retrieval implementations and proposer strategy remain future objects under separate concrete contracts. No general self-modification permission is granted.
 
 ## Decision ownership
 
@@ -23,7 +25,7 @@ Request → recognize scenario → confirm requirements/scope/budget → generat
 
 The user can adopt, keep the baseline, or select a reference version and add requirements in the sidebar. Another iteration creates a task with `parentId`, preserving the previous candidate, authorization, usage, and comparison. It returns to confirmation; feedback alone does not call a model.
 
-Each comparison freezes requirements, preferences, complete Skill files, scenario version, and model settings. Each side receives one tool-free request, followed by compilation and artifact sealing. Links and measurements are shown separately. A later iteration does not reuse results obtained under different conditions to imply a fair comparison.
+Each Skill comparison freezes requirements, preferences, complete Skill files, scenario version, and model settings. Each side receives one tool-free request, followed by compilation and artifact sealing. Links and measurements are shown separately. A later iteration does not reuse results obtained under different conditions to imply a fair comparison.
 
 Adoption is a separate action. Task scope does not change project defaults; project scope changes only that project's active version. A previously bound session cannot switch versions in place; the host creates a linked session when needed. Source directories remain unchanged by default.
 
@@ -35,7 +37,7 @@ See [architecture](ARCHITECTURE.md) and [contributing](CONTRIBUTING.md) for resp
 
 ## Current boundaries
 
-- Comparison is one tool-free model request per side with the complete Skill. Ordinary tasks still run through the native Harness Agent.
+- Skill comparison is one tool-free model request per side with the complete Skill. Ordinary tasks still run through the native Harness Agent.
 - Web comparison produces a self-contained HTML/CSS/JavaScript page, not a multi-file project build. Text comparison does not read external repositories and should state when supplied information is insufficient.
 - A managed Skill contains at most 32 regular UTF-8 files. Symlinks, special files, unauthorized paths, and empty candidates are rejected. Fixed Docker checks validate script syntax without running candidate scripts on the host.
 - Default generation budget: at most 3 requests, 4096 output tokens each, a 32000 confirmed-token stop threshold, and 5 minutes. These bound generation/clarification, not automatic optimization rounds.
@@ -45,9 +47,9 @@ See [architecture](ARCHITECTURE.md) and [contributing](CONTRIBUTING.md) for resp
 
 ## Next steps
 
-1. Validate the new comparison UI with a separately authorized real batch across different preferences and outputs.
-2. Add concrete needed scenarios, such as structured reports, code explanation, or controlled project builds, before broadening execution permissions.
-3. Improve multi-round history, explicit rollback, and source-directory export/recovery.
-4. Test clean installation and additional host combinations; settle licensing, release procedures, and interface compatibility.
+1. The [repository snapshot contract](POLICY-SNAPSHOT-CONTRACTS.md) now covers real-worktree capture, sidebar preview/explicit sealing and immutable source-bound sessions under the fixed route; see [source UI evidence](POLICY-SOURCE-UI-REPORT.md). Real-repository answer evaluation, credentials and real-model spending still need their concrete contracts. Keep evaluator conditions outside candidate control. Do not infer real improvement from scripted responses.
+2. Validate the existing comparison UI with a separately authorized real batch across different preferences and outputs.
+3. Add concrete needed scenarios before broadening execution permissions; improve history, rollback and source export/recovery.
+4. Test clean installation and additional host combinations; settle licensing, release procedures and interface compatibility.
 
 These are future tasks, not claims that the package is already a general RSI platform.

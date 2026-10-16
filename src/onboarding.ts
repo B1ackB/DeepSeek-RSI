@@ -55,7 +55,7 @@ export function applyOnboarding(ctx: Context, store: Store, prepareManaged: (wor
 	}
 	ctx.on('agent/pre-step', async ({ agent, messages, turn, signal }, next) => {
 		const decision = await next();
-		if (decision.kind === 'reject' || !root(agent)) return decision;
+		if (decision.kind === 'reject' || !root(agent) || store.policySession(agent.session.id)) return decision;
 		if (startPage && store.business().mainflow.tasks.some(t => t.sessionId === agent.session.id && !['dispatched', 'stopped'].includes(t.status))) return startPage(agent, turn, [], decision, signal);
 		if (current(agent.session.id)) return decision;
 		const text = userText(messages);

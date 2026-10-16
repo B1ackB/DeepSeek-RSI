@@ -1,0 +1,6 @@
+{
+	"command": "npm run typecheck && npm run build",
+	"reason": "Final readable validation message in the new source card",
+	"exitCode": 0,
+	"output": "\n> @b1ackb/deepseek-rsi@0.0.0-g2.5 build\n> node scripts/build.mjs\n\n"
+}

@@ -1,0 +1,48 @@
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 check
+> npm run typecheck && npm test && npm run build
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.client.json
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 test
+> node --test tests/*.test.ts
+
+✔ comparison freezes inputs, compiles both artifacts, preserves unknown usage and never selects ACTIVE (265.209458ms)
+✔ trusted scenarios extend matching and compilation without host decision authority (0.325583ms)
+✔ frontend preferences stay scoped, ask at most two bounded batches, and freeze task overrides (6.694125ms)
+✔ version 2 migration preserves receipts, rolls back invalid data, and persists preference commands atomically (13.53425ms)
+✔ G1 native observation, explicit one-shot analysis, scope guards, cancellation and restart (299.765834ms)
+✔ real Harness Skill registry pins text and resources across durable bindings (126.812416ms)
+✔ real Harness monotonic guard blocks a later scope-local tool and leaves daily tools available (6.219667ms)
+✔ Harness structured cancellation remains readable without leaking raw objects or credentials (0.887875ms)
+✔ candidate rejects missing, corrupt, duplicate and unauthorized replacements while preserving complete baseline (59.357542ms)
+✔ generation budget, interruption and v4 migration preserve authorization and uncertain usage (25.0865ms)
+✔ script candidates fail closed when Docker cannot start and never execute on the host (22.780375ms)
+✔ v5 migration preserves old tasks and preferences while adding scenario defaults (12.912166ms)
+✔ main flow gates real Harness dispatch, seals exact candidate, separates usage, and links an old session (418.133917ms)
+✔ policy content and frozen conditions reject authority fields, templates, byte excess, traversal and mutation (6.852292ms)
+✔ snapshot tools never access host paths and enforce argument, call and result limits (1.086625ms)
+✔ native SDK completes baseline, candidate and restored tasks in independent owned profiles with durable pre-dispatch accounting (865.350709ms)
+✔ native SDK denies late scoped tools and out-of-snapshot reads without executing forbidden effects (413.858041ms)
+✔ native SDK stops before dispatch for request/token caps, unknown usage and changed model route (1085.537416ms)
+✔ native SDK preserves provider failures, truncated streams and crash recovery without replay (645.263417ms)
+✔ native SDK cancellation and external deadline interrupt a hanging provider and reap the owned process (550.878792ms)
+✔ native Agent Loop retry records two attempts and links the actual retry event without network (39.920791ms)
+✔ Web commands persist, reject stale/conflicting writes, and roll back failure (1065.197ms)
+✔ unknown requests survive restart, block RSI, and do not block daily sessions (7.983792ms)
+✔ stream ledger separates owners, deduplicates usage and pauses on conflicting or missing usage (18.873833ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3886.683583
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 build
+> node scripts/build.mjs
+
