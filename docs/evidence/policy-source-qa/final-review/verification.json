@@ -1,0 +1,71 @@
+{
+  "paidRequests": 0,
+  "baseCommit": "96af936501b14da7abdac3013db076618575b644",
+  "harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+  "harnessPatchUnchanged": true,
+  "historicalEvidenceFilesUnchanged": 114,
+  "priorQAEvidenceFilesUnchanged": 11,
+  "originalQuestionPackFilesUnchanged": true,
+  "retainedFixtureHome": ".cache/policy-source-qa-final-WB6d11",
+  "retainedPolicyAndUsageRowsUnchangedAcrossRestart": {
+    "attempts": 48,
+    "policy_generations": 3,
+    "policy_batches": 5,
+    "policy_sessions": 5,
+    "policy_choices": 3,
+    "policy_sources": 4
+  },
+  "sqliteVersion": 7,
+  "confirmedFixtureAttempts": 48,
+  "syntheticTokens": 714,
+  "qaComparisons": [
+    {
+      "caseId": "symbol",
+      "status": "passed",
+      "requests": 8,
+      "syntheticTokens": 120
+    },
+    {
+      "caseId": "call-chain",
+      "status": "passed",
+      "requests": 8,
+      "syntheticTokens": 120
+    },
+    {
+      "caseId": "error-path",
+      "status": "passed",
+      "requests": 8,
+      "syntheticTokens": 120
+    }
+  ],
+  "pairedConditionsEqual": true,
+  "workerAndClientBundlesExcludeHostAnswers": true,
+  "ownedChildrenAbsent": [
+    64879,
+    64887,
+    64935,
+    64936,
+    64937,
+    64938,
+    64939,
+    64940,
+    64941,
+    64942
+  ],
+  "ownedChildHomesRemoved": true,
+  "hosts": [
+    {
+      "pid": 64906,
+      "port": 49971,
+      "processAbsent": true,
+      "portReleased": true
+    },
+    {
+      "pid": 64963,
+      "port": 50207,
+      "processAbsent": true,
+      "portReleased": true
+    }
+  ],
+  "browserErrors": []
+}

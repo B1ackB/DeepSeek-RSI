@@ -2,12 +2,13 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import childProcesses from 'node:child_process';
 import filePromises from 'node:fs/promises';
+import fileSystem from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { spawn, fork } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { randomUUID } from 'node:crypto';
 import { mkdtempSync, cpSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, rmSync, existsSync, realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { SessionId } from '@deepseek-ai/dsh-session';
 import { createUserMessage } from '@deepseek-ai/dsh-llm';
@@ -17,25 +18,28 @@ import { openStore, type Store } from '../src/store.ts';
 import { policyCommandSchema, type PolicyCommand } from '../src/policy-review-contracts.ts';
 import { preparePolicyReviewFixture, policyReviewRuntime } from '../scripts/policy-review-fixture.ts';
 import { registerPolicyGenerationAdapter } from '../scripts/policy-generation.ts';
+import { sourceQaFiles, sourceQaAvailable } from '../src/policy-source-qa.ts';
+import type { PolicySourceCase } from '../src/policy-inputs.ts';
 
 const seed = mkdtempSync(join(tmpdir(), 'rsi-authorization-seed-'));
 before(async () => { await preparePolicyReviewFixture(join(seed, 'state.sqlite')); });
 after(() => rmSync(seed, { recursive: true, force: true }));
 const budget = { provider: 'rsi-policy-generation-fixture' as const, model: 'offline-v1' as const, maxRequests: 1 as const, maxOutputTokens: 1024, maxInputBytes: 16384, maxDurationMs: 5000 };
 function command(store: Store, kind: PolicyCommand['kind'], payload: PolicyCommand['payload']) { return policyCommandSchema.parse({ schemaVersion: 1, operationId: randomUUID(), expectedRevision: store.snapshot().snapshotRevision, kind, payload }); }
-async function fixture(mode: Parameters<typeof policyReviewRuntime>[2] = 'complete', generationMode = 'complete') {
+async function fixture(mode: Parameters<typeof policyReviewRuntime>[2] = 'complete', generationMode = 'complete', files = [{ path: 'source.ts', content: 'export const retained = "HELD_OUT_SOURCE_ANSWER";\n' }]) {
 	const root = realpathSync(mkdtempSync(join(tmpdir(), 'rsi-authorization-'))); cpSync(seed, root, { recursive: true }); mkdirSync(join(root, '.git'));
-	writeFileSync(join(root, 'source.ts'), 'export const retained = "HELD_OUT_SOURCE_ANSWER";\n'); const file = join(root, 'state.sqlite'); const store = openStore(file);
+	for (const item of files) { mkdirSync(dirname(join(root, item.path)), { recursive: true }); writeFileSync(join(root, item.path), item.content); }
+	const file = join(root, 'state.sqlite'); const store = openStore(file);
 	const review = store.policyReview().reviews[0]; store.policyCommand(command(store, 'policy_adopt', { workspaceId: 'workspace', policyId: review.policyId, batchId: review.batchId, baselineDigest: review.baselineDigest, candidateDigest: review.candidateDigest, evidenceDigest: review.evidenceDigest!, choice: 'baseline', expectedActive: null }), root);
 	const runtime = await policyReviewRuntime(store, root, mode); const generator = registerPolicyGenerationAdapter(runtime.ctx, store, generationMode);
 	const choice = store.policySelection('workspace')!;
-	const preview = await runtime.review.command(command(store, 'policy_preview', { workspaceId: 'workspace', expectedActive: choice.id, paths: ['source.ts'] })); const source = store.policySource(preview.focusId!)!;
+	const preview = await runtime.review.command(command(store, 'policy_preview', { workspaceId: 'workspace', expectedActive: choice.id, paths: files.map(item => item.path) })); const source = store.policySource(preview.focusId!)!;
 	const intent = { workspaceId: 'workspace', expectedActive: choice.id, sourceId: source.id, snapshotDigest: source.conditions.sourceSnapshot!.digest };
 	await runtime.review.command(command(store, 'policy_seal', intent));
 	return { root, file, store, runtime, generator, choice, source, intent, async close() { if (runtime.ctx.agents) await runtime.dispose(); try { store.close(); } catch {} rmSync(root, { recursive: true, force: true }); } };
 }
 function generation(f: Awaited<ReturnType<typeof fixture>>, requirements = 'Inspect implementations before claims and cite evidence.') { return command(f.store, 'policy_generate', { ...f.intent, baselineDigest: f.choice.digest, requirements, budget }); }
-function evaluation(f: Awaited<ReturnType<typeof fixture>>, id: string, maxRequests = 6) { const task = f.store.policyGeneration(id)!; return command(f.store, 'policy_evaluate', { ...f.intent, generationId: id, baselineDigest: task.authorization.baselineDigest, candidateDigest: task.candidateDigest!, budget: { maxRequests, tokenStopThreshold: 1000, maxDurationMs: 30000 } }); }
+function evaluation(f: Awaited<ReturnType<typeof fixture>>, id: string, maxRequests = 6, caseId?: PolicySourceCase) { const task = f.store.policyGeneration(id)!; return command(f.store, 'policy_evaluate', { ...f.intent, generationId: id, baselineDigest: task.authorization.baselineDigest, candidateDigest: task.candidateDigest!, budget: { maxRequests, tokenStopThreshold: 1000, maxDurationMs: 30000 }, ...caseId ? { caseId } : {} }); }
 
 test('sidebar separately authorizes exact source generation and two independent complete tool tasks with one ledger', { timeout: 20000 }, async () => {
 	const f = await fixture();
@@ -251,5 +255,152 @@ test('stopping during home preparation or failing PID persistence releases every
 			if (root) rmSync(root, { recursive: true, force: true });
 			await f.close();
 		}
+	}
+});
+
+test('sealed source QA runs three separately authorized full-task comparisons against exact host facts without proposer leakage', async () => {
+	const { submit, checkout } = await import(new URL('../fixtures/repository-qa-v1/checkout.js', import.meta.url).href);
+	const { total } = await import(new URL('../fixtures/repository-qa-v1/pricing.js', import.meta.url).href);
+	const decoy = await import(new URL('../fixtures/repository-qa-v1/unused.js', import.meta.url).href);
+	assert.equal(checkout(2), 3); assert.deepEqual(submit(2), { ok: true, amount: 3 }); assert.equal(decoy.total(2), 200);
+	for (const input of [-1, 1.5]) { assert.throws(() => total(input), { name: 'RangeError', message: 'INVALID_QUANTITY' }); assert.deepEqual(submit(input), { ok: false, error: 'INVALID_QUANTITY' }); }
+	const f = await fixture('complete', 'complete', sourceQaFiles());
+	try {
+		assert.equal(f.store.policyReview().sources[0].qaAvailable, true);
+		const cmd = generation(f); await f.runtime.review.command(cmd); await f.runtime.review.whenIdle();
+		assert.equal(f.store.policyGeneration(cmd.operationId)!.status, 'sealed'); assert.equal(f.runtime.requests.length, 0);
+		assert.doesNotMatch(JSON.stringify(f.generator), /INVALID_QUANTITY|submit|pricing\.js|unused\.js|entry-call|caught-result|repository-source-qa-v1/);
+		writeFileSync(join(f.root, 'fixtures/repository-qa-v1/pricing.js'), 'export const total = () => "LIVE_CHANGED";');
+		for (const caseId of ['symbol', 'call-chain', 'error-path'] as const) {
+			const evaluate = evaluation(f, cmd.operationId, 8, caseId); const receipt = await f.runtime.review.command(evaluate); await f.runtime.review.whenIdle();
+			const batch = f.store.policyBatch(receipt.focusId!)!; assert.equal(batch.evaluation?.status, 'passed', JSON.stringify(batch));
+			assert.equal(batch.authorization.evaluationSpec!.evaluator, 'repository-source-qa-v1');
+			assert.deepEqual(batch.authorization.runs[0].run.conditions, batch.authorization.runs[1].run.conditions);
+			assert.equal(batch.authorization.runs[0].run.conditions.sourceSnapshot!.digest, f.intent.snapshotDigest);
+			assert.ok(!JSON.stringify(batch.authorization).includes('LIVE_CHANGED'));
+			const usage = f.store.policyAccounting(f.choice.policyId, receipt.focusId!); assert.equal(usage.attempts.length, 8); assert.equal(usage.totalTokens, 120);
+			assert.equal(new Set(batch.evidence!.map(row => row.workerPid)).size, 2);
+			assert.ok(batch.evidence!.every(row => row.result!.events.filter(event => event.type === 'tool/call').length === 3 && row.cleanup.processExited && row.cleanup.agentsDisposed && row.cleanup.directoryRemoved && !existsSync(row.cleanup.temporaryRoot)));
+			assert.equal(f.store.policySelection('workspace')!.id, f.choice.id); const calls: number = f.runtime.requests.length;
+			assert.deepEqual(await f.runtime.review.command(evaluate), receipt); await f.runtime.review.whenIdle(); assert.equal(f.runtime.requests.length, calls);
+			await assert.rejects(f.runtime.review.command({ ...evaluate, payload: { ...evaluate.payload, caseId: caseId === 'symbol' ? 'call-chain' : 'symbol' } }), /操作 ID/);
+		}
+		assert.equal(f.runtime.requests.length, 24); assert.equal(f.generator.length, 1);
+		assert.equal(f.store.snapshot().attempts.filter(row => row.ownerId === cmd.operationId).length, 1);
+		for (const id of new Set(f.runtime.requests.map(row => row.sessionId))) {
+			const first = f.runtime.requests.find(row => row.sessionId === id)!;
+			assert.doesNotMatch(JSON.stringify(first.messages), /pricing\.js exports total|returns \{ok:true,amount:3\}|RangeError: INVALID_QUANTITY/);
+		}
+	} finally { await f.close(); }
+});
+
+test('source QA rejects unsupported or changed complete manifests and answer overrides before evaluation authority', async () => {
+	for (const files of [[{ path: 'source.ts', content: 'export const total = () => 1;' }], sourceQaFiles().slice(0, 2), sourceQaFiles().map(row => ({ ...row, content: row.content + '\n' }))]) {
+		const f = await fixture('complete', 'complete', files);
+		try {
+			assert.equal(f.store.policyReview().sources[0].qaAvailable, undefined);
+			const cmd = generation(f); await f.runtime.review.command(cmd); await f.runtime.review.whenIdle();
+			for (const caseId of ['symbol', 'call-chain', 'error-path'] as const) {
+				const evaluate = evaluation(f, cmd.operationId, 8, caseId);
+				await assert.rejects(f.runtime.review.command(evaluate), /不匹配固定问答包/);
+				assert.equal(f.store.policyBatch(evaluate.operationId), undefined); assert.equal(f.store.businessReceipt(evaluate), undefined);
+				await assert.rejects(f.runtime.review.command({ ...evaluate, payload: { ...evaluate.payload, answer: { claims: [] }, evaluator: 'accept-all' } }));
+			}
+			assert.equal(f.runtime.requests.length, 0); assert.equal(f.store.policyGeneration(cmd.operationId)!.status, 'sealed');
+		} finally { await f.close(); }
+	}
+});
+
+test('source QA distinguishes wrong facts/citations from missing reads, tool-free results, limits and unknown usage', { timeout: 20000 }, async () => {
+	for (const mode of ['wrong_answer', 'wrong_citation', 'missing_read', 'no_tools', 'cap', 'tokens', 'unknown', 'stop'] as const) {
+		const f = await fixture(mode === 'cap' || mode === 'tokens' ? 'complete' : mode === 'stop' ? 'hang_after_read' : mode, 'complete', sourceQaFiles());
+		try {
+			const cmd = generation(f); await f.runtime.review.command(cmd); await f.runtime.review.whenIdle(); const evaluate = evaluation(f, cmd.operationId, mode === 'cap' ? 6 : 8, 'error-path'); assert.equal(evaluate.kind, 'policy_evaluate');
+			if (mode === 'tokens') evaluate.payload.budget.tokenStopThreshold = 50;
+			await f.runtime.review.command(evaluate);
+			if (mode === 'stop') { await until(() => f.runtime.requests.length === 3); await f.runtime.review.command(command(f.store, 'policy_stop', { workspaceId: 'workspace', target: 'evaluation', jobId: evaluate.operationId })); }
+			await f.runtime.review.whenIdle();
+			const batch = f.store.policyBatch(evaluate.operationId)!; const complete = ['wrong_answer', 'wrong_citation'].includes(mode);
+			assert.equal(batch.evaluation!.status, complete ? 'failed' : 'incomplete', mode); assert.equal(f.store.policyReview().reviews.at(-1)!.eligible, complete);
+			if (mode === 'wrong_citation') assert.ok(batch.evaluation!.sides.every(row => row.infrastructure && row.facts && !row.citations));
+			const usage = f.store.policyAccounting(f.choice.policyId, evaluate.operationId);
+			if (mode === 'cap') assert.equal(usage.attempts.length, 6);
+			if (mode === 'tokens') assert.equal(usage.attempts.length, 4);
+			if (mode === 'unknown') { assert.equal(usage.attempts.length, 1); assert.equal(usage.totalTokens, null); }
+			if (mode === 'stop') { assert.equal(batch.status, 'cancelled'); assert.equal(usage.attempts.length, 3); assert.equal(usage.totalTokens, null); }
+			for (const row of batch.evidence ?? []) { assert.equal(row.cleanup.processExited, true); assert.equal(row.cleanup.directoryRemoved, true); assert.equal(existsSync(row.cleanup.temporaryRoot), false); }
+		} finally { await f.close(); }
+	}
+});
+
+test('QA receipt/spec corruption fails closed, authorization-only restart never replays, and lost source blocks dispatch', async () => {
+	const f = await fixture('complete', 'complete', sourceQaFiles());
+	try {
+		const cmd = generation(f); await f.runtime.review.command(cmd); await f.runtime.review.whenIdle();
+		const evaluate = evaluation(f, cmd.operationId, 8, 'symbol'); const receipt = f.store.policyCommand(evaluate, f.root, undefined, policyExecutionRuntime());
+		await f.runtime.dispose(); f.store.close();
+		for (const table of ['g1_operations', 'policy_batches']) {
+			const column = table === 'g1_operations' ? 'command' : 'data'; const db = new DatabaseSync(f.file); const original = String(db.prepare(`SELECT ${column} FROM ${table} WHERE id=?`).get(evaluate.operationId)![column]);
+			const changed = JSON.parse(original); if (table === 'g1_operations') changed.payload.caseId = 'error-path'; else changed.authorization.evaluationSpec.caseId = 'error-path';
+			db.prepare(`UPDATE ${table} SET ${column}=? WHERE id=?`).run(JSON.stringify(changed), evaluate.operationId); db.close(); assert.throws(() => openStore(f.file));
+			const after = new DatabaseSync(f.file); assert.equal(after.prepare(`SELECT ${column} FROM ${table} WHERE id=?`).get(evaluate.operationId)![column], JSON.stringify(changed)); after.prepare(`UPDATE ${table} SET ${column}=? WHERE id=?`).run(original, evaluate.operationId); after.close();
+		}
+		const recovered = openStore(f.file); const runtime = await policyReviewRuntime(recovered, f.root);
+		try {
+			assert.equal(recovered.policyBatch(evaluate.operationId)!.status, 'interrupted'); assert.deepEqual(await runtime.review.command(evaluate), receipt); await runtime.review.whenIdle(); assert.equal(runtime.requests.length, 0);
+			const next = evaluation({ ...f, store: recovered }, cmd.operationId, 8, 'error-path'); recovered.policyCommand(next, f.root, undefined, policyExecutionRuntime());
+			unlinkSync(join(f.root, 'repository-snapshots', f.intent.snapshotDigest + '.json'));
+			await executeAuthorizedPolicyBatch(runtime.ctx, recovered, next.operationId); assert.equal(runtime.requests.length, 0); assert.equal(recovered.policyAccounting(f.choice.policyId, next.operationId).attempts.length, 0);
+			const batch = recovered.policyBatch(next.operationId)!; assert.equal(batch.evaluation!.status, 'incomplete'); assert.ok(batch.evidence!.every(row => !existsSync(row.cleanup.temporaryRoot)));
+		} finally { await runtime.dispose(); recovered.close(); }
+	} finally { await f.close(); }
+});
+
+test('source QA controller loss after search/read preserves exact case, unknown usage and old rows without replay', { timeout: 15000 }, async () => {
+	const f = await fixture('complete', 'complete', sourceQaFiles());
+	try {
+		const cmd = generation(f); await f.runtime.review.command(cmd); await f.runtime.review.whenIdle(); const evaluate = evaluation(f, cmd.operationId, 8, 'error-path');
+		await f.runtime.dispose(); f.store.close();
+		const raw = new DatabaseSync(f.file); const history = ['attempts', 'policy_batches', 'policy_generations', 'policy_sessions', 'g1_operations', 'operations'].map(table => ({ table, rows: raw.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all() })); raw.close();
+		const code = `import {openStore} from ${JSON.stringify(new URL('../src/store.ts', import.meta.url).pathname)}; import {policyReviewRuntime} from ${JSON.stringify(new URL('../scripts/policy-review-fixture.ts', import.meta.url).pathname)}; const store=openStore(${JSON.stringify(f.file)}); const runtime=await policyReviewRuntime(store,${JSON.stringify(f.root)},'hang_after_read'); await runtime.review.command(${JSON.stringify(evaluate)}); while(runtime.requests.length<3) await new Promise(r=>setTimeout(r,5)); process.exit(77);`;
+		const child = spawn(process.execPath, ['--input-type=module', '-e', code], { env: { PATH: process.env.PATH }, stdio: ['ignore', 'ignore', 'pipe'] }); let errors = ''; child.stderr.on('data', data => errors += data);
+		assert.equal(await new Promise<number | null>(resolve => child.once('exit', resolve)), 77, errors);
+		const recovered = openStore(f.file); const batch = recovered.policyBatch(evaluate.operationId)!; const resource = batch.progress[0].resource!;
+		try {
+			assert.equal(batch.status, 'interrupted'); assert.equal(batch.authorization.evaluationSpec!.evaluator, 'repository-source-qa-v1');
+			const usage = recovered.policyAccounting(f.choice.policyId, evaluate.operationId); assert.equal(usage.attempts.length, 3); assert.equal(usage.confirmedTokens, 30); assert.equal(usage.totalTokens, null);
+			await until(() => { try { process.kill(resource.pid!, 0); return false; } catch (error) { return (error as NodeJS.ErrnoException).code === 'ESRCH'; } }); await until(() => !existsSync(resource.temporaryRoot));
+			const runtime = await policyReviewRuntime(recovered, f.root); try { assert.equal((await runtime.review.command(evaluate)).focusId, evaluate.operationId); await runtime.review.whenIdle(); assert.equal(runtime.requests.length, 0); assert.equal(recovered.policyReview().reviews.at(-1)!.eligible, false); } finally { await runtime.dispose(); }
+		} finally { recovered.close(); }
+		const after = new DatabaseSync(f.file); try { for (const { table, rows } of history) for (const row of rows) { const key = table === 'policy_sessions' ? 'session' : 'id'; assert.deepEqual(after.prepare(`SELECT * FROM ${table} WHERE ${key}=?`).get(row[key] as string), row); } } finally { after.close(); }
+	} finally { await f.close(); }
+});
+
+test('installed example changes cannot redefine the reviewed QA manifest or alter a sealed comparison', async t => {
+	const original = sourceQaFiles(); const modified = original.map(row => ({ ...row, content: row.path.endsWith('/pricing.js') ? row.content.replace('quantity + 1', 'quantity + 100') : row.content }));
+	for (const scenario of ['authorization', 'sealed'] as const) {
+		const f = await fixture('complete', 'complete', scenario === 'authorization' ? modified : original);
+		try {
+			const cmd = generation(f); await f.runtime.review.command(cmd); await f.runtime.review.whenIdle();
+			const evaluate = evaluation(f, cmd.operationId, 8, 'call-chain');
+			if (scenario === 'sealed') f.store.policyCommand(evaluate, f.root, undefined, policyExecutionRuntime());
+			const read = fileSystem.readFileSync;
+			const spy = t.mock.method(fileSystem, 'readFileSync', (...args: Parameters<typeof read>) => {
+				const value = read(...args); return String(args[0]).endsWith('/fixtures/repository-qa-v1/pricing.js') && typeof value === 'string' ? value.replace('quantity + 1', 'quantity + 100') : value;
+			}); syncBuiltinESMExports();
+			try {
+				assert.equal(sourceQaAvailable(modified), false); assert.equal(sourceQaAvailable(original), true);
+				assert.throws(() => sourceQaFiles(), /预置问答包/);
+				if (scenario === 'authorization') {
+					await assert.rejects(f.runtime.review.command(evaluate), /不匹配固定问答包/); assert.equal(f.store.policyBatch(evaluate.operationId), undefined); assert.equal(f.runtime.requests.length, 0);
+					const legacy = evaluation(f, cmd.operationId); await f.runtime.review.command(legacy); await f.runtime.review.whenIdle(); assert.equal(f.store.policyBatch(legacy.operationId)!.evaluation!.status, 'passed');
+				} else {
+					await executeAuthorizedPolicyBatch(f.runtime.ctx, f.store, evaluate.operationId);
+					const batch = f.store.policyBatch(evaluate.operationId)!; assert.equal(batch.evaluation!.status, 'passed'); assert.equal(f.runtime.requests.length, 8);
+					assert.deepEqual(batch.authorization.runs[0].run.conditions, batch.authorization.runs[1].run.conditions);
+					assert.deepEqual(batch.authorization.runs[0].run.conditions.files, original); assert.ok(batch.evidence!.every(row => row.cleanup.processExited && row.cleanup.directoryRemoved && !existsSync(row.cleanup.temporaryRoot)));
+				}
+			} finally { spy.mock.restore(); syncBuiltinESMExports(); }
+		} finally { await f.close(); }
 	}
 });

@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "generationRequestsAfterRestart": 0,
+  "evaluationAndDailyRequestsAfterRestart": 0,
+  "policyProjectionAndAttemptRowsUnchanged": true,
+  "totalAttempts": 48,
+  "sealedSourceGenerations": 2,
+  "retainedQAEvaluations": 3,
+  "oldSessionSource": "snapshot 2",
+  "unchangedSessionBindings": 5,
+  "browserErrors": []
+}

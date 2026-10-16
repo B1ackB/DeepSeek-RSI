@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { integer } from './contracts.ts';
-import { repositorySelectionSchema, policyConditionsDataSchema, policyGenerationBudgetSchema, policyBatchBudgetSchema } from './policy-inputs.ts';
+import { repositorySelectionSchema, policyConditionsDataSchema, policyGenerationBudgetSchema, policyBatchBudgetSchema, policySourceCaseSchema } from './policy-inputs.ts';
 
 const id = z.uuid();
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
@@ -12,7 +12,7 @@ const command = <K extends string, S extends z.ZodType>(kind: K, payload: S) => 
 const sourceIntent = { workspaceId, expectedActive: id, sourceId: id, snapshotDigest: digest };
 export const policyCommands = [
 	command('policy_generate', z.strictObject({ ...sourceIntent, baselineDigest: digest, requirements: z.string().trim().min(1).max(4000), budget: policyGenerationBudgetSchema })),
-	command('policy_evaluate', z.strictObject({ ...sourceIntent, generationId: id, baselineDigest: digest, candidateDigest: digest, budget: policyBatchBudgetSchema })),
+	command('policy_evaluate', z.strictObject({ ...sourceIntent, generationId: id, baselineDigest: digest, candidateDigest: digest, budget: policyBatchBudgetSchema, caseId: policySourceCaseSchema.optional() })),
 	command('policy_stop', z.strictObject({ workspaceId, target: z.enum(['generation', 'evaluation']), jobId: id })),
 	command('policy_adopt', z.strictObject({ workspaceId, policyId: id, batchId: id, baselineDigest: digest, candidateDigest: digest, evidenceDigest: digest, choice: z.enum(['baseline', 'candidate']), expectedActive: id.nullable() })),
 	command('policy_restore', z.strictObject({ workspaceId, targetChoiceId: id, expectedActive: id })),
@@ -34,7 +34,7 @@ export const policySourceSchema = z.strictObject({ id, workspaceId, workspacePat
 	.refine(source => source.conditions.sourceSnapshot?.root === source.workspacePath && (source.status === 'preview' ? source.sealedAt === null && source.sealId === null : source.sealId !== null && source.sealedAt !== null && source.sealedAt >= source.createdAt), 'Source provenance or sealing state is invalid');
 export type PolicySource = z.infer<typeof policySourceSchema>;
 export const policySourceRequestSchema = z.strictObject({ workspaceId, sourceId: id });
-const sourceView = z.strictObject({ id, workspaceId, choiceId: id, snapshotDigest: digest, status: z.enum(['preview', 'sealed']), createdAt: integer, files: z.array(z.strictObject({ path: z.string(), bytes: integer, contentDigest: digest })).min(1).max(32) });
+const sourceView = z.strictObject({ id, workspaceId, choiceId: id, snapshotDigest: digest, status: z.enum(['preview', 'sealed']), createdAt: integer, qaAvailable: z.boolean().optional(), files: z.array(z.strictObject({ path: z.string(), bytes: integer, contentDigest: digest })).min(1).max(32) });
 const side = z.strictObject({ side: z.enum(['baseline', 'candidate']), instructions: z.string(), response: z.string(), sources: z.array(z.string()), infrastructure: z.boolean(), facts: z.boolean(), citations: z.boolean(), requests: integer, tools: integer, totalTokens: integer.nullable() });
 export const policyReviewSnapshotSchema = z.strictObject({
 	choices: z.array(policyChoiceSchema), sessions: z.array(policySessionSchema),

@@ -2,6 +2,8 @@
 
 2026-10-16. One concrete extension to the existing repository-evidence-policy pilot; fixed responses only. This contract precedes implementation. No new optimization object, provider or automatic adoption.
 
+The subsequent [fixed source question contract](POLICY-SOURCE-QA-CONTRACTS.md) adds optional question selection and an exact-manifest three-case host pack. Omitted selection retains the first-line specification below unchanged.
+
 ## Exact intent and minimal fields
 
 Reuse the policy command envelope, global revision, operation receipt and existing generation/batch tables. `policy_generate` confirms registered workspace, expected active choice, exact baseline digest, sealed source ID/digest, requirements and the existing single-request generation budget. The host derives policy ID, root, input digest, lineage and generation ID (the operation ID). Both policy and source must match the current explicit approval. No client root, source body, evaluator, prompt, tools or real provider is accepted.

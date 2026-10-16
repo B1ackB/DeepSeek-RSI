@@ -1,5 +1,7 @@
 # Core Rules and G0 Contracts
 
+2026-10-16: [fixed source QA](POLICY-SOURCE-QA-CONTRACTS.md) adds an optional exact question selection and `repository-source-qa-v1` specification for a host-authored three-case source pack. Existing SQLite 7 tables, shared usage, separate generation/evaluation authorization and explicit adoption remain unchanged. Old omitted-case commands and their serialized rows retain first-line semantics; no default insertion or historical rewrite.
+
 2026-09-13: the current product uses compilation/format thresholds and user choice. See [extension contracts](EXTENSION-CONTRACTS.md) for comparisons, later iterations, and SQLite 6 migration. G0 sections below describe the historical integration contract and do not authorize current spending.
 
 2026-10-15: [policy contracts](POLICY-CONTRACTS.md) add literal repository policies, separately authorized generation, sealed lineage, SQLite 6→7 additive persistence, shared batch accounting and paired full-task checks. Verification remains offline with fixed responses. The subsequent review gate adds explicit sidebar selection/restoration and dedicated fixed-route session bindings; ordinary chats are not enrolled.

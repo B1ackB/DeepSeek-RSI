@@ -31,7 +31,8 @@ export async function preparePolicyReviewFixture(file: string, modes: Parameters
 }
 
 /** Only fixed adapter; no real profile, credentials or provider registration. */
-export async function policyReviewRuntime(store: Store, root: string, mode: 'complete' | 'unknown' | 'hang' | 'no_tools' | 'wrong_answer' | 'forbidden' = 'complete') {
+export type PolicyReviewMode = 'complete' | 'unknown' | 'hang' | 'hang_after_read' | 'no_tools' | 'wrong_answer' | 'wrong_citation' | 'missing_read' | 'forbidden';
+export async function policyReviewRuntime(store: Store, root: string, mode: PolicyReviewMode = 'complete') {
 	const ctx = new Context();
 	await ctx.plugin(LlmRuntime); await ctx.plugin(SessionStore); await ctx.plugin(SessionProjections);
 	await ctx.plugin(SystemPrompt, { persona: 'Trusted test authority. Preserve the user instructions.' }); await ctx.plugin(Tools); await ctx.plugin(AgentRegistry);
@@ -43,7 +44,7 @@ export async function policyReviewRuntime(store: Store, root: string, mode: 'com
 	return { ctx, review, requests: fixtureRequests, async dispose() { await review.dispose(); const agents = ctx.agents.roots().length; await ctx.fiber.dispose(); return { agents, contextDisposed: true }; } };
 }
 
-export function registerPolicyReviewAdapter(ctx: Context, store: Store, mode: 'complete' | 'unknown' | 'hang' | 'no_tools' | 'wrong_answer' | 'forbidden' = 'complete') {
+export function registerPolicyReviewAdapter(ctx: Context, store: Store, mode: PolicyReviewMode = 'complete') {
 	const requests: Array<{ sessionId: string | undefined; system: string | undefined; tools: unknown; messages: unknown }> = [];
 	class Adapter extends LlmAdapter {
 		async listModels(provider: string) { return [{ provider, id: 'offline-v1', name: '固定响应（离线验证）' }]; }
@@ -51,20 +52,22 @@ export function registerPolicyReviewAdapter(ctx: Context, store: Store, mode: 'c
 		async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
 			const row = store.snapshot().attempts.findLast(row => row.sessionId === options.sessionId);
 			if (row?.state !== 'in_flight') throw new Error('Daily request must reserve before dispatch');
-			if (mode === 'hang') {
+			const index = requests.filter(row => row.sessionId === options.sessionId).length;
+			if (mode === 'hang' || (mode === 'hang_after_read' && index === 2)) {
 				requests.push({ sessionId: options.sessionId, system: options.system, tools: options.tools, messages: JSON.parse(JSON.stringify(options.messages)) });
 				yield { type: 'block-start', index: 0, blockType: 'text' }; yield { type: 'text-delta', index: 0, text: 'partial response' };
 				await new Promise<void>(resolve => { if (options.signal?.aborted) resolve(); else options.signal?.addEventListener('abort', () => resolve(), { once: true }); }); return;
 			}
-			const index = requests.filter(row => row.sessionId === options.sessionId).length;
 			requests.push({ sessionId: options.sessionId, system: options.system, tools: options.tools, messages: JSON.parse(JSON.stringify(options.messages)) });
 			const binding = options.sessionId ? store.policyRunBinding(options.sessionId) : undefined;
 			const fixed = binding?.batch.authorization.evaluationSpec ? evaluationCase(binding.batch.authorization.evaluationSpec, binding.entry.run.conditions) : undefined;
 			const bound = options.sessionId ? store.policySessionRun(options.sessionId) : undefined;
 			const source = fixed ? binding!.entry.run.conditions.files[0] : bound?.conditions.sourceSnapshot ? bound.conditions.files[0] : undefined;
-			if (source && index >= 2 && !JSON.stringify(options.messages).includes(`${source.path}:1:`)) throw new Error('Frozen repository read did not reach continuation');
+			const reads = mode === 'missing_read' ? fixed!.reads.slice(0, 1) : fixed?.reads ?? [source?.path ?? 'sample.js'];
+			if (index > reads.length && reads.some(path => !JSON.stringify(options.messages).includes(`${path}:1:`))) throw new Error('Frozen repository read did not reach continuation');
 			if (fixed && mode === 'wrong_answer') fixed.answer.claims[0].value = 'controlled incorrect result';
-			const block = mode !== 'no_tools' && index < 2 ? { type: 'tool-call' as const, id: ToolCallId(`daily-${index}`), name: mode === 'forbidden' ? 'shell' : index ? 'rsi_read' : 'rsi_search', arguments: JSON.stringify(index ? { path: source?.path ?? 'sample.js' } : { query: source ? 'export' : 'total' }) } : { type: 'text' as const, text: fixed ? JSON.stringify(fixed.answer) : source ? '已读取已确认的仓库快照（固定响应验证）。' : 'total adds 1. Source: sample.js:1-3.' };
+			if (fixed && mode === 'wrong_citation') fixed.answer.claims[0].citations = [{ path: 'fixtures/repository-qa-v1/unused.js', startLine: 2, endLine: 2 }];
+			const block = mode !== 'no_tools' && index <= reads.length ? { type: 'tool-call' as const, id: ToolCallId(`daily-${index}`), name: mode === 'forbidden' ? 'shell' : index ? 'rsi_read' : 'rsi_search', arguments: JSON.stringify(index ? { path: reads[index - 1] } : { query: source ? 'export' : 'total' }) } : { type: 'text' as const, text: fixed ? JSON.stringify(fixed.answer) : source ? '已读取已确认的仓库快照（固定响应验证）。' : 'total adds 1. Source: sample.js:1-3.' };
 			yield { type: 'block-start', index: 0, blockType: block.type };
 			if (block.type === 'text') yield { type: 'text-delta', index: 0, text: block.text };
 			else yield { type: 'tool-call-delta', index: 0, id: block.id, name: block.name, argumentsDelta: block.arguments };

@@ -1,5 +1,7 @@
 # Repository Evidence Policy Contract
 
+2026-10-16 question increment: [fixed source QA](POLICY-SOURCE-QA-CONTRACTS.md) adds separately selected symbol, call-chain and error-path checks for one reviewed exact three-file manifest. It reuses source-bound generation/batch/receipt/session ownership and the live executor. Unsupported snapshots fail before evaluation authorization; old first-line/casebook records retain their original semantics. No automatic ground-truth inference or paid route is added.
+
 2026-10-16 increment: [sidebar authorization](POLICY-AUTHORIZATION-CONTRACTS.md) adds exact source-bound candidate generation, a separately confirmed fixed source evaluation and explicit cancellation using existing v7 records. The original developer gate below remains supported; its SQLite handoff is not used by the live sidebar. The new evaluator checks complete source/tool/citation transport, not arbitrary repository semantics. The proposer view remains independent of selected source and evaluation answers.
 
 Status: generation, sealing and separately authorized fixed evaluation implemented as developer gates, 2026-10-15. The executable definitions are [policy-contracts.ts](../src/policy-contracts.ts), [generation contracts](../src/policy-generation-contracts.ts) and [policy-evaluation.ts](../src/policy-evaluation.ts). Two independent native Agent children share one persisted batch per fixed case. Explicit sidebar review, workspace selection/restoration and dedicated session binding are defined below. Paid provider routes remain future work.

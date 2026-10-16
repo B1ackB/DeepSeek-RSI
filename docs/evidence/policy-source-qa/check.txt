@@ -1,0 +1,123 @@
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 check
+> npm run typecheck && npm test && npm run build
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.client.json
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 test
+> node --test tests/*.test.ts
+
+✔ comparison freezes inputs, compiles both artifacts, preserves unknown usage and never selects ACTIVE (413.783209ms)
+✔ trusted scenarios extend matching and compilation without host decision authority (0.300834ms)
+✔ frontend preferences stay scoped, ask at most two bounded batches, and freeze task overrides (3.49525ms)
+✔ version 2 migration preserves receipts, rolls back invalid data, and persists preference commands atomically (9.01575ms)
+✔ G1 native observation, explicit one-shot analysis, scope guards, cancellation and restart (493.754ms)
+✔ real Harness Skill registry pins text and resources across durable bindings (140.726209ms)
+✔ real Harness monotonic guard blocks a later scope-local tool and leaves daily tools available (5.896542ms)
+✔ Harness structured cancellation remains readable without leaking raw objects or credentials (1.56375ms)
+✔ candidate rejects missing, corrupt, duplicate and unauthorized replacements while preserving complete baseline (43.895542ms)
+✔ generation budget, interruption and v4 migration preserve authorization and uncertain usage (36.62025ms)
+✔ script candidates fail closed when Docker cannot start and never execute on the host (61.582042ms)
+✔ v5 migration preserves old tasks and preferences while adding scenario defaults (22.103292ms)
+✔ main flow gates real Harness dispatch, seals exact candidate, separates usage, and links an old session (936.452916ms)
+✔ sidebar separately authorizes exact source generation and two independent complete tool tasks with one ledger (1945.228875ms)
+✔ generation authority is atomic, rejects stale/conflicting scope, and cancellation retains unknown usage without replay (89.176459ms)
+✔ shared request and token limits, unknown usage and tool-free results cannot qualify a source evaluation (2110.434125ms)
+✔ evaluation authorization rejects changed lineage/source/budget and active choice; pending stop and disposal release owned processes (393.401792ms)
+✔ process loss after committed generation or evaluation intent interrupts without replay and preserves historical raw rows (412.389458ms)
+✔ unknown or invalid generator output never authorizes evaluation, and loss before launch keeps an unreplayed exact receipt (162.242209ms)
+✔ source authorization and independent evaluation receipts fail closed on corruption without clearing historical rows (384.372167ms)
+✔ an IPC worker refuses an unowned cwd without deleting its files (129.91225ms)
+✔ synchronous child startup failure retains authorization but releases its recorded owned directory (52.959792ms)
+✔ a sealed source lost after evaluation authorization blocks the first adapter dispatch without fallback (187.148333ms)
+✔ stopping during home preparation or failing PID persistence releases every owned resource before returning (227.390625ms)
+✔ sealed source QA runs three separately authorized full-task comparisons against exact host facts without proposer leakage (1097.596083ms)
+✔ source QA rejects unsupported or changed complete manifests and answer overrides before evaluation authority (195.948958ms)
+✔ source QA distinguishes wrong facts/citations from missing reads, tool-free results, limits and unknown usage (2551.600209ms)
+✔ QA receipt/spec corruption fails closed, authorization-only restart never replays, and lost source blocks dispatch (211.484625ms)
+✔ source QA controller loss after search/read preserves exact case, unknown usage and old rows without replay (408.994834ms)
+✔ six fixed complete-task cases run both isolated children in one durable batch per case (4444.160375ms)
+✔ one cumulative batch budget limits the candidate and can stop before its process is launched (1040.433375ms)
+✔ unknown usage on either side persists, stops the batch and cannot be resumed by reopening authorization (733.737708ms)
+✔ child loss on either side recovers shared reservations and resource ownership without replay (719.4655ms)
+✔ wrong facts and citations fail fixed checks, and a tool-free correct answer cannot pass infrastructure (1447.471083ms)
+✔ cancel and batch deadline stop a hanging candidate, retain baseline and reap both workers (2020.873792ms)
+✔ fixed evaluator rejects changed cases and missing, reassigned or unclean execution evidence (475.231875ms)
+✔ handoff requires an existing batch, preserves active state only during an explicit handoff and does not alter old v7 rows (14.439584ms)
+✔ missing cleanup receipt blocks the next child and retains explicit resource ownership for inspection (246.385708ms)
+✔ controller process loss closes its native child through EOF and restart retains unresolved cleanup without replay (405.145584ms)
+✔ native proposer sees only baseline/requirements/development, seals scoped content and records distinct generation ownership (64.256084ms)
+✔ scope violations, malformed/unchanged responses, partial/failed streams and unknown usage cannot become candidates (480.260583ms)
+✔ authorization is one-shot, revision guarded, exact-input bound and rejects unapproved configuration (41.715542ms)
+✔ exact generator envelope and ownership guards reject tools, history, route changes and stale writes before dispatch (34.020291ms)
+✔ sealed generation gets a separate fixed evaluation authorization and preserves lineage and cumulative policy accounting (1120.474ms)
+✔ fresh generation can extend a sealed candidate without altering the baseline or previous provenance (43.272209ms)
+✔ restart retains append-only partial output, unknown reservations and spent identity without sealing or replay (21.828667ms)
+✔ cancellation and deadline dispose the native proposer and retain unknown usage without a candidate (288.116708ms)
+✔ failed filesystem publication keeps response/costs without a committed candidate; a new authorization can recover (78.775583ms)
+✔ adding generation storage preserves old v7 rows and invalid generation records fail without rewriting history (29.319458ms)
+✔ policy objects seal canonical bytes without replacement and preserve parent provenance (129.816042ms)
+✔ policy object reads reject missing, symlinked, noncanonical and oversized files (7.80175ms)
+✔ populated v6 migration appends tables and retains every historical row and artifact byte (21.667375ms)
+✔ invalid v6 data rolls back schema and new tables without rewriting old rows (21.522084ms)
+✔ batch authorization is immutable, exact-version bound and cannot reuse spending identities (72.657542ms)
+✔ policy and batch accounting covers both complete streams and cumulative request/token stops (133.576042ms)
+✔ unknown and conflicting totals block both sides, survive recovery and do not poison unrelated owners (230.485833ms)
+✔ restart interrupts authorized and in-flight batches, retains reservations and permits only late usage settlement (71.267459ms)
+✔ policy observer rejects missing binding, changed envelopes, legacy ownership and cancelled batches before dispatch (35.654416ms)
+✔ settled not-sent reservations consume a slot without inventing tokens; in-flight usage cannot authorize parallel dispatch (29.21275ms)
+✔ persistent batch and run deadlines and backward clocks reject dispatch without a new reservation (25.267834ms)
+✔ review is free; adoption binds exact pair/batch/evidence, receipts survive restart and ABA conflicts (1057.994459ms)
+✔ restoration requires a same-workspace explicit approval; rejected commands cannot alter active choice (25.087125ms)
+✔ restoration survives a damaged other object while selected bytes and original evidence remain mandatory (224.876208ms)
+✔ incomplete or changed evidence, unknown usage and corrupt objects block evaluated adoption (182.053125ms)
+✔ complete but incorrect full-task results remain a visible user decision (798.656583ms)
+✔ native first requests retain old bindings; new sessions inherit adoption/restore and scoped tools are enforced (128.110541ms)
+✔ native JSONL resume uses the original policy, does not replay, and missing binding fails before publication (74.833375ms)
+✔ native UI-style resume preserves the cap and original binding before the session first request (88.529292ms)
+✔ route/tools/output changes cannot dispatch; unknown usage blocks further daily work and keeps batch accounting separate (50.479417ms)
+✔ choice/receipt commit atomically, lost replies and pre-Agent interruptions recover without model replay (199.005125ms)
+✔ interrupted daily requests retain original bindings and unknown usage; recovery cannot replay or restart their budget (78.0405ms)
+✔ workspace attachment failure keeps the exact session intent and retries without creating or running another Agent (44.234584ms)
+✔ v6/v7 additive upgrade preserves old terminal bytes and validates new binding references (34.605083ms)
+✔ real Git checkout captures exact dirty, untracked and explicitly selected ignored bytes without writing source or index (225.841209ms)
+✔ sensitive paths fail the complete selection before opening any selected file; common secret content never leaves capture (49.15ms)
+✔ scope rejects traversal, directories, aliases, links, special files, invalid text and bounded-size overflow (66.098125ms)
+✔ abort closes acquired descriptors and a mid-capture edit fails without a partial object; a fresh capture recovers (47.94925ms)
+✔ sealed snapshot verification and publication reject corruption without replacing targets, including expanded JSON (203.518208ms)
+✔ abrupt publication loss leaves no authority: retry verifies complete objects and never sweeps unknown staging files (439.665583ms)
+✔ snapshot conditions bind exact provenance and bytes; historical digests and persisted v7 JSON remain unchanged (44.78475ms)
+✔ full native fixed task reads captured source after the worktree is gone, keeps scope/accounting and releases resources (475.750875ms)
+✔ sidebar commands preview full exact bytes for free, require confirmation, and exclude sensitive selections (1169.967ms)
+✔ changed worktree, exact digest, active choice, global revision and workspace conflicts cannot seal a stale preview (65.665625ms)
+✔ old unused sessions retain their original source through newer snapshots, restart and later worktree edits (293.714ms)
+✔ capture rechecks state after async reads, and disposal aborts owned capture work before closing descriptors (31.653792ms)
+✔ publication followed by transaction failure leaves preview recoverable; lost replies and provisioning failure reuse exact intent (126.927584ms)
+✔ process loss after session intent commits recovers the exact binding; missing/corrupt objects never fall back (255.875167ms)
+✔ new source persistence preserves legacy session bytes and rejects corrupt provenance without clearing history (122.813958ms)
+✔ policy content and frozen conditions reject authority fields, templates, byte excess, traversal and mutation (4.979083ms)
+✔ snapshot tools never access host paths and enforce argument, call and result limits (0.9845ms)
+✔ native SDK completes baseline, candidate and restored tasks in independent owned profiles with durable pre-dispatch accounting (1371.444541ms)
+✔ native SDK denies late scoped tools and out-of-snapshot reads without executing forbidden effects (622.17925ms)
+✔ native SDK stops before dispatch for request/token caps, unknown usage and changed model route (1245.152042ms)
+✔ native SDK preserves provider failures, truncated streams and crash recovery without replay (673.5055ms)
+✔ native SDK cancellation and external deadline interrupt a hanging provider and reap the owned process (554.735458ms)
+✔ native Agent Loop retry records two attempts and links the actual retry event without network (57.854125ms)
+✔ Web commands persist, reject stale/conflicting writes, and roll back failure (1111.490666ms)
+✔ unknown requests survive restart, block RSI, and do not block daily sessions (10.506042ms)
+✔ stream ledger separates owners, deduplicates usage and pauses on conflicting or missing usage (21.252417ms)
+ℹ tests 99
+ℹ suites 0
+ℹ pass 99
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11821.622958
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 build
+> node scripts/build.mjs
+
