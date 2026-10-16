@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import type { G1Snapshot } from '../g1-contracts.ts';
 import type { createPanelModel } from './model.ts';
 import { policySessionId, type PolicySource } from '../policy-review-contracts.ts';
+import { PolicyQaEditor } from './policy-qa.tsx';
 import { PolicyAuthoring } from './policy-authoring.tsx';
 
 type Model = ReturnType<typeof createPanelModel>;
-function PolicySources({ snapshot, workspaceId, disabled, command, policySource, openSession }: { snapshot: G1Snapshot; workspaceId: string; disabled: boolean; command: Model['command']; policySource: Model['policySource']; openSession: (id: string) => Promise<void> }) {
+function PolicySources({ snapshot, workspaceId, disabled, command, policySource, policyQa, openSession }: { snapshot: G1Snapshot; workspaceId: string; disabled: boolean; command: Model['command']; policySource: Model['policySource']; policyQa: Model['policyQa']; openSession: (id: string) => Promise<void> }) {
 	const [paths, setPaths] = useState(''); const [selected, setSelected] = useState('');
 	const [source, setSource] = useState<PolicySource | null>(null); const [confirm, setConfirm] = useState(false);
 	const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
@@ -48,11 +49,12 @@ function PolicySources({ snapshot, workspaceId, disabled, command, policySource,
 			{!exact && <p>当前采纳版本已改变，请重新预览。</p>}
 			{source.status === 'preview' ? <button disabled={blocked || !exact} onClick={() => setConfirm(true)}>封存此预览</button> : <button disabled={blocked || !exact} onClick={() => void run('policy_source_session')}>使用此快照创建只读会话</button>}
 			{confirm && source.status === 'preview' && <div role="group" aria-label="确认封存快照"><p>仅封存上方已展示的文件与文本。宿主将复采核对；源码或策略变化后需重新预览。封存和创建会话均不会发送模型请求。</p><button disabled={blocked || !exact} onClick={() => void run('policy_seal')}>确认封存快照</button><button disabled={busy} onClick={() => setConfirm(false)}>取消封存</button></div>}
+			<PolicyQaEditor key={`qa-${source.id}`} snapshot={snapshot} source={source} disabled={disabled || busy} command={command} policyQa={policyQa} />
 			<PolicyAuthoring key={source.id} snapshot={snapshot} source={source} disabled={disabled || busy} command={command} />
 		</>}
 	</section>;
 }
-export function PolicyReview({ snapshot, workspaceId, sessionId, disabled, command, policySource, openSession }: { snapshot: G1Snapshot; workspaceId: string | null; sessionId: string | null; disabled: boolean; command: Model['command']; policySource: Model['policySource']; openSession: (id: string) => Promise<void> }) {
+export function PolicyReview({ snapshot, workspaceId, sessionId, disabled, command, policySource, policyQa, openSession }: { snapshot: G1Snapshot; workspaceId: string | null; sessionId: string | null; disabled: boolean; command: Model['command']; policySource: Model['policySource']; policyQa: Model['policyQa']; openSession: (id: string) => Promise<void> }) {
 	const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
 	const [confirmation, setConfirmation] = useState<{ label: string; kind: 'policy_adopt' | 'policy_restore'; payload: Parameters<Model['command']>[1] } | null>(null);
 	const choices = snapshot.policy.choices.filter(row => row.workspaceId === workspaceId); const active = choices.at(-1);
@@ -73,7 +75,7 @@ export function PolicyReview({ snapshot, workspaceId, sessionId, disabled, comma
 		<p>{active ? `新只读会话默认：第 ${choices.indexOf(active) + 1} 次选择${active.kind === 'restore' ? '（恢复旧版）' : ''}` : '尚未明确采纳版本'}</p>
 		<p>{current ? `当前只读会话：会话 ${sessions.indexOf(current) + 1} · 第 ${choices.findIndex(row => row.id === current.choiceId) + 1} 次选择` : '当前会话：普通会话'}</p>
 		{current && <p>当前源码：{current.sourceId ? `仓库快照 ${snapshot.policy.sources.filter(row => row.workspaceId === workspaceId).findIndex(row => row.id === current.sourceId) + 1}` : snapshot.policy.reviews.find(row => row.batchId === current.batchId)?.sourceId ? '评测冻结源码' : '评测冻结示例'}</p>}
-		{workspaceId && <PolicySources snapshot={snapshot} workspaceId={workspaceId} disabled={blocked} command={command} policySource={policySource} openSession={openSession} />}
+		{workspaceId && <PolicySources snapshot={snapshot} workspaceId={workspaceId} disabled={blocked} command={command} policySource={policySource} policyQa={policyQa} openSession={openSession} />}
 		{snapshot.policy.reviews.length === 0 && <p>尚无可审阅的成对评测。</p>}
 		{snapshot.policy.reviews.filter(review => !review.workspaceId || review.workspaceId === workspaceId).map((review, index) => <details key={review.batchId}>
 			<summary>评测 {index + 1} · {{ passed: '固定检查通过', failed: '质量检查未通过', incomplete: '执行不完整', unevaluated: '尚未评测' }[review.status]}</summary>

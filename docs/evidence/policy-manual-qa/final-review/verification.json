@@ -1,0 +1,64 @@
+{
+  "status": "passed",
+  "base": "8f62c0907c21bea48fb36b5e31c2b9f1dddcc802",
+  "preservedHistoricalAndFixtureFiles": 150,
+  "priorManualEvidenceFilesUnchanged": 11,
+  "harnessHeadAndPatchUnchanged": true,
+  "unchangedTablesAcrossRestart": {
+    "policy_versions": 3,
+    "policy_generations": 2,
+    "policy_batches": 4,
+    "policy_choices": 1,
+    "policy_sessions": 1,
+    "policy_sources": 1,
+    "policy_qa_packs": 2,
+    "attempts": 28
+  },
+  "manualQuestions": [
+    {
+      "caseId": "symbol",
+      "requests": 6,
+      "totalTokens": 90,
+      "sameConditions": true,
+      "independentPids": [
+        5462,
+        5463
+      ]
+    },
+    {
+      "caseId": "call-chain",
+      "requests": 8,
+      "totalTokens": 120,
+      "sameConditions": true,
+      "independentPids": [
+        5464,
+        5465
+      ]
+    },
+    {
+      "caseId": "error-path",
+      "requests": 6,
+      "totalTokens": 90,
+      "sameConditions": true,
+      "independentPids": [
+        5466,
+        5470
+      ]
+    }
+  ],
+  "syntheticTokensIncludingSeedAndGeneration": 416,
+  "paidRequests": 0,
+  "ownedHostsAbsent": [
+    {
+      "pid": 5431,
+      "port": 58674
+    },
+    {
+      "pid": 5547,
+      "port": 59020
+    }
+  ],
+  "ownedEvaluationWorkersAbsent": 8,
+  "ownedWorkerHomesRemoved": 8,
+  "privateFinalHome": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-manual-qa-Wedkq0"
+}

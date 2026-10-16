@@ -21,6 +21,7 @@ export async function apply(ctx: Context) {
 		try { await access(join(workspace, path)); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; await writeFile(join(workspace, path), content, { flag: 'wx', mode: 0o600 }); }
 	}
 	await ctx.workspaceRegistry.create(join(process.env.DSH_HOME, 'workspace'), '仓库证据策略隔离验证');
+	if (process.env.RSI_POLICY_MANUAL_QA_REPOSITORY) await ctx.workspaceRegistry.create(process.env.RSI_POLICY_MANUAL_QA_REPOSITORY, '真实仓库人工问答验证');
 	await mkdir(join(process.env.DSH_HOME, 'alternate'), { recursive: true });
 	await ctx.workspaceRegistry.create(join(process.env.DSH_HOME, 'alternate'), '另一个隔离工作区');
 	ctx.effect(() => ctx.connection.rpc.handle('/rsi-policy-fixture', async (endpoint, payload) => {

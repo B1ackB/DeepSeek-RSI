@@ -12,7 +12,7 @@ export const inject = ['connection', 'slots', 'sessions'];
 export function apply(ctx: Context) {
 	const model = createPanelModel(ctx.get('connection') as ConnectionHandle);
 	ctx.effect(() => () => model.dispose());
-	ctx.slots.inject('shell.panel', () => ctx.slots.register({ name: 'shell.panel', id: 'rsi', order: 0, label: 'RSI', inject: (): PanelInjected => ({ hooks: { rsi: model.source }, command: model.command, catalog: model.catalog, policySource: model.policySource, openSession: async (id: string) => { const sessions = ctx.get('sessions') as ISessions; await sessions.refresh(); sessions.open(id as Parameters<ISessions['open']>[0]); } }) }, RsiPanel));
+	ctx.slots.inject('shell.panel', () => ctx.slots.register({ name: 'shell.panel', id: 'rsi', order: 0, label: 'RSI', inject: (): PanelInjected => ({ hooks: { rsi: model.source }, command: model.command, catalog: model.catalog, policySource: model.policySource, policyQa: model.policyQa, openSession: async (id: string) => { const sessions = ctx.get('sessions') as ISessions; await sessions.refresh(); sessions.open(id as Parameters<ISessions['open']>[0]); } }) }, RsiPanel));
 	const connection = ctx.get('connection') as ConnectionHandle;
 	const sessions = ctx.get('sessions') as ISessions;
 	async function call(endpoint: string, payload: unknown, signal?: AbortSignal): Promise<Snapshot> {

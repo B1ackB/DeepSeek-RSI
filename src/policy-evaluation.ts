@@ -5,8 +5,9 @@ import type { Store } from './store.ts';
 import { POLICY_AUTHORITY, policyTools } from './policy.ts';
 import { sourceQuestion } from './policy-source-qa.ts';
 
-const citation = z.strictObject({ path: z.string(), startLine: z.number().int().min(1), endLine: z.number().int().min(1) });
-export const policyAnswerSchema = z.strictObject({ status: z.enum(['sufficient', 'insufficient']), claims: z.array(z.strictObject({ fact: z.string(), value: z.string(), citations: z.array(citation).max(8) })).min(1).max(8) });
+import { policyAnswerSchema } from './policy-qa-inputs.ts';
+import { manualSourceQuestion } from './policy-manual-qa.ts';
+export { policyAnswerSchema } from './policy-qa-inputs.ts';
 const cases = {
 	symbol: { question: 'Explain total.', files: [{ path: 'sample.js', content: 'export function total(value) {\n\treturn value + 1;\n}' }], facts: [{ fact: 'total', value: 'adds 1', sources: [{ path: 'sample.js', startLine: 1, endLine: 3 }] }], reads: ['sample.js'] },
 	'call-chain': { question: 'Explain how checkout reaches total.', files: [{ path: 'checkout.js', content: "import { total } from './sample.js';\nexport const checkout = value => total(value);" }, { path: 'sample.js', content: 'export const total = value => value + 1;' }], facts: [{ fact: 'checkout', value: 'calls total, which adds 1', sources: [{ path: 'checkout.js', startLine: 1, endLine: 2 }, { path: 'sample.js', startLine: 1, endLine: 1 }] }], reads: ['checkout.js', 'sample.js'] },
@@ -31,12 +32,13 @@ export function sourceEvaluation(sourceId: string, input: unknown, caseId?: unkn
 	const answer = { status: 'sufficient', claims: [{ fact: 'source-line', value: file.content.split('\n')[0], citations: [{ path: file.path, startLine: 1, endLine: 1 }] }] };
 	return { spec: { evaluator: 'repository-source-v1' as const, sourceId, digest: policyDigest([conditions, answer]) }, conditions, answer, reads: [file.path] };
 }
-export function evaluationCase(spec: NonNullable<PolicyBatchInput['evaluationSpec']>, conditions: unknown) {
+export function evaluationCase(spec: NonNullable<PolicyBatchInput['evaluationSpec']>, conditions: unknown, manualPack?: unknown) {
+	if (spec.evaluator === 'repository-source-qa-manual-v1') return manualSourceQuestion(spec.packId, manualPack, spec.sourceId, conditions, spec.caseId);
 	return spec.evaluator === 'repository-evidence-v1' ? policyCase(spec.caseId) : sourceEvaluation(spec.sourceId, conditions, spec.evaluator === 'repository-source-qa-v1' ? spec.caseId : undefined);
 }
-export function validatePolicyEvaluation(input: PolicyBatchInput) {
+export function validatePolicyEvaluation(input: PolicyBatchInput, manualPack?: unknown) {
 	if (!input.evaluationSpec) return;
-	const fixed = evaluationCase(input.evaluationSpec, input.runs[0].run.conditions);
+	const fixed = evaluationCase(input.evaluationSpec, input.runs[0].run.conditions, manualPack);
 	if (policyDigest(input.evaluationSpec) !== policyDigest(fixed.spec) || input.runs.length !== 2 || input.runs.some(row => row.run.conditionsDigest !== policyDigest(fixed.conditions))) throw fault('policy_evaluator_changed', 'Evaluation case, conditions or fixed checker differs from authorization');
 }
 export function authorizeGeneratedPolicyEvaluation(store: Store, generationId: string, input: unknown) {
@@ -61,10 +63,10 @@ function strings(value: unknown): string[] {
 }
 const toolResult = z.object({ message: z.object({ content: z.array(z.object({ type: z.literal('tool-result'), toolCallId: z.string(), isError: z.boolean(), content: z.array(z.object({ type: z.literal('text'), text: z.string().min(1) })).min(1) })).min(1) }) });
 const toolCall = z.object({ callId: z.string(), name: z.string(), arguments: z.string() });
-export function evaluatePolicyBatch(batch: PolicyBatch, attempts: Attempt[]) {
-	validatePolicyEvaluation(batch.authorization);
+export function evaluatePolicyBatch(batch: PolicyBatch, attempts: Attempt[], manualPack?: unknown) {
+	validatePolicyEvaluation(batch.authorization, manualPack);
 	if (!batch.authorization.evaluationSpec) throw fault('policy_evaluator_missing', 'Legacy batch has no fixed evaluator authorization');
-	const fixed = evaluationCase(batch.authorization.evaluationSpec, batch.authorization.runs[0].run.conditions);
+	const fixed = evaluationCase(batch.authorization.evaluationSpec, batch.authorization.runs[0].run.conditions, manualPack);
 	const sides = batch.authorization.runs.map(({ run }) => {
 		const evidence = batch.evidence?.find(row => row.runId === run.runId); const result = evidence?.result;
 		const rows = attempts.filter(row => row.owner === 'rsi' && row.ownerId === batch.authorization.id && row.sessionId === run.runId);

@@ -385,6 +385,7 @@ export function applyG1(ctx: Context, store: Store, config: G1Config, requestOwn
 	ctx.effect(() => ctx.connection.rpc.handle('/rsi', async (endpoint, payload, signal) => {
 		try {
 			if (endpoint === 'catalog') { const p = z.strictObject({ workspaceId: z.string().min(1), sessionId: z.string().min(1).nullable() }).parse(payload); return { ok: true, value: await catalog(p.workspaceId, p.sessionId) }; }
+			if (endpoint === 'policy_qa') return { ok: true, value: policyReview.qa(payload) };
 			if (endpoint === 'policy_source') return { ok: true, value: policyReview.source(payload) };
 			if (endpoint === 'command') return { ok: true, value: { receipt: await command(payload, signal), snapshot: snapshot() } };
 			if (endpoint === 'wait') {

@@ -5,7 +5,7 @@ import type {} from '@deepseek-ai/dsh-api-session-controller/types';
 import { SessionId } from '@deepseek-ai/dsh-session';
 import type { Store } from './store.ts';
 import { fault } from './contracts.ts';
-import { policyCommandSchema, policySessionId, policySourceRequestSchema } from './policy-review-contracts.ts';
+import { policyCommandSchema, policySessionId, policySourceRequestSchema, policyQaRequestSchema } from './policy-review-contracts.ts';
 import { captureRepository } from './policy-snapshot.ts';
 import { POLICY_AUTHORITY, policyTools } from './policy.ts';
 import { generatePolicyCandidate } from './policy-generation.ts';
@@ -87,6 +87,13 @@ export function applyPolicyReview(ctx: Context, store: Store) {
 		if (!row || !workspace || row.workspaceId !== workspace.id || row.workspacePath !== workspace.path) throw fault('policy_source_missing', '本工作区没有该快照预览');
 		return row;
 	}
+	function qa(input: unknown) {
+		const request = policyQaRequestSchema.parse(input); const pack = store.policyQaPack(request.packId, true);
+		if (!pack) throw fault('policy_qa_missing', '本工作区没有该问答包');
+		const row = source({ workspaceId: request.workspaceId, sourceId: pack.content.sourceId });
+		if (pack.workspaceId !== row.workspaceId || pack.workspacePath !== row.workspacePath) throw fault('policy_qa_missing', '问答包不属于当前工作区');
+		return pack;
+	}
 	async function execute(input: unknown, signal?: AbortSignal) {
 		const abort = AbortSignal.any([controller.signal, ...signal ? [signal] : []]); abort.throwIfAborted();
 		const cmd = policyCommandSchema.parse(input);
@@ -123,5 +130,5 @@ export function applyPolicyReview(ctx: Context, store: Store) {
 	}
 	function command(input: unknown, signal?: AbortSignal) { const work = execute(input, signal); jobs.add(work); return work.finally(() => jobs.delete(work)); }
 	async function dispose() { controller.abort(); await Promise.allSettled(jobs); await Promise.allSettled(pending.values()); await Promise.all([...handles.values()].map(handle => handle.dispose())); handles.clear(); }
-	return { command, source, open, dispose, whenIdle: () => Promise.allSettled(jobs) };
+	return { command, source, qa, open, dispose, whenIdle: () => Promise.allSettled(jobs) };
 }
