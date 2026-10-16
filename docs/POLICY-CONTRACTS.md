@@ -1,5 +1,7 @@
 # Repository Evidence Policy Contract
 
+2026-10-16 increment: [sidebar authorization](POLICY-AUTHORIZATION-CONTRACTS.md) adds exact source-bound candidate generation, a separately confirmed fixed source evaluation and explicit cancellation using existing v7 records. The original developer gate below remains supported; its SQLite handoff is not used by the live sidebar. The new evaluator checks complete source/tool/citation transport, not arbitrary repository semantics. The proposer view remains independent of selected source and evaluation answers.
+
 Status: generation, sealing and separately authorized fixed evaluation implemented as developer gates, 2026-10-15. The executable definitions are [policy-contracts.ts](../src/policy-contracts.ts), [generation contracts](../src/policy-generation-contracts.ts) and [policy-evaluation.ts](../src/policy-evaluation.ts). Two independent native Agent children share one persisted batch per fixed case. Explicit sidebar review, workspace selection/restoration and dedicated session binding are defined below. Paid provider routes remain future work.
 
 [Documentation](README.md) · [Pilot plan](EVOLUTION-PILOT-PLAN.md) · [Execution evidence](POLICY-REPORT.md) · [Persistence evidence](POLICY-PERSISTENCE-REPORT.md) · [Paired evaluation evidence](POLICY-COMPARISON-REPORT.md)

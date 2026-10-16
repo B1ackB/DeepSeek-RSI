@@ -10,6 +10,8 @@
 
 2026-10-16: [sidebar source selection](POLICY-SOURCE-UI-REPORT.md) appends `policy_sources` within unreleased SQLite 7 and optional `sourceId` on new session bindings. Preview, exact recapture/seal confirmation and source-bound session creation are separate commands. Old bindings/terminal rows remain unchanged; new source bodies/objects and exact receipts remain recoverable. No paid authorization is added.
 
+2026-10-16: [sidebar authorization](POLICY-AUTHORIZATION-CONTRACTS.md) adds exact source-bound generation, a separate fixed source-evaluation authorization and explicit stopping. Optional source metadata and receipts reuse existing v7 generation/batch/attempt tables without historical rewrites. Two native tool-task children use the host's single ledger through bounded IPC. The generator view stays independent of selected source and held-out evaluation material. Source transport checks are not arbitrary repository quality checks; no paid route is enabled.
+
 [Documentation](README.md) · [Development rules](../AGENTS.md)
 
 Historical update: 2026-09-08. G0 integration was implemented with executable definitions in `src/contracts.ts`; evidence and remaining limitations are in [G0-REPORT.md](G0-REPORT.md). Section 8 retains the first approved batch, not a renewable budget.

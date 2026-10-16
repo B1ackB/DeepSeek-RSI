@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
+await build({ entryPoints: ['src/policy-worker.ts'], outfile: 'dist/policy-worker.js', bundle: true, platform: 'node', format: 'esm', packages: 'external', target: 'node24' });
 await build({ entryPoints: ['src/index.ts'], outfile: 'dist/index.js', bundle: true, platform: 'node', format: 'esm', packages: 'external', target: 'node24' });
 await build({ entryPoints: ['src/scenarios/index.ts'], outfile: 'dist/scenarios.js', bundle: true, platform: 'node', format: 'esm', packages: 'external', target: 'node24' });
 execFileSync(process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.types.json'], { stdio: 'inherit' });

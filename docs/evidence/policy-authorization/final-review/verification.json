@@ -1,0 +1,43 @@
+{
+  "paidRequests": 0,
+  "harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+  "harnessPatchUnchanged": true,
+  "preservedHistoricalEvidenceFiles": 85,
+  "preservedPriorAuthorizationEvidenceFiles": 16,
+  "retainedFixtureHome": ".cache/policy-authorization-review-DnMmns",
+  "beforeRestartRowsUnchanged": {
+    "attempts": 23,
+    "policy_generations": 2,
+    "policy_batches": 2,
+    "policy_sessions": 5,
+    "policy_choices": 3,
+    "policy_sources": 3
+  },
+  "confirmedFixtureAttempts": 23,
+  "syntheticTokens": 341,
+  "pairedConditionsEqual": true,
+  "allBatchesPassed": true,
+  "ownedChildrenAbsent": [
+    48878,
+    48886,
+    48940,
+    48941
+  ],
+  "ownedChildHomesRemoved": true,
+  "hosts": [
+    {
+      "pid": 48906,
+      "port": 58879,
+      "processAbsent": true,
+      "portReleased": true
+    },
+    {
+      "pid": 48960,
+      "port": 59085,
+      "processAbsent": true,
+      "portReleased": true
+    }
+  ],
+  "browserErrors": [],
+  "startupSandboxLimitation": "Initial loopback listen denied with EPERM; same isolated fixture ran with local service permission."
+}

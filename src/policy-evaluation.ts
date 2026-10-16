@@ -21,9 +21,20 @@ export function policyCase(input: unknown) {
 	const answer = { status: id === 'insufficient' ? 'insufficient' : 'sufficient', claims: item.facts.map(row => ({ fact: row.fact, value: row.value, citations: row.sources })) };
 	return { spec, conditions, answer, reads: item.reads };
 }
+export function sourceEvaluation(sourceId: string, input: unknown) {
+	const original = policyConditionsSchema.parse(input);
+	if (!original.sourceSnapshot) throw fault('policy_source_invalid', 'Source evaluation needs a sealed repository snapshot');
+	const file = original.files[0];
+	const conditions = policyConditionsSchema.parse({ ...original, question: `Search and read ${file.path}. Return its exact first line with a line-1 citation. Return JSON: {status: sufficient, claims: [{fact: source-line, value: exact first line, citations: [{path, startLine, endLine}]}]}.` });
+	const answer = { status: 'sufficient', claims: [{ fact: 'source-line', value: file.content.split('\n')[0], citations: [{ path: file.path, startLine: 1, endLine: 1 }] }] };
+	return { spec: { evaluator: 'repository-source-v1' as const, sourceId, digest: policyDigest([conditions, answer]) }, conditions, answer, reads: [file.path] };
+}
+export function evaluationCase(spec: NonNullable<PolicyBatchInput['evaluationSpec']>, conditions: unknown) {
+	return spec.evaluator === 'repository-evidence-v1' ? policyCase(spec.caseId) : sourceEvaluation(spec.sourceId, conditions);
+}
 export function validatePolicyEvaluation(input: PolicyBatchInput) {
 	if (!input.evaluationSpec) return;
-	const fixed = policyCase(input.evaluationSpec.caseId);
+	const fixed = evaluationCase(input.evaluationSpec, input.runs[0].run.conditions);
 	if (policyDigest(input.evaluationSpec) !== policyDigest(fixed.spec) || input.runs.length !== 2 || input.runs.some(row => row.run.conditionsDigest !== policyDigest(fixed.conditions))) throw fault('policy_evaluator_changed', 'Evaluation case, conditions or fixed checker differs from authorization');
 }
 export function authorizeGeneratedPolicyEvaluation(store: Store, generationId: string, input: unknown) {
@@ -51,7 +62,7 @@ const toolCall = z.object({ callId: z.string(), name: z.string(), arguments: z.s
 export function evaluatePolicyBatch(batch: PolicyBatch, attempts: Attempt[]) {
 	validatePolicyEvaluation(batch.authorization);
 	if (!batch.authorization.evaluationSpec) throw fault('policy_evaluator_missing', 'Legacy batch has no fixed evaluator authorization');
-	const fixed = policyCase(batch.authorization.evaluationSpec.caseId);
+	const fixed = evaluationCase(batch.authorization.evaluationSpec, batch.authorization.runs[0].run.conditions);
 	const sides = batch.authorization.runs.map(({ run }) => {
 		const evidence = batch.evidence?.find(row => row.runId === run.runId); const result = evidence?.result;
 		const rows = attempts.filter(row => row.owner === 'rsi' && row.ownerId === batch.authorization.id && row.sessionId === run.runId);
@@ -68,7 +79,8 @@ export function evaluatePolicyBatch(batch: PolicyBatch, attempts: Attempt[]) {
 		const envelopes = evidence && strings(evidence.dispatch[0]?.messages).includes(run.conditions.question) && evidence.dispatch.every((row, index) => row.request === index + 1 && row.policyPresent && row.authorityPresent && row.system === `${POLICY_AUTHORITY}\n\n${run.policy.instructions}` && policyDigest(row.tools) === policyDigest(tools) && Buffer.byteLength(JSON.stringify([row.system, row.messages, row.tools])) <= run.conditions.budget.maxInputBytes);
 		const complete = batch.progress.find(row => row.runId === run.runId)?.status === 'completed' && z.object({ reason: z.object({ kind: z.literal('completed') }) }).safeParse(result?.events.at(-1)?.type === 'turn/end' ? result.events.at(-1)!.data : null).success;
 		const ledger = rows.length > 0 && rows.every(row => row.state === 'succeeded' && row.usageState === 'confirmed' && !row.diagnostic) && policyDigest(rows.map(row => row.attemptId)) === policyDigest(evidence?.dispatch.map(row => row.attemptId) ?? []);
-		const cleanup = evidence?.cleanup; const infrastructure = !!(identity && envelopes && complete && ledger && validHeaders && realTools && !evidence?.error && cleanup?.processExited && cleanup.agentsDisposed && cleanup.directoryRemoved && cleanup.forbiddenExecutions === 0);
+		const sourceProtocol = batch.authorization.evaluationSpec?.evaluator !== 'repository-source-v1' || (calls.some(row => row.success && row.data.name === 'rsi_search') && calls.some(row => row.success && row.data.name === 'rsi_read' && (() => { try { return policyDigest(JSON.parse(row.data.arguments)) === policyDigest({ path: run.conditions.files[0].path }); } catch { return false; } })()));
+		const cleanup = evidence?.cleanup; const infrastructure = !!(identity && envelopes && complete && ledger && validHeaders && realTools && sourceProtocol && !evidence?.error && cleanup?.processExited && cleanup.agentsDisposed && cleanup.directoryRemoved && cleanup.forbiddenExecutions === 0);
 		let answer: z.infer<typeof policyAnswerSchema> | undefined;
 		try { answer = policyAnswerSchema.parse(JSON.parse(result?.finalResponse ?? '')); } catch {}
 		const facts = !!answer && answer.status === fixed.answer.status && answer.claims.length === fixed.answer.claims.length && fixed.answer.claims.every(expected => answer!.claims.filter(row => row.fact === expected.fact && row.value === expected.value).length === 1);

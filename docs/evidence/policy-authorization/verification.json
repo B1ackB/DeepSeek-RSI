@@ -1,0 +1,94 @@
+{
+  "runtime": {
+    "node": "25.8.1",
+    "harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215"
+  },
+  "paidRequests": 0,
+  "finalHost": {
+    "pid": 41208,
+    "port": 56178,
+    "processAbsent": true,
+    "portReleased": true,
+    "browserClosed": true
+  },
+  "priorHosts": [
+    {
+      "pid": 35351,
+      "port": 54625,
+      "processAbsent": true,
+      "portReleased": true,
+      "browserClosed": true
+    },
+    {
+      "pid": 35449,
+      "port": 54940,
+      "processAbsent": true,
+      "portReleased": true,
+      "browserClosed": true
+    },
+    {
+      "pid": 38322,
+      "port": 55436,
+      "processAbsent": true,
+      "portReleased": true,
+      "browserClosed": true
+    }
+  ],
+  "children": [
+    {
+      "pid": 35329,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 35337,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 35372,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 35373,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 38346,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 38347,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 41230,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 41231,
+      "processAbsent": true,
+      "directoryRemoved": true
+    }
+  ],
+  "sourceBatches": 3,
+  "sameConditionsBothSides": true,
+  "unchangedOldSessions": true,
+  "sessions": 5,
+  "generations": 2,
+  "sources": 3,
+  "sqliteVersion": 7,
+  "attempts": 35,
+  "generationRequests": 2,
+  "evaluationRequests": 24,
+  "dailyRequests": 9,
+  "syntheticTokens": 521,
+  "allUsageConfirmed": true,
+  "retainedHome": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-authorization-ui-9x6Xyi",
+  "builtWorkerSha256": "8d38f2401f17aa9fe8187da67e486bcf1a484cb5446f0b99ad7389b4dd6effcc"
+}

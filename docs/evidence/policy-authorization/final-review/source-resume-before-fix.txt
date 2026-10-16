@@ -1,0 +1,25 @@
+✖ sidebar separately authorizes exact source generation and two independent complete tool tasks with one ledger (912.725291ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1114.936042
+
+✖ failing tests:
+
+test at tests/policy-authorization.test.ts:40:1
+✖ sidebar separately authorizes exact source generation and two independent complete tool tasks with one ledger (912.725291ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/tests/policy-authorization.test.ts:68:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /ENOENT|source|snapshot/i,
+    operator: 'throws',
+    diff: 'simple'
+  }

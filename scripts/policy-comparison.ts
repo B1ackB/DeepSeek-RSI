@@ -37,7 +37,8 @@ export async function executePolicyComparison(file: string, id: string, modesInp
 	file = resolve(file);
 	let store: Store | undefined = openStore(file, id);
 	const batch = store.policyBatch(id)!; const policyId = batch.authorization.policyId;
-	if (batch.status !== 'authorized' || batch.authorization.runtimeDigest !== runtime.runtimeDigest || !batch.authorization.evaluationSpec) { store.close(); throw new Error('Batch cannot start, change runtime or replay'); }
+	if (batch.status !== 'authorized' || batch.authorization.runtimeDigest !== runtime.runtimeDigest || batch.authorization.evaluationSpec?.evaluator !== 'repository-evidence-v1') { store.close(); throw new Error('Batch cannot start, change runtime or replay'); }
+	const caseId = batch.authorization.evaluationSpec.caseId;
 	const workers: Awaited<ReturnType<typeof runPolicyFixture>>[] = []; let error: string | null = null;
 	try {
 		for (const [index, entry] of batch.authorization.runs.entries()) {
@@ -45,7 +46,7 @@ export async function executePolicyComparison(file: string, id: string, modesInp
 			const active = store.policyBatch(id)!;
 			const deadline = Math.min(active.deadline, active.progress[index].startedAt! + entry.run.conditions.budget.maxDurationMs);
 			store.close(); store = undefined;
-			const worker = await runPolicyFixture(entry.run, modes[index], cancelSide === entry.side, { file, batchId: id, policyId, runtimeDigest: runtime.runtimeDigest, caseId: batch.authorization.evaluationSpec!.caseId, deadline });
+			const worker = await runPolicyFixture(entry.run, modes[index], cancelSide === entry.side, { file, batchId: id, policyId, runtimeDigest: runtime.runtimeDigest, caseId, deadline });
 			workers.push(worker);
 			store = openStore(file, id);
 			const evidence: PolicyEvidence = {

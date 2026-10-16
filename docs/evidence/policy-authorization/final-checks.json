@@ -1,0 +1,10 @@
+{
+  "documentationLinks": "passed",
+  "credentialLiteralScan": "passed",
+  "typescriptTabIndentation": "passed",
+  "gitDiffCheck": "passed",
+  "packDryRun": "passed",
+  "workerIncludedInPackage": true,
+  "privateHomesOrDatabasesIncluded": false,
+  "paidRequests": 0
+}

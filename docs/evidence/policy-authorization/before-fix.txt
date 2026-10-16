@@ -1,0 +1,43 @@
+✔ sidebar separately authorizes exact source generation and two independent complete tool tasks with one ledger (877.013292ms)
+✔ generation authority is atomic, rejects stale/conflicting scope, and cancellation retains unknown usage without replay (41.594ms)
+✔ shared request and token limits, unknown usage and tool-free results cannot qualify a source evaluation (1593.154375ms)
+✔ evaluation authorization rejects changed lineage/source/budget and active choice; pending stop and disposal release owned processes (194.126959ms)
+✖ process loss after committed generation or evaluation intent interrupts without replay and preserves historical raw rows (2569.522834ms)
+✔ unknown or invalid generator output never authorizes evaluation, and loss before launch keeps an unreplayed exact receipt (177.691ms)
+✔ source authorization and independent evaluation receipts fail closed on corruption without clearing historical rows (341.099333ms)
+✔ policy objects seal canonical bytes without replacement and preserve parent provenance (67.092625ms)
+✔ policy object reads reject missing, symlinked, noncanonical and oversized files (1.67525ms)
+✔ populated v6 migration appends tables and retains every historical row and artifact byte (17.487334ms)
+✔ invalid v6 data rolls back schema and new tables without rewriting old rows (4.75ms)
+✔ batch authorization is immutable, exact-version bound and cannot reuse spending identities (23.764209ms)
+✔ policy and batch accounting covers both complete streams and cumulative request/token stops (44.497042ms)
+✔ unknown and conflicting totals block both sides, survive recovery and do not poison unrelated owners (59.6725ms)
+✔ restart interrupts authorized and in-flight batches, retains reservations and permits only late usage settlement (41.381208ms)
+✔ policy observer rejects missing binding, changed envelopes, legacy ownership and cancelled batches before dispatch (21.641709ms)
+✔ settled not-sent reservations consume a slot without inventing tokens; in-flight usage cannot authorize parallel dispatch (21.47775ms)
+✔ persistent batch and run deadlines and backward clocks reject dispatch without a new reservation (20.896959ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6000.630792
+
+✖ failing tests:
+
+test at tests/policy-authorization.test.ts:113:1
+✖ process loss after committed generation or evaluation intent interrupts without replay and preserves historical raw rows (2569.522834ms)
+  AssertionError [ERR_ASSERTION]: Disconnected home /tmp/rsi-policy-evaluation-QTJw21 did not reach expected checkpoint
+      at until (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/tests/policy-authorization.test.ts:55:147)
+      at async TestContext.<anonymous> (file:///Users/black/Documents/ChatGPT/DeepSeek-RSI/tests/policy-authorization.test.ts:126:4)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }

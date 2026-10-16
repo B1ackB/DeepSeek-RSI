@@ -8,6 +8,8 @@ import { fault } from './contracts.ts';
 import { policyCommandSchema, policySessionId, policySourceRequestSchema } from './policy-review-contracts.ts';
 import { captureRepository } from './policy-snapshot.ts';
 import { POLICY_AUTHORITY, policyTools } from './policy.ts';
+import { generatePolicyCandidate } from './policy-generation.ts';
+import { executeAuthorizedPolicyBatch, policyExecutionRuntime } from './policy-execution.ts';
 import { restrictWorker } from './worker.ts';
 
 /** Explicit fixture-pilot entry. Ordinary sessions never acquire a project policy. */
@@ -16,6 +18,7 @@ export function applyPolicyReview(ctx: Context, store: Store) {
 	const scopes = new WeakSet<Context>();
 	const handles = new Map<string, AgentHandle>();
 	const pending = new Map<string, Promise<void>>();
+	const executions = new Map<string, AbortController>();
 	const jobs = new Set<Promise<unknown>>(); const controller = new AbortController();
 	function compose(scoped: Context, id: string, usedCalls: number) {
 		if (scopes.has(scoped)) return;
@@ -90,7 +93,7 @@ export function applyPolicyReview(ctx: Context, store: Store) {
 		const workspace = ctx.workspaceRegistry.list().find(row => row.id === cmd.payload.workspaceId);
 		if (!workspace) throw fault('workspace_missing', '请先登记工作区');
 		const workspacePath = workspace.path;
-		let receipt = store.businessReceipt(cmd);
+		let receipt = store.businessReceipt(cmd); const fresh = !receipt;
 		if (!receipt) {
 			store.checkPolicyCommand(cmd, workspacePath);
 			let captured;
@@ -102,12 +105,23 @@ export function applyPolicyReview(ctx: Context, store: Store) {
 			}
 			abort.throwIfAborted();
 			if (ctx.workspaceRegistry.list().find(row => row.id === cmd.payload.workspaceId)?.path !== workspacePath) throw fault('workspace_conflict', '工作区已变化，请重新预览');
-			receipt = store.policyCommand(cmd, workspacePath, captured);
+			receipt = store.policyCommand(cmd, workspacePath, captured, cmd.kind === 'policy_evaluate' ? policyExecutionRuntime() : undefined);
 		}
+		if (fresh && (cmd.kind === 'policy_generate' || cmd.kind === 'policy_evaluate')) launch(cmd.operationId, cmd.kind);
+		if (cmd.kind === 'policy_stop') executions.get(cmd.payload.jobId)?.abort();
 		if (cmd.kind === 'policy_session' || cmd.kind === 'policy_source_session' || cmd.kind === 'policy_open') await open(policySessionId(receipt.focusId!));
 		return receipt;
 	}
+	function launch(id: string, kind: 'policy_generate' | 'policy_evaluate') {
+		const own = new AbortController(); executions.set(id, own);
+		const signal = AbortSignal.any([controller.signal, own.signal]);
+		const task = (kind === 'policy_generate' ? generatePolicyCandidate(ctx, store, id, signal) : executeAuthorizedPolicyBatch(ctx, store, id, signal)).catch(error => {
+			if (kind === 'policy_generate') { const row = store.policyGeneration(id); if (row && ['authorized', 'running'].includes(row.status)) store.failPolicyGeneration(id, signal.aborted ? 'cancelled' : 'failed', row.response, error instanceof Error ? error.message.slice(0, 4000) : 'Generation failed'); }
+			else { store.stopPolicyBatch(id, signal.aborted ? 'cancelled' : 'failed'); try { store.evaluatePolicy(id); } catch {} }
+		}).finally(() => { executions.delete(id); jobs.delete(task); });
+		jobs.add(task);
+	}
 	function command(input: unknown, signal?: AbortSignal) { const work = execute(input, signal); jobs.add(work); return work.finally(() => jobs.delete(work)); }
 	async function dispose() { controller.abort(); await Promise.allSettled(jobs); await Promise.allSettled(pending.values()); await Promise.all([...handles.values()].map(handle => handle.dispose())); handles.clear(); }
-	return { command, source, open, dispose };
+	return { command, source, open, dispose, whenIdle: () => Promise.allSettled(jobs) };
 }

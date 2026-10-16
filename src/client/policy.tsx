@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { G1Snapshot } from '../g1-contracts.ts';
 import type { createPanelModel } from './model.ts';
 import { policySessionId, type PolicySource } from '../policy-review-contracts.ts';
+import { PolicyAuthoring } from './policy-authoring.tsx';
 
 type Model = ReturnType<typeof createPanelModel>;
 function PolicySources({ snapshot, workspaceId, disabled, command, policySource, openSession }: { snapshot: G1Snapshot; workspaceId: string; disabled: boolean; command: Model['command']; policySource: Model['policySource']; openSession: (id: string) => Promise<void> }) {
@@ -47,6 +48,7 @@ function PolicySources({ snapshot, workspaceId, disabled, command, policySource,
 			{!exact && <p>当前采纳版本已改变，请重新预览。</p>}
 			{source.status === 'preview' ? <button disabled={blocked || !exact} onClick={() => setConfirm(true)}>封存此预览</button> : <button disabled={blocked || !exact} onClick={() => void run('policy_source_session')}>使用此快照创建只读会话</button>}
 			{confirm && source.status === 'preview' && <div role="group" aria-label="确认封存快照"><p>仅封存上方已展示的文件与文本。宿主将复采核对；源码或策略变化后需重新预览。封存和创建会话均不会发送模型请求。</p><button disabled={blocked || !exact} onClick={() => void run('policy_seal')}>确认封存快照</button><button disabled={busy} onClick={() => setConfirm(false)}>取消封存</button></div>}
+			<PolicyAuthoring key={source.id} snapshot={snapshot} source={source} disabled={disabled || busy} command={command} />
 		</>}
 	</section>;
 }
@@ -70,12 +72,14 @@ export function PolicyReview({ snapshot, workspaceId, sessionId, disabled, comma
 		{error && <p role="alert">{error}</p>}
 		<p>{active ? `新只读会话默认：第 ${choices.indexOf(active) + 1} 次选择${active.kind === 'restore' ? '（恢复旧版）' : ''}` : '尚未明确采纳版本'}</p>
 		<p>{current ? `当前只读会话：会话 ${sessions.indexOf(current) + 1} · 第 ${choices.findIndex(row => row.id === current.choiceId) + 1} 次选择` : '当前会话：普通会话'}</p>
-		{current && <p>当前源码：{current.sourceId ? `仓库快照 ${snapshot.policy.sources.filter(row => row.workspaceId === workspaceId).findIndex(row => row.id === current.sourceId) + 1}` : '评测冻结示例'}</p>}
+		{current && <p>当前源码：{current.sourceId ? `仓库快照 ${snapshot.policy.sources.filter(row => row.workspaceId === workspaceId).findIndex(row => row.id === current.sourceId) + 1}` : snapshot.policy.reviews.find(row => row.batchId === current.batchId)?.sourceId ? '评测冻结源码' : '评测冻结示例'}</p>}
 		{workspaceId && <PolicySources snapshot={snapshot} workspaceId={workspaceId} disabled={blocked} command={command} policySource={policySource} openSession={openSession} />}
 		{snapshot.policy.reviews.length === 0 && <p>尚无可审阅的成对评测。</p>}
-		{snapshot.policy.reviews.map((review, index) => <details key={review.batchId}>
+		{snapshot.policy.reviews.filter(review => !review.workspaceId || review.workspaceId === workspaceId).map((review, index) => <details key={review.batchId}>
 			<summary>评测 {index + 1} · {{ passed: '固定检查通过', failed: '质量检查未通过', incomplete: '执行不完整', unevaluated: '尚未评测' }[review.status]}</summary>
 			<p>{review.question}</p><small>{review.limits}</small><small>冻结源码：{review.paths.join('、')}</small>
+			{review.executionStatus && <small>执行状态：{({ authorized: '已授权', running: '执行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断，不自动重跑' } as Record<string, string>)[review.executionStatus]}{review.cleanupPending ? ` · ${review.cleanupPending} 项清理证据不完整` : ''}</small>}
+			{review.workspaceId === workspaceId && ['authorized', 'running'].includes(review.executionStatus ?? '') && <button disabled={blocked} onClick={() => void run('policy_stop', { workspaceId: workspaceId!, target: 'evaluation', jobId: review.batchId })}>停止本批评测</button>}
 			{review.rationale && <p>修改理由：{review.rationale}</p>}
 			<p>固定响应只验证流程，不证明模型能力提升。质量结果由你判断；用量、权限或清理不完整时不能采纳。</p>
 			{review.error && <p role="alert">无法采纳：{review.error}</p>}

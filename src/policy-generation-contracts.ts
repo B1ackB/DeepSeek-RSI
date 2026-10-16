@@ -7,8 +7,9 @@ export const POLICY_GENERATOR_SYSTEM = 'Revise only the repository-evidence-poli
 export function policyGeneratorPrompt(baseline: PolicyContent, requirements: string) {
 	return { system: POLICY_GENERATOR_SYSTEM, input: JSON.stringify({ baseline, requirements, development: { id: 'repository-policy-development-v1', question: 'Locate normalizeUsername and cite how it transforms a name.', files: [{ path: 'names.js', content: 'export const normalizeUsername = name => name.trim().toLowerCase();' }], failure: 'The previous response guessed without inspecting source or citing lines.' } }) };
 }
-export const policyGenerationBudgetSchema = z.strictObject({ provider: z.literal('rsi-policy-generation-fixture'), model: z.literal('offline-v1'), maxRequests: z.literal(1), maxOutputTokens: integer.min(128).max(4096), maxInputBytes: integer.min(1024).max(32768), maxDurationMs: integer.min(100).max(30000) });
-export const policyGenerationInputSchema = z.strictObject({ id: z.uuid(), policyId: z.uuid(), baselineDigest: digest, requirements: z.string().trim().min(1).max(4000), budget: policyGenerationBudgetSchema });
+export { policyGenerationBudgetSchema } from './policy-inputs.ts';
+import { policyGenerationBudgetSchema, policySourceBindingSchema } from './policy-inputs.ts';
+export const policyGenerationInputSchema = z.strictObject({ id: z.uuid(), policyId: z.uuid(), baselineDigest: digest, requirements: z.string().trim().min(1).max(4000), budget: policyGenerationBudgetSchema, source: policySourceBindingSchema.optional() });
 export const policyGenerationAuthorizationSchema = policyGenerationInputSchema.extend({ inputDigest: digest });
 export const policyGenerationResponseSchema = z.strictObject({ kind: z.literal('candidate'), instructions: policyContentSchema.shape.instructions, rationale: z.string().trim().min(1).max(4000) });
 export const policyGenerationSchema = z.strictObject({

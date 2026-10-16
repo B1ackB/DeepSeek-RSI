@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "finalBuild": true,
+  "paidRequests": 0,
+  "generationRequests": 0,
+  "explicitlyAuthorizedEvaluationRequests": 6,
+  "preservedEarlierAttempts": 29,
+  "totalAttempts": 35,
+  "preservedSessions": 5,
+  "nativeFullTaskSides": 2,
+  "tools": 4,
+  "automaticAdoptions": 0,
+  "browserErrors": []
+}

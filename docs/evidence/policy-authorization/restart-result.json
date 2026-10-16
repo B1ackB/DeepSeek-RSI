@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "modelRequestsAfterRestart": 0,
+  "sources": 3,
+  "sessions": 5,
+  "preservedDailyAttempts": 9,
+  "preservedTotalAttempts": 23,
+  "preservedSourceGenerations": 1,
+  "preservedEvaluations": 2,
+  "generationRequestsAfterRestart": 0,
+  "oldSessionSource": "snapshot 2",
+  "browserErrors": []
+}

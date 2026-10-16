@@ -76,9 +76,35 @@ try {
 		await page.reload(); await card.getByText('当前源码：仓库快照 3', { exact: true }).waitFor(); await sources.getByLabel('快照文件 evidence.ts').waitFor(); assert.equal((await status()).calls, 9);
 		await sources.scrollIntoViewIfNeeded(); sourceChecks.push('sensitive path rejected before preview', 'full source preview without dispatch', 'cancel seal without mutation', 'changed source requires fresh preview', 'workspace switch clears source and confirmation', 'explicit exact seal', 'new sessions bind exact source before first request', 'old/new source native full tasks', 'reload retains snapshots without replay');
 	}
+	if (process.argv.includes('--authorization')) {
+		assert.ok(process.argv.includes('--sources')); const before = await status();
+		let author = card.getByRole('region', { name: '策略生成与独立评测', exact: true });
+		await author.getByLabel('本轮策略修改要求').fill('Inspect implementations, inspect callers, and cite source evidence.');
+		await author.getByRole('button', { name: '准备生成授权', exact: true }).click(); await author.getByRole('group', { name: '授权生成候选', exact: true }).waitFor();
+		await author.getByRole('button', { name: '取消本次授权', exact: true }).click(); assert.equal((await status()).generationRequests.length, 0);
+		await author.getByRole('button', { name: '准备生成授权', exact: true }).click();
+		if (!await workspace.isVisible()) await advanced.click(); await workspace.selectOption({ label: '另一个隔离工作区' }); assert.equal(await card.getByRole('group', { name: '授权生成候选', exact: true }).count(), 0);
+		await workspace.selectOption({ label: '仓库证据策略隔离验证' }); if (await workspace.isVisible()) await advanced.click();
+		author = card.getByRole('region', { name: '策略生成与独立评测', exact: true }); await author.getByLabel('本轮策略修改要求').fill('Inspect implementations, inspect callers, and cite source evidence.');
+		await author.getByRole('button', { name: '准备生成授权', exact: true }).click(); await author.getByRole('button', { name: '确认授权生成候选', exact: true }).click();
+		await author.getByText('候选生成 1 · 候选已封存', { exact: true }).waitFor(); state = await status();
+		assert.equal(state.calls, 9); assert.equal(state.generationRequests.length, 1); assert.equal(state.policy.reviews.length, before.policy.reviews.length);
+		assert.equal(state.policy.generations[0].sourceId, state.policy.sources[2].id); assert.deepEqual(state.policy.choices, before.policy.choices);
+		assert.doesNotMatch(JSON.stringify(state.generationRequests), /stale-second|sourceVersion|evidence\.ts|sample\.js|LOCAL_PRIVATE_SENTINEL|repository-source-v1/);
+		assert.deepEqual(state.generationRequests[0].tools, []);
+		await author.getByRole('button', { name: '准备此候选的独立评测', exact: true }).click(); await author.getByRole('group', { name: '授权独立评测', exact: true }).waitFor();
+		await author.getByRole('button', { name: '取消本次授权', exact: true }).click(); assert.equal((await status()).calls, 9);
+		await author.getByRole('button', { name: '准备此候选的独立评测', exact: true }).click(); await author.getByRole('button', { name: '确认授权独立评测', exact: true }).click();
+		for (let n = 0; n < 200; n++) { state = await status(); if (state.policy.reviews.at(-1)?.status === 'passed' && state.calls === 15) break; await new Promise(resolve => setTimeout(resolve, 50)); }
+		assert.equal(state.calls, 15); assert.equal(state.policy.reviews.at(-1).status, 'passed'); assert.ok(state.policy.reviews.at(-1).sides.every(row => row.infrastructure && row.requests === 3 && row.tools === 2 && row.totalTokens === 45));
+		assert.deepEqual(state.policy.choices, before.policy.choices); assert.deepEqual(state.policy.sessions, before.policy.sessions);
+		await page.reload(); await card.getByText('候选生成 1 · 候选已封存', { exact: true }).waitFor(); state = await status(); assert.equal(state.calls, 15); assert.equal(state.generationRequests.length, 1);
+		await card.getByRole('region', { name: '策略生成与独立评测', exact: true }).scrollIntoViewIfNeeded();
+		sourceChecks.push('generation confirmation cancel/workspace reset without dispatch', 'exact sealed source and baseline bound', 'generator excludes selected source and held-out answers', 'generation does not authorize evaluation', 'independent evaluation confirmation cancel', 'two source full tool tasks with separate generation/batch accounting', 'no automatic adoption or session rebinding', 'reload without generation or evaluation replay');
+	}
 	await writeFile(`${root}/browser-status.json`, JSON.stringify(state, null, 2));
 	const text = await card.innerText(); assert.doesNotMatch(text, /\b[a-f0-9]{12,64}\b|\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b/i);
 	await page.screenshot({ path: `${root}/sidebar.png` });
 	await page.setViewportSize({ width: 760, height: 1000 }); await page.screenshot({ path: `${root}/sidebar-narrow.png` });
-	assert.deepEqual(errors, []); await writeFile(`${root}/browser-result.json`, JSON.stringify({ status: 'passed', paidRequests: 0, calls: state.calls, choices: state.policy.choices.length, sessions: state.policy.sessions.length, checks: ['workspace switch clears pending confirmation', 'explicit confirmation/cancel', 'review without dispatch', 'old session first request after adoption', 'native full tool task', 'restore future binding', 'reload without replay', 'readable sidebar at wide/narrow viewport', ...sourceChecks], browserErrors: errors }, null, 2));
+	assert.deepEqual(errors, []); await writeFile(`${root}/browser-result.json`, JSON.stringify({ status: 'passed', paidRequests: 0, calls: state.calls, generationCalls: state.generationRequests?.length ?? 0, choices: state.policy.choices.length, sessions: state.policy.sessions.length, checks: ['workspace switch clears pending confirmation', 'explicit confirmation/cancel', 'review without dispatch', 'old session first request after adoption', 'native full tool task', 'restore future binding', 'reload without replay', 'readable sidebar at wide/narrow viewport', ...sourceChecks], browserErrors: errors }, null, 2));
 } catch (error) { if (page) { await page.screenshot({ path: `${root}/browser-failure.png` }); await writeFile(`${root}/browser-failure.txt`, await page.locator('body').innerText()); } throw error; } finally { await browser.close(); }
