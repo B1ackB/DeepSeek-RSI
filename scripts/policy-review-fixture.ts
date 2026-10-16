@@ -31,7 +31,7 @@ export async function preparePolicyReviewFixture(file: string, modes: Parameters
 }
 
 /** Only fixed adapter; no real profile, credentials or provider registration. */
-export type PolicyReviewMode = 'complete' | 'unknown' | 'hang' | 'hang_after_read' | 'no_tools' | 'wrong_answer' | 'wrong_citation' | 'missing_read' | 'forbidden';
+export type PolicyReviewMode = 'complete' | 'unknown_call_chain' | 'hang_call_chain' | 'unknown' | 'hang' | 'hang_after_read' | 'no_tools' | 'wrong_answer' | 'wrong_citation' | 'missing_read' | 'forbidden';
 export async function policyReviewRuntime(store: Store, root: string, mode: PolicyReviewMode = 'complete') {
 	const ctx = new Context();
 	await ctx.plugin(LlmRuntime); await ctx.plugin(SessionStore); await ctx.plugin(SessionProjections);
@@ -52,14 +52,15 @@ export function registerPolicyReviewAdapter(ctx: Context, store: Store, mode: Po
 		async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
 			const row = store.snapshot().attempts.findLast(row => row.sessionId === options.sessionId);
 			if (row?.state !== 'in_flight') throw new Error('Daily request must reserve before dispatch');
+			const binding = options.sessionId ? store.policyRunBinding(options.sessionId) : undefined;
+			const callChain = binding?.batch.authorization.evaluationSpec && 'caseId' in binding.batch.authorization.evaluationSpec && binding.batch.authorization.evaluationSpec.caseId === 'call-chain';
 			const index = requests.filter(row => row.sessionId === options.sessionId).length;
-			if (mode === 'hang' || (mode === 'hang_after_read' && index === 2)) {
+			if (mode === 'hang' || ((mode === 'hang_after_read' || (mode === 'hang_call_chain' && callChain)) && index === 2)) {
 				requests.push({ sessionId: options.sessionId, system: options.system, tools: options.tools, messages: JSON.parse(JSON.stringify(options.messages)) });
 				yield { type: 'block-start', index: 0, blockType: 'text' }; yield { type: 'text-delta', index: 0, text: 'partial response' };
 				await new Promise<void>(resolve => { if (options.signal?.aborted) resolve(); else options.signal?.addEventListener('abort', () => resolve(), { once: true }); }); return;
 			}
 			requests.push({ sessionId: options.sessionId, system: options.system, tools: options.tools, messages: JSON.parse(JSON.stringify(options.messages)) });
-			const binding = options.sessionId ? store.policyRunBinding(options.sessionId) : undefined;
 			const fixed = binding?.batch.authorization.evaluationSpec ? store.policyEvaluationCase(binding.batch.authorization.evaluationSpec, binding.entry.run.conditions) : undefined;
 			const bound = options.sessionId ? store.policySessionRun(options.sessionId) : undefined;
 			const source = fixed ? binding!.entry.run.conditions.files[0] : bound?.conditions.sourceSnapshot ? bound.conditions.files[0] : undefined;
@@ -72,7 +73,7 @@ export function registerPolicyReviewAdapter(ctx: Context, store: Store, mode: Po
 			if (block.type === 'text') yield { type: 'text-delta', index: 0, text: block.text };
 			else yield { type: 'tool-call-delta', index: 0, id: block.id, name: block.name, argumentsDelta: block.arguments };
 			yield { type: 'block-end', index: 0, block };
-			if (mode !== 'unknown') yield { type: 'usage', usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 } };
+			if (mode !== 'unknown' && !(mode === 'unknown_call_chain' && callChain)) yield { type: 'usage', usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 } };
 			yield { type: 'finish', reason: { kind: block.type === 'text' ? 'stop' : 'tool-calls' } };
 		}
 	}

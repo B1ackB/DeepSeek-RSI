@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "identicalRawTables": 9,
+  "attempts": 28,
+  "ownedWorkersExited": 8,
+  "ownedWorkerHomesRemoved": 8,
+  "packEvaluationReceipts": 1,
+  "singleQuestionEvaluationReceipts": 0
+}

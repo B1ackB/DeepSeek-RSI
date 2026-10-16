@@ -13,6 +13,7 @@ import { policyChoiceSchema, policySessionSchema, policyCommandSchema, policyRev
 import { sealRepositorySnapshot, readRepositorySnapshot, repositoryManifest } from './policy-snapshot.ts';
 import { policyQaContentSchema } from './policy-qa-inputs.ts';
 import { validateManualQa, manualSourceQuestion } from './policy-manual-qa.ts';
+import { policyPackCases, policyPackEvaluationSchema, type PolicyPackEvaluation } from './policy-pack-contracts.ts';
 import { sourceQaAvailable } from './policy-source-qa.ts';
 
 export function openStore(file: string, handoffBatchId?: string) {
@@ -44,6 +45,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 		CREATE TABLE IF NOT EXISTS policy_sessions (session TEXT PRIMARY KEY, data TEXT NOT NULL);
 		CREATE TABLE IF NOT EXISTS policy_sources (id TEXT PRIMARY KEY, data TEXT NOT NULL);
 		CREATE TABLE IF NOT EXISTS policy_qa_packs (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+		CREATE TABLE IF NOT EXISTS policy_pack_evaluations (id TEXT PRIMARY KEY, data TEXT NOT NULL);
 		`);
 		const previous = db.prepare('SELECT data FROM g1_state WHERE id=1').get();
 		if (previous) {
@@ -136,6 +138,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 		}
 		for (const row of db.prepare('SELECT data FROM policy_generations').all()) { const task = policyGenerationSchema.parse(JSON.parse(String(row.data))); generationSource(task, false); checkGenerationIntent(task); }
 		for (const row of db.prepare('SELECT data FROM policy_batches').all()) checkEvaluationIntent(policyBatchSchema.parse(JSON.parse(String(row.data))));
+		for (const row of db.prepare('SELECT id FROM policy_pack_evaluations').all()) checkPolicyPack(String(row.id));
 		db.exec('PRAGMA user_version=7; COMMIT;');
 	} catch (error) { if (db.isTransaction) db.exec('ROLLBACK'); db.close(); throw error; }
 	const initial: State = { schemaVersion: 1, probeId: randomUUID(), snapshotRevision: 1, updatedAt: Date.now(), marker: '', cancelled: false, budgetStartedAt: null };
@@ -150,6 +153,45 @@ export function openStore(file: string, handoffBatchId?: string) {
 	const repositoryObjects = join(dirname(file), 'repository-snapshots');
 	function policyVersions(policyId: string) { return db.prepare('SELECT data FROM policy_versions WHERE policy=? ORDER BY rowid').all(z.uuid().parse(policyId)).map(row => policyVersionSchema.parse(JSON.parse(String(row.data)))); }
 	function policyBatch(id: string) { const row = db.prepare('SELECT data FROM policy_batches WHERE id=?').get(z.uuid().parse(id)); return row ? policyBatchSchema.parse(JSON.parse(String(row.data))) : undefined; }
+	function policyPackEvaluation(id: string) { const row = db.prepare('SELECT data FROM policy_pack_evaluations WHERE id=?').get(z.uuid().parse(id)); return row ? policyPackEvaluationSchema.parse(JSON.parse(String(row.data))) : undefined; }
+	function checkPolicyPack(id: string, verifyObject = false) {
+		const pack = policyPackEvaluation(id);
+		const receipt = db.prepare('SELECT command,result FROM g1_operations WHERE id=?').get(id);
+		const cmd = receipt && policyCommandSchema.parse(JSON.parse(String(receipt.command)));
+		if (!pack || pack.id !== id || !cmd || cmd.kind !== 'policy_evaluate_pack' || cmd.operationId !== id || receiptSchema.parse(JSON.parse(String(receipt!.result))).focusId !== id || policyDigest(cmd.payload) !== policyDigest({ workspaceId: pack.workspaceId, expectedActive: pack.choiceId, sourceId: pack.sourceId, snapshotDigest: pack.snapshotDigest, generationId: pack.generationId, baselineDigest: pack.baselineDigest, candidateDigest: pack.candidateDigest, packId: pack.packId, packDigest: pack.packDigest, budget: pack.budget })) throw fault('policy_pack_invalid', 'Whole-pack evaluation has no exact authorization receipt');
+		const task = policyGeneration(pack.generationId);
+		if (!task || task.authorization.policyId !== pack.policyId || task.authorization.baselineDigest !== pack.baselineDigest || task.candidateDigest !== pack.candidateDigest || policyDigest(task.authorization.source) !== policyDigest({ workspaceId: pack.workspaceId, workspacePath: pack.workspacePath, choiceId: pack.choiceId, sourceId: pack.sourceId, snapshotDigest: pack.snapshotDigest })) throw fault('policy_pack_invalid', 'Whole-pack generation/source binding differs');
+		checkGenerationIntent(task); generationSource(task, verifyObject);
+		const questionPack = policyQaPack(pack.packId, verifyObject);
+		if (!questionPack || questionPack.status !== 'sealed' || questionPack.digest !== pack.packDigest || questionPack.choiceId !== pack.choiceId || questionPack.workspaceId !== pack.workspaceId || questionPack.workspacePath !== pack.workspacePath || questionPack.content.sourceId !== pack.sourceId || questionPack.content.snapshotDigest !== pack.snapshotDigest) throw fault('policy_pack_invalid', 'Whole-pack question version differs');
+		for (const [index, batchId] of pack.batchIds.entries()) {
+			const batch = policyBatch(batchId); const auth = batch?.authorization; const spec = auth?.evaluationSpec;
+			if (!batch || !auth || auth.id !== batchId || auth.packEvaluationId !== id || auth.generationId !== pack.generationId || auth.policyId !== pack.policyId || auth.runtimeDigest !== pack.runtimeDigest || spec?.evaluator !== 'repository-source-qa-manual-v1' || spec.caseId !== policyPackCases[index] || spec.sourceId !== pack.sourceId || spec.packId !== pack.packId || spec.packDigest !== pack.packDigest || batch.createdAt !== pack.createdAt || batch.deadline !== pack.deadline || policyDigest(auth.budget) !== policyDigest({ ...pack.budget, maxRequests: Math.min(16, pack.budget.maxRequests) })) throw fault('policy_pack_invalid', 'Whole-pack ordered membership or fixed conditions differ');
+			validateGeneratedBatch(auth);
+		}
+		return pack;
+	}
+	function checkPackDispatch(batch: PolicyBatch) {
+		if (!batch.authorization.packEvaluationId) return;
+		const pack = checkPolicyPack(batch.authorization.packEvaluationId, true);
+		if (!pack.batchIds.includes(batch.authorization.id)) throw fault('policy_pack_invalid', 'Batch is not a member of this pack');
+		for (const prior of pack.batchIds.slice(0, pack.batchIds.indexOf(batch.authorization.id))) checkedPolicyBatch(prior);
+		const usage = policyAccounting(pack.policyId, pack.id);
+		if (usage.totalTokens === null) throw fault('usage_unknown', 'Whole-pack usage is unsettled');
+		if (usage.attempts.length >= pack.budget.maxRequests || usage.confirmedTokens >= pack.budget.tokenStopThreshold || Math.max(Date.now(), openedAt + performance.now() - monotonicStart) >= pack.deadline) throw fault('budget_exhausted', 'Whole-pack cumulative request/token/window limit reached');
+	}
+	function stopPolicyPack(id: string, status: 'failed' | 'cancelled' | 'interrupted') {
+		return transaction(() => { const pack = policyPackEvaluation(id); if (!pack) throw fault('policy_pack_invalid', 'Whole-pack evaluation is missing'); for (const batchId of pack.batchIds) stopPolicyBatch(batchId, status); });
+	}
+	function policyPackSummary(id: string) {
+		const pack = policyPackEvaluation(id)!; const batches = pack.batchIds.map(id => policyBatch(id)!);
+		const states = batches.map(row => row.status); const usage = policyAccounting(pack.policyId, id);
+		let completedCases = 0; let passed = true;
+		for (const batchId of pack.batchIds) { try { if (checkedPolicyBatch(batchId).evaluation!.status !== 'passed') passed = false; completedCases++; } catch { passed = false; } }
+		const executionStatus = states.every(s => s === 'completed') ? 'completed' : states.includes('interrupted') ? 'interrupted' : states.includes('cancelled') ? 'cancelled' : states.every(s => s === 'authorized') ? 'authorized' : states.some(s => s === 'authorized' || s === 'running') ? 'running' : 'failed';
+		return { ...pack, executionStatus, status: completedCases !== 3 || usage.totalTokens === null ? 'incomplete' : passed ? 'passed' : 'failed', completedCases, requests: usage.attempts.length, confirmedTokens: usage.confirmedTokens, totalTokens: usage.totalTokens, unknownUsage: usage.attempts.filter(row => row.state !== 'not_sent' && (['reserved', 'in_flight'].includes(row.state) || row.usageState !== 'confirmed')).length };
+	}
+
 	function policyChoices() { return db.prepare('SELECT data FROM policy_choices ORDER BY rowid').all().map(row => policyChoiceSchema.parse(JSON.parse(String(row.data)))); }
 	function policySessions() { return db.prepare('SELECT data FROM policy_sessions ORDER BY rowid').all().map(row => policySessionSchema.parse(JSON.parse(String(row.data)))); }
 	function policySelection(workspaceId: string) { return policyChoices().findLast(row => row.workspaceId === workspaceId); }
@@ -183,6 +225,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 	function checkEvaluationIntent(batch: PolicyBatch, verifyObject = false) {
 		const spec = batch.authorization.evaluationSpec;
 		if (!spec || spec.evaluator === 'repository-evidence-v1') return;
+		if (batch.authorization.packEvaluationId) { const pack = checkPolicyPack(batch.authorization.packEvaluationId, verifyObject); if (!pack.batchIds.includes(batch.authorization.id)) throw fault('policy_pack_invalid', 'Batch is outside the authorized pack'); return; }
 		const task = policyGeneration(batch.authorization.generationId!)!; checkGenerationIntent(task); generationSource(task, verifyObject);
 		const link = task.authorization.source!;
 		const receipt = db.prepare('SELECT command,result FROM g1_operations WHERE id=?').get(batch.authorization.id);
@@ -214,7 +257,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 		if (source.status !== 'sealed' || policyDigest(source.conditions) !== binding.conditionsDigest || policyDigest(readRepositorySnapshot(repositoryObjects, source.conditions.sourceSnapshot!.digest)) !== policyDigest(snapshotForSource(source))) throw fault('policy_source_invalid', '已绑定的封存快照缺失或损坏');
 		return { ...entry.run, runId: sessionId.slice(11), policy, conditions: source.conditions, conditionsDigest: binding.conditionsDigest };
 	}
-	function checkedPolicyReview(batchId: string, selectedDigest?: string) {
+	function checkedPolicyBatch(batchId: string, selectedDigest?: string) {
 		const batch = policyBatch(batchId);
 		if (batch) checkEvaluationIntent(batch);
 		if (!batch?.evaluation || batch.authorization.runs.length !== 2) throw fault('policy_incomplete', 'A paired evaluated batch is required');
@@ -234,16 +277,22 @@ export function openStore(file: string, handoffBatchId?: string) {
 		if (result.status === 'incomplete' || policyDigest(result) !== policyDigest({ evidenceDigest: batch.evaluation.evidenceDigest, status: batch.evaluation.status, sides: batch.evaluation.sides })) throw fault('policy_incomplete', 'Evaluation evidence, usage or cleanup is incomplete or changed');
 		return batch;
 	}
+	function checkedPolicyReview(batchId: string, selectedDigest?: string) {
+		const batch = checkedPolicyBatch(batchId, selectedDigest);
+		if (batch.authorization.packEvaluationId) for (const id of checkPolicyPack(batch.authorization.packEvaluationId).batchIds) checkedPolicyBatch(id, selectedDigest);
+		return batch;
+	}
+
 	function policyReview() {
 		const rows = attempts();
 		const reviews = db.prepare('SELECT id FROM policy_batches ORDER BY rowid').all().flatMap(row => {
 			const batch = policyBatch(String(row.id))!; if (batch.authorization.runs.length !== 2) return [];
-			let eligible = true; let error: string | null = null;
-			try { checkedPolicyReview(String(row.id)); } catch (e) { eligible = false; error = e instanceof Error ? e.message : 'Evaluation unavailable'; }
+			let eligible = true; let verified = false; let error: string | null = null;
+			try { checkedPolicyBatch(String(row.id)); verified = true; if (batch.authorization.packEvaluationId) checkedPolicyReview(String(row.id)); } catch (e) { eligible = false; error = e instanceof Error ? e.message : 'Evaluation unavailable'; }
 			const auth = batch.authorization; const task = auth.generationId ? policyGeneration(auth.generationId) : undefined;
 			let rationale = ''; try { if (task?.response) rationale = policyGenerationResponseSchema.parse(JSON.parse(task.response)).rationale; } catch {}
-			return [{ ...task?.authorization.source ? { workspaceId: task.authorization.source.workspaceId, sourceId: task.authorization.source.sourceId, executionStatus: batch.status, cleanupPending: batch.progress.filter(row => row.resource && !batch.evidence?.some(item => item.runId === row.runId && item.cleanup.processExited && item.cleanup.directoryRemoved)).length } : {}, policyId: auth.policyId, batchId: auth.id, baselineDigest: auth.runs[0].run.policyDigest, candidateDigest: auth.runs[1].run.policyDigest, evidenceDigest: batch.evaluation?.evidenceDigest ?? null, generationId: auth.generationId ?? null, rationale, question: auth.runs[0].run.conditions.question, paths: auth.runs[0].run.conditions.files.map(file => file.path), limits: `固定响应；每侧最多 ${auth.runs[0].run.conditions.budget.maxRequests} 次请求、每次输出 ${auth.runs[0].run.conditions.budget.maxOutputTokens} Token、${auth.runs[0].run.conditions.budget.maxToolCalls} 次工具、${auth.runs[0].run.conditions.budget.maxDurationMs / 1000} 秒；整批最多 ${auth.budget.maxRequests} 次请求`, status: eligible ? batch.evaluation!.status : batch.evaluation ? 'incomplete' : 'unevaluated', eligible, error,
-				sides: auth.runs.map(({ side, run }) => { const usage = rows.filter(item => item.ownerId === auth.id && item.sessionId === run.runId); const evidence = batch.evidence?.find(item => item.runId === run.runId); const result = batch.evaluation?.sides.find(item => item.runId === run.runId); const sources = evidence?.result?.events.filter(item => item.type === 'tool/result').flatMap(item => { const result = z.object({ message: z.object({ content: z.array(z.object({ content: z.array(z.object({ type: z.string(), text: z.string().optional() })) })) }) }).safeParse(item.data); return result.success ? result.data.message.content.flatMap(block => block.content.flatMap(text => text.type === 'text' && text.text ? [text.text] : [])) : []; }) ?? []; return { side, instructions: run.policy.instructions, sources, response: evidence?.result?.finalResponse ?? '', infrastructure: eligible && (result?.infrastructure ?? false), facts: eligible && (result?.facts ?? false), citations: eligible && (result?.citations ?? false), requests: usage.length, tools: evidence?.result?.events.filter(item => item.type === 'tool/call').length ?? 0, totalTokens: !usage.length || usage.some(item => item.usageState !== 'confirmed' || ['reserved', 'in_flight'].includes(item.state)) ? null : usage.reduce((sum, item) => sum + (item.tokens.total ?? 0), 0) }; }),
+			return [{ ...task?.authorization.source ? { workspaceId: task.authorization.source.workspaceId, sourceId: task.authorization.source.sourceId, executionStatus: batch.status, cleanupPending: batch.progress.filter(row => row.resource && !batch.evidence?.some(item => item.runId === row.runId && item.cleanup.processExited && item.cleanup.directoryRemoved)).length } : {}, policyId: auth.policyId, batchId: auth.id, ...auth.packEvaluationId ? { packEvaluationId: auth.packEvaluationId } : {}, baselineDigest: auth.runs[0].run.policyDigest, candidateDigest: auth.runs[1].run.policyDigest, evidenceDigest: batch.evaluation?.evidenceDigest ?? null, generationId: auth.generationId ?? null, rationale, question: auth.runs[0].run.conditions.question, paths: auth.runs[0].run.conditions.files.map(file => file.path), limits: `固定响应；每侧最多 ${auth.runs[0].run.conditions.budget.maxRequests} 次请求、每次输出 ${auth.runs[0].run.conditions.budget.maxOutputTokens} Token、${auth.runs[0].run.conditions.budget.maxToolCalls} 次工具、${auth.runs[0].run.conditions.budget.maxDurationMs / 1000} 秒；整批最多 ${auth.budget.maxRequests} 次请求`, status: verified ? batch.evaluation!.status : batch.evaluation ? 'incomplete' : 'unevaluated', eligible, error,
+				sides: auth.runs.map(({ side, run }) => { const usage = rows.filter(item => item.ownerId === auth.id && item.sessionId === run.runId); const evidence = batch.evidence?.find(item => item.runId === run.runId); const result = batch.evaluation?.sides.find(item => item.runId === run.runId); const sources = evidence?.result?.events.filter(item => item.type === 'tool/result').flatMap(item => { const result = z.object({ message: z.object({ content: z.array(z.object({ content: z.array(z.object({ type: z.string(), text: z.string().optional() })) })) }) }).safeParse(item.data); return result.success ? result.data.message.content.flatMap(block => block.content.flatMap(text => text.type === 'text' && text.text ? [text.text] : [])) : []; }) ?? []; return { side, instructions: run.policy.instructions, sources, response: evidence?.result?.finalResponse ?? '', infrastructure: verified && (result?.infrastructure ?? false), facts: verified && (result?.facts ?? false), citations: verified && (result?.citations ?? false), requests: usage.length, tools: evidence?.result?.events.filter(item => item.type === 'tool/call').length ?? 0, totalTokens: !usage.length || usage.some(item => item.usageState !== 'confirmed' || ['reserved', 'in_flight'].includes(item.state)) ? null : usage.reduce((sum, item) => sum + (item.tokens.total ?? 0), 0) }; }),
 			}];
 		});
 		const generations = db.prepare('SELECT id FROM policy_generations ORDER BY rowid').all().flatMap(row => {
@@ -253,7 +302,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 			return [{ id: task.authorization.id, workspaceId: link.workspaceId, sourceId: link.sourceId, snapshotDigest: link.snapshotDigest, baselineDigest: task.authorization.baselineDigest, candidateDigest: task.candidateDigest, requirements: task.authorization.requirements, status: task.status, error: task.error, instructions, rationale, budget: task.authorization.budget, requests: usage.length, totalTokens: usage.some(row => row.usageState !== 'confirmed' || ['reserved', 'in_flight'].includes(row.state)) ? null : usage.reduce((sum, row) => sum + (row.tokens.total ?? 0), 0) }];
 		});
 		const qaPacks = db.prepare('SELECT id FROM policy_qa_packs ORDER BY rowid').all().map(row => { const pack = policyQaPack(String(row.id))!; return { id: pack.id, workspaceId: pack.workspaceId, sourceId: pack.content.sourceId, snapshotDigest: pack.content.snapshotDigest, digest: pack.digest, parentId: pack.parentId, status: pack.status, createdAt: pack.createdAt }; });
-		return policyReviewSnapshotSchema.parse({ qaPacks, generations, choices: policyChoices(), sessions: policySessions(), reviews, sources: policySources().map(source => ({ id: source.id, workspaceId: source.workspaceId, choiceId: source.choiceId, snapshotDigest: source.conditions.sourceSnapshot!.digest, status: source.status, createdAt: source.createdAt, ...sourceQaAvailable(source.conditions.files) ? { qaAvailable: true } : {}, files: repositoryManifest(snapshotForSource(source)) })) });
+		return policyReviewSnapshotSchema.parse({ packEvaluations: db.prepare('SELECT id FROM policy_pack_evaluations ORDER BY rowid').all().map(row => policyPackSummary(String(row.id))), qaPacks, generations, choices: policyChoices(), sessions: policySessions(), reviews, sources: policySources().map(source => ({ id: source.id, workspaceId: source.workspaceId, choiceId: source.choiceId, snapshotDigest: source.conditions.sourceSnapshot!.digest, status: source.status, createdAt: source.createdAt, ...sourceQaAvailable(source.conditions.files) ? { qaAvailable: true } : {}, files: repositoryManifest(snapshotForSource(source)) })) });
 	}
 	function checkPolicyCommand(input: unknown, workspacePath: string) {
 		const cmd = policyCommandSchema.parse(input);
@@ -270,7 +319,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 			const previous = businessReceipt(cmd); if (previous) return previous;
 			const active = checkPolicyCommand(cmd, workspacePath);
 			let focusId: string = cmd.operationId;
-			if (cmd.kind === 'policy_generate' || cmd.kind === 'policy_evaluate') {
+			if (cmd.kind === 'policy_generate' || cmd.kind === 'policy_evaluate' || cmd.kind === 'policy_evaluate_pack') {
 				if (!active) throw fault('policy_approval_missing', '请先明确采纳一个版本');
 				const p = cmd.payload; const source = checkedSource(p.sourceId, p.workspaceId, workspacePath, p.expectedActive, p.snapshotDigest);
 				if (source.status !== 'sealed' || active.digest !== p.baselineDigest) throw fault('policy_source_conflict', '需要当前策略与明确封存的精确快照');
@@ -286,8 +335,18 @@ export function openStore(file: string, handoffBatchId?: string) {
 					if (!task || task.status !== 'sealed' || task.authorization.policyId !== active.policyId || task.authorization.baselineDigest !== p.baselineDigest || task.candidateDigest !== cmd.payload.candidateDigest || !link || link.sourceId !== source.id || link.choiceId !== active.id || link.snapshotDigest !== p.snapshotDigest || usage.length !== 1 || usage.some(row => row.state !== 'succeeded' || row.usageState !== 'confirmed' || row.diagnostic)) throw fault('policy_generation_mismatch', '需要该策略和快照的完整候选及已确认用量');
 					const pack = cmd.payload.packId ? policyQaPack(cmd.payload.packId) : undefined;
 					if (cmd.payload.packId && (!pack || pack.status !== 'sealed' || pack.digest !== cmd.payload.packDigest || pack.workspaceId !== p.workspaceId || pack.workspacePath !== workspacePath || pack.choiceId !== active.id || pack.content.sourceId !== source.id)) throw fault('policy_qa_invalid', '需要当前快照明确封存的精确问答包');
-					const fixed = pack ? manualSourceQuestion(pack.id, readSealedJson(join(dirname(file), 'repository-question-packs'), pack.digest, 65536, value => policyQaContentSchema.parse(value)), source.id, source.conditions, cmd.payload.caseId) : sourceEvaluation(source.id, source.conditions, cmd.payload.caseId);
-					authorizePolicyBatch({ id: cmd.operationId, policyId: active.policyId, generationId: task.authorization.id, runtimeDigest, evaluationSpec: fixed.spec, runs: [{ side: 'baseline', run: freezePolicyRun(policyContent(active.policyId, p.baselineDigest), fixed.conditions) }, { side: 'candidate', run: freezePolicyRun(policyContent(active.policyId, cmd.payload.candidateDigest), fixed.conditions) }], budget: cmd.payload.budget });
+					const content = pack ? readSealedJson(join(dirname(file), 'repository-question-packs'), pack.digest, 65536, value => policyQaContentSchema.parse(value)) : undefined;
+					let group: PolicyPackEvaluation | undefined;
+					if (cmd.kind === 'policy_evaluate_pack') {
+						const createdAt = Date.now();
+						group = policyPackEvaluationSchema.parse({ id: cmd.operationId, workspaceId: p.workspaceId, workspacePath, choiceId: active.id, policyId: active.policyId, generationId: task.authorization.id, baselineDigest: p.baselineDigest, candidateDigest: cmd.payload.candidateDigest, sourceId: source.id, snapshotDigest: p.snapshotDigest, packId: pack!.id, packDigest: pack!.digest, runtimeDigest, budget: cmd.payload.budget, batchIds: policyPackCases.map(() => randomUUID()), createdAt, deadline: createdAt + cmd.payload.budget.maxDurationMs });
+						if (policyBatch(group.id) || policyGeneration(group.id) || attempts().some(row => row.ownerId === group!.id) || policyPackEvaluation(group.id)) throw fault('policy_owner_conflict', 'Whole-pack identity was already used');
+						db.prepare('INSERT INTO policy_pack_evaluations VALUES (?,?)').run(group.id, JSON.stringify(group));
+					}
+					for (const [index, caseId] of (group ? policyPackCases : [cmd.kind === 'policy_evaluate' ? cmd.payload.caseId : undefined]).entries()) {
+						const fixed = pack ? manualSourceQuestion(pack.id, content!, source.id, source.conditions, caseId) : sourceEvaluation(source.id, source.conditions, caseId);
+						authorizePolicyBatch({ id: group ? group.batchIds[index] : cmd.operationId, ...group ? { packEvaluationId: group.id } : {}, policyId: active.policyId, generationId: task.authorization.id, runtimeDigest, evaluationSpec: fixed.spec, runs: [{ side: 'baseline', run: freezePolicyRun(policyContent(active.policyId, p.baselineDigest), fixed.conditions) }, { side: 'candidate', run: freezePolicyRun(policyContent(active.policyId, cmd.payload.candidateDigest), fixed.conditions) }], budget: group ? { ...group.budget, maxRequests: Math.min(16, group.budget.maxRequests) } : cmd.payload.budget });
+					}
 				}
 			} else if (cmd.kind === 'policy_qa_draft' || cmd.kind === 'policy_qa_seal') {
 				const p = cmd.payload; const source = checkedSource(p.sourceId, p.workspaceId, workspacePath, p.expectedActive, p.snapshotDigest);
@@ -306,11 +365,12 @@ export function openStore(file: string, handoffBatchId?: string) {
 					db.prepare('UPDATE policy_qa_packs SET data=? WHERE id=?').run(JSON.stringify(policyQaPackSchema.parse({ ...pack, status: 'sealed', sealedAt: Date.now(), sealId: cmd.operationId })), pack.id); focusId = pack.id;
 				}
 			} else if (cmd.kind === 'policy_stop') {
-				const task = cmd.payload.target === 'generation' ? policyGeneration(cmd.payload.jobId) : policyGeneration(policyBatch(cmd.payload.jobId)?.authorization.generationId ?? cmd.payload.jobId);
+				const groupId = cmd.payload.target === 'pack-evaluation' ? cmd.payload.jobId : cmd.payload.target === 'evaluation' ? policyBatch(cmd.payload.jobId)?.authorization.packEvaluationId : undefined;
+				const task = cmd.payload.target === 'generation' ? policyGeneration(cmd.payload.jobId) : policyGeneration((groupId ? policyPackEvaluation(groupId)?.generationId : policyBatch(cmd.payload.jobId)?.authorization.generationId) ?? cmd.payload.jobId);
 				if (!task?.authorization.source || task.authorization.source.workspaceId !== cmd.payload.workspaceId || task.authorization.source.workspacePath !== workspacePath) throw fault('policy_binding_missing', '本工作区没有该执行');
 				if (cmd.payload.target === 'generation') { if (['authorized', 'running'].includes(task.status)) { task.status = 'cancelled'; task.error = '用户停止；保留用量，不自动重放'; task.revision++; savePolicyGeneration(task); } }
-				else stopPolicyBatch(cmd.payload.jobId, 'cancelled');
-				focusId = cmd.payload.jobId;
+				else if (groupId) stopPolicyPack(groupId, 'cancelled'); else stopPolicyBatch(cmd.payload.jobId, 'cancelled');
+				focusId = groupId ?? cmd.payload.jobId;
 			} else if (cmd.kind === 'policy_adopt' || cmd.kind === 'policy_restore') {
 				let target;
 				if (cmd.kind === 'policy_adopt') {
@@ -398,7 +458,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 			const previous = policyGeneration(request.id);
 			if (previous) { if (policyDigest(previous.authorization) !== policyDigest(authorization)) throw fault('policy_generation_conflict', 'Generation ID already authorizes different input'); return previous; }
 			const old = business();
-			if (policyBatch(request.id) || attempts().some(row => row.ownerId === request.id || row.sessionId === policyGenerationSession(request.id)) || policyRunBinding(policyGenerationSession(request.id)) || old.analyses.some(row => row.id === request.id) || old.mainflow.tasks.some(row => row.id === request.id || row.comparison?.id === request.id)) throw fault('policy_owner_conflict', 'Generation ID collides with a spending identity');
+			if (policyBatch(request.id) || policyPackEvaluation(request.id) || attempts().some(row => row.ownerId === request.id || row.sessionId === policyGenerationSession(request.id)) || policyRunBinding(policyGenerationSession(request.id)) || old.analyses.some(row => row.id === request.id) || old.mainflow.tasks.some(row => row.id === request.id || row.comparison?.id === request.id)) throw fault('policy_owner_conflict', 'Generation ID collides with a spending identity');
 			const prompt = policyGeneratorPrompt(baseline, request.requirements);
 			if (Buffer.byteLength(JSON.stringify([prompt.system, prompt.input])) > request.budget.maxInputBytes) throw fault('budget_config', 'Generation input exceeds confirmed bytes');
 			const createdAt = Date.now(); const task = policyGenerationSchema.parse({ authorization, revision: 1, createdAt, deadline: createdAt + request.budget.maxDurationMs, status: 'authorized', response: '', candidateDigest: null, error: null });
@@ -470,13 +530,15 @@ export function openStore(file: string, handoffBatchId?: string) {
 			const previous = policyBatch(authorization.id);
 			if (previous) { if (policyDigest(previous.authorization) !== policyDigest(authorization)) throw fault('policy_batch_conflict', 'Batch ID already authorizes different input'); return previous; }
 			const old = business();
-			if (policyGeneration(authorization.id) || attempts().some(row => row.ownerId === authorization.id) || old.analyses.some(row => row.id === authorization.id) || old.mainflow.tasks.some(row => row.id === authorization.id || row.comparison?.id === authorization.id)) throw fault('policy_owner_conflict', 'Batch ID collides with another spending owner');
+			if (policyGeneration(authorization.id) || policyPackEvaluation(authorization.id) || attempts().some(row => row.ownerId === authorization.id) || old.analyses.some(row => row.id === authorization.id) || old.mainflow.tasks.some(row => row.id === authorization.id || row.comparison?.id === authorization.id)) throw fault('policy_owner_conflict', 'Batch ID collides with another spending owner');
 			validateGeneratedBatch(authorization);
 			for (const { run } of authorization.runs) {
 				if (policyRunBinding(run.runId) || attempts().some(row => row.sessionId === run.runId)) throw fault('policy_binding_conflict', 'Policy session identity was already used');
 				if (!policyVersions(authorization.policyId).some(row => row.digest === run.policyDigest) || policyDigest(readPolicy(policyObjects, run.policyDigest)) !== policyDigest(run.policy)) throw fault('policy_version_missing', 'Run requires its registered intact policy version');
 			}
-			const createdAt = Date.now();
+			const group = authorization.packEvaluationId ? policyPackEvaluation(authorization.packEvaluationId) : undefined;
+			if (authorization.packEvaluationId && (!group || !group.batchIds.includes(authorization.id))) throw fault('policy_pack_invalid', 'Whole-pack membership is missing');
+			const createdAt = group?.createdAt ?? Date.now();
 			const batch = policyBatchSchema.parse({ authorization, revision: 1, createdAt, deadline: createdAt + authorization.budget.maxDurationMs, status: 'authorized', progress: authorization.runs.map(({ run }) => ({ runId: run.runId, status: 'pending', startedAt: null })) });
 			db.prepare('INSERT INTO policy_batches VALUES (?,?)').run(authorization.id, JSON.stringify(batch)); write(read()); return batch;
 		});
@@ -485,7 +547,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 		return transaction(() => {
 			const binding = policyRunBinding(runId);
 			if (!binding || binding.batch.authorization.id !== batchId) throw fault('policy_binding_missing', 'Run is not authorized by this batch');
-			const { batch, progress } = binding;
+			const { batch, progress } = binding; checkPackDispatch(batch);
 			if (!['authorized', 'running'].includes(batch.status) || progress.status !== 'pending' || batch.progress.some(row => row.status === 'running') || batch.progress.slice(0, batch.progress.indexOf(progress)).some(row => row.status === 'pending')) throw fault('policy_state_conflict', 'Run cannot start or replay in this batch');
 			const rows = attempts().filter(row => row.owner === 'rsi' && row.ownerId === batchId);
 			if (rows.some(row => ['reserved', 'in_flight'].includes(row.state) || (row.state !== 'not_sent' && row.usageState !== 'confirmed'))) throw fault('usage_unknown', 'Policy batch usage is unsettled');
@@ -521,8 +583,9 @@ export function openStore(file: string, handoffBatchId?: string) {
 	}
 	function policyAccounting(policyId: string, batchId?: string) {
 		z.uuid().parse(policyId);
-		if (batchId !== undefined && policyBatch(batchId)?.authorization.policyId !== policyId) throw fault('policy_binding_missing', 'Batch does not belong to this policy');
-		const rows = db.prepare("SELECT attempts.data FROM attempts LEFT JOIN policy_batches ON json_extract(attempts.data,'$.ownerId')=policy_batches.id LEFT JOIN policy_generations ON json_extract(attempts.data,'$.ownerId')=policy_generations.id LEFT JOIN policy_sessions ON json_extract(attempts.data,'$.sessionId')=policy_sessions.session WHERE (json_extract(attempts.data,'$.owner')='rsi' AND ((json_extract(policy_batches.data,'$.authorization.policyId')=? AND (? IS NULL OR policy_batches.id=?)) OR (? IS NULL AND json_extract(policy_generations.data,'$.authorization.policyId')=?))) OR (? IS NULL AND json_extract(attempts.data,'$.owner')='session' AND json_extract(policy_sessions.data,'$.policyId')=?) ORDER BY attempts.rowid").all(policyId, batchId ?? null, batchId ?? null, batchId ?? null, policyId, batchId ?? null, policyId).map(row => attemptSchema.parse(JSON.parse(String(row.data))));
+		const group = batchId ? policyPackEvaluation(batchId) : undefined;
+		if (batchId !== undefined && (group ? group.policyId : policyBatch(batchId)?.authorization.policyId) !== policyId) throw fault('policy_binding_missing', 'Batch does not belong to this policy');
+		const rows = group ? attempts().filter(row => row.owner === 'rsi' && group.batchIds.includes(row.ownerId ?? '')) : db.prepare("SELECT attempts.data FROM attempts LEFT JOIN policy_batches ON json_extract(attempts.data,'$.ownerId')=policy_batches.id LEFT JOIN policy_generations ON json_extract(attempts.data,'$.ownerId')=policy_generations.id LEFT JOIN policy_sessions ON json_extract(attempts.data,'$.sessionId')=policy_sessions.session WHERE (json_extract(attempts.data,'$.owner')='rsi' AND ((json_extract(policy_batches.data,'$.authorization.policyId')=? AND (? IS NULL OR policy_batches.id=?)) OR (? IS NULL AND json_extract(policy_generations.data,'$.authorization.policyId')=?))) OR (? IS NULL AND json_extract(attempts.data,'$.owner')='session' AND json_extract(policy_sessions.data,'$.policyId')=?) ORDER BY attempts.rowid").all(policyId, batchId ?? null, batchId ?? null, batchId ?? null, policyId, batchId ?? null, policyId).map(row => attemptSchema.parse(JSON.parse(String(row.data))));
 		const confirmedTokens = rows.reduce((sum, row) => sum + (row.usageState === 'confirmed' ? row.tokens.total! : 0), 0);
 		return { attempts: rows, confirmedTokens, totalTokens: rows.some(row => ['reserved', 'in_flight'].includes(row.state) || (row.state !== 'not_sent' && row.usageState !== 'confirmed')) ? null : confirmedTokens };
 	}
@@ -635,7 +698,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 				if (rows.length >= auth.budget.maxRequests || Date.now() < state.updatedAt || Math.max(Date.now(), openedAt + performance.now() - monotonicStart) >= generation.deadline) throw fault('budget_exhausted', 'Generation request/window limit reached');
 			} else if (attempt.ownerId && db.prepare('SELECT 1 FROM policy_generations WHERE id=?').get(attempt.ownerId)) throw fault('not_authorized', 'Generation requires its registered session');
 			if (policy) {
-				const { batch, entry, progress } = policy; const run = entry.run; checkEvaluationIntent(batch, true);
+				const { batch, entry, progress } = policy; const run = entry.run; checkEvaluationIntent(batch, true); checkPackDispatch(batch);
 				if (attempt.owner !== 'rsi' || attempt.ownerId !== batch.authorization.id || attempt.purpose !== (entry.side === 'baseline' ? 'baseline' : 'evaluation') || attempt.callKind !== 'agent' || attempt.retryOfAttemptId !== null || batch.status !== 'running' || progress.status !== 'running') throw fault('not_authorized', 'Policy request has no active batch authorization');
 				if (attempt.provider !== run.conditions.provider || attempt.model !== run.conditions.model) throw fault('budget_config', 'Policy route differs from frozen authorization');
 				const rows = attempts().filter(row => row.owner === 'rsi' && row.ownerId === batch.authorization.id);
@@ -725,6 +788,6 @@ export function openStore(file: string, handoffBatchId?: string) {
 		});
 	}
 	function binding(sessionId: string, skillId: string) { const row = db.prepare('SELECT data FROM bindings WHERE session=? AND skill=?').get(sessionId, skillId); return row ? bindingSchema.parse(JSON.parse(String(row.data))) : undefined; }
-	return { policyQaPack, policyEvaluationCase, stopPolicyBatch, policySource, checkPolicyCommand, policyCommand, policyReview, policySelection, policySession, policySessionRun, policyContent, policyGeneration, policyGenerationBinding, generationPrompt, authorizePolicyGeneration, startPolicyGeneration, recordPolicyGenerationResponse, sealPolicyGeneration, failPolicyGeneration, recordPolicyResource, recordPolicyEvidence, evaluatePolicy, policyVersions, sealPolicyVersion, policyBatch, policyRunBinding, authorizePolicyBatch, startPolicyRun, finishPolicyRun, policyAccounting, binding, snapshot, command, reserve, settle, bind, transaction, business, mutateBusiness, businessReceipt, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }, close() { listeners.clear(); db.close(); } };
+	return { policyPackEvaluation, policyPackSummary, stopPolicyPack, policyQaPack, policyEvaluationCase, stopPolicyBatch, policySource, checkPolicyCommand, policyCommand, policyReview, policySelection, policySession, policySessionRun, policyContent, policyGeneration, policyGenerationBinding, generationPrompt, authorizePolicyGeneration, startPolicyGeneration, recordPolicyGenerationResponse, sealPolicyGeneration, failPolicyGeneration, recordPolicyResource, recordPolicyEvidence, evaluatePolicy, policyVersions, sealPolicyVersion, policyBatch, policyRunBinding, authorizePolicyBatch, startPolicyRun, finishPolicyRun, policyAccounting, binding, snapshot, command, reserve, settle, bind, transaction, business, mutateBusiness, businessReceipt, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }, close() { listeners.clear(); db.close(); } };
 }
 export type Store = ReturnType<typeof openStore>;

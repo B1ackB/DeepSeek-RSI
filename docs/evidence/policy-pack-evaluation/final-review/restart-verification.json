@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "phase": "after",
+  "rawTables": 9,
+  "allRawRowsUnchanged": true,
+  "attempts": 28,
+  "wholePackReceipts": 1,
+  "individualEvaluationReceipts": 0,
+  "ownedWorkersExited": 8,
+  "ownedWorkerHomesRemoved": 8
+}

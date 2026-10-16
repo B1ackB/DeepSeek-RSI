@@ -1,0 +1,14 @@
+{
+  "root": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-pack-compat-WfTQyr",
+  "status": "passed",
+  "originalDatabaseHashUnchanged": true,
+  "oldTables": 13,
+  "allOldRowsUnchangedOnOpen": true,
+  "attempts": 28,
+  "oldEligiblePairs": 4,
+  "oldSessionBindings": 1,
+  "newTableInitiallyEmpty": true,
+  "oneNewPackIntentRecoveredInterrupted": true,
+  "newModelAttempts": 0,
+  "oldRowsPreservedAfterNewIntent": true
+}

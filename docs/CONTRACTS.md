@@ -1,5 +1,7 @@
 # Core Rules and G0 Contracts
 
+2026-10-16: [whole-pack evaluation](POLICY-PACK-EVALUATION-CONTRACTS.md) adds one explicit manual-pack authorization and three ordered existing paired batches under one cumulative budget/deadline. `policy_pack_evaluations` appends to unreleased SQLite 7; optional child provenance and empty-default summaries preserve old rows. Generation and adoption remain separate.
+
 2026-10-16: [manual source QA](POLICY-MANUAL-QA-CONTRACTS.md) adds explicitly reviewed question/answer/citation packs for exact sealed snapshots. Append-only drafts and explicit seals use `policy_qa_packs` and read-only question objects within unreleased SQLite 7. Evaluation pins the exact sealed pack under a separate authorization; generator prompts and historical rows remain unchanged.
 
 2026-10-16: [fixed source QA](POLICY-SOURCE-QA-CONTRACTS.md) adds an optional exact question selection and `repository-source-qa-v1` specification for a host-authored three-case source pack. Existing SQLite 7 tables, shared usage, separate generation/evaluation authorization and explicit adoption remain unchanged. Old omitted-case commands and their serialized rows retain first-line semantics; no default insertion or historical rewrite.

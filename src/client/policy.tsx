@@ -76,12 +76,19 @@ export function PolicyReview({ snapshot, workspaceId, sessionId, disabled, comma
 		<p>{current ? `当前只读会话：会话 ${sessions.indexOf(current) + 1} · 第 ${choices.findIndex(row => row.id === current.choiceId) + 1} 次选择` : '当前会话：普通会话'}</p>
 		{current && <p>当前源码：{current.sourceId ? `仓库快照 ${snapshot.policy.sources.filter(row => row.workspaceId === workspaceId).findIndex(row => row.id === current.sourceId) + 1}` : snapshot.policy.reviews.find(row => row.batchId === current.batchId)?.sourceId ? '评测冻结源码' : '评测冻结示例'}</p>}
 		{workspaceId && <PolicySources snapshot={snapshot} workspaceId={workspaceId} disabled={blocked} command={command} policySource={policySource} policyQa={policyQa} openSession={openSession} />}
+		{snapshot.policy.packEvaluations.filter(row => row.workspaceId === workspaceId).map((row, index) => <section key={row.id} aria-label="整包评测汇总">
+			<h4>整包评测 {index + 1} · {{ passed: '三题固定检查通过', failed: '质量检查未通过', incomplete: '执行不完整' }[row.status]}</h4>
+			<p>完整题目 {row.completedCases}/3 · {row.requests}/{row.budget.maxRequests} 次评测请求 · {row.totalTokens ?? '未知'} Token（已确认 {row.confirmedTokens}，未知用量 {row.unknownUsage} 次）</p>
+			<small>仅累计本包三个评测批次；生成独立计量。整包未完整结束时不能采纳。状态：{({ authorized: '已授权', running: '执行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断，不自动重跑' })[row.executionStatus]}</small>
+			{row.batchIds.map((id, caseIndex) => { const review = snapshot.policy.reviews.find(item => item.batchId === id); return <p key={id}>{['符号定位', '调用链', '错误路径'][caseIndex]}：{review?.sides.map(side => `${side.side === 'baseline' ? '基线' : '候选'} ${side.requests} 次请求 / ${side.tools} 次工具 / ${side.totalTokens ?? '未知'} Token · ${side.infrastructure && side.facts && side.citations ? '通过' : '未通过或不完整'}`).join('；')}（详情见下方评测记录）</p>; })}
+			{['authorized', 'running'].includes(row.executionStatus) && <button disabled={blocked} onClick={() => void run('policy_stop', { workspaceId: workspaceId!, target: 'pack-evaluation', jobId: row.id })}>停止整包评测</button>}
+		</section>)}
 		{snapshot.policy.reviews.length === 0 && <p>尚无可审阅的成对评测。</p>}
 		{snapshot.policy.reviews.filter(review => !review.workspaceId || review.workspaceId === workspaceId).map((review, index) => <details key={review.batchId}>
 			<summary>评测 {index + 1} · {{ passed: '固定检查通过', failed: '质量检查未通过', incomplete: '执行不完整', unevaluated: '尚未评测' }[review.status]}</summary>
 			<p>{review.question}</p><small>{review.limits}</small><small>冻结源码：{review.paths.join('、')}</small>
 			{review.executionStatus && <small>执行状态：{({ authorized: '已授权', running: '执行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断，不自动重跑' } as Record<string, string>)[review.executionStatus]}{review.cleanupPending ? ` · ${review.cleanupPending} 项清理证据不完整` : ''}</small>}
-			{review.workspaceId === workspaceId && ['authorized', 'running'].includes(review.executionStatus ?? '') && <button disabled={blocked} onClick={() => void run('policy_stop', { workspaceId: workspaceId!, target: 'evaluation', jobId: review.batchId })}>停止本批评测</button>}
+			{!review.packEvaluationId && review.workspaceId === workspaceId && ['authorized', 'running'].includes(review.executionStatus ?? '') && <button disabled={blocked} onClick={() => void run('policy_stop', { workspaceId: workspaceId!, target: 'evaluation', jobId: review.batchId })}>停止本批评测</button>}
 			{review.rationale && <p>修改理由：{review.rationale}</p>}
 			<p>固定响应只验证流程，不证明模型能力提升。质量结果由你判断；用量、权限或清理不完整时不能采纳。</p>
 			{review.error && <p role="alert">无法采纳：{review.error}</p>}

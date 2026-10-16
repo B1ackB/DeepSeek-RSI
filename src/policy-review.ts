@@ -9,7 +9,7 @@ import { policyCommandSchema, policySessionId, policySourceRequestSchema, policy
 import { captureRepository } from './policy-snapshot.ts';
 import { POLICY_AUTHORITY, policyTools } from './policy.ts';
 import { generatePolicyCandidate } from './policy-generation.ts';
-import { executeAuthorizedPolicyBatch, policyExecutionRuntime } from './policy-execution.ts';
+import { executeAuthorizedPolicyBatch, executeAuthorizedPolicyPack, policyExecutionRuntime } from './policy-execution.ts';
 import { restrictWorker } from './worker.ts';
 
 /** Explicit fixture-pilot entry. Ordinary sessions never acquire a project policy. */
@@ -112,18 +112,19 @@ export function applyPolicyReview(ctx: Context, store: Store) {
 			}
 			abort.throwIfAborted();
 			if (ctx.workspaceRegistry.list().find(row => row.id === cmd.payload.workspaceId)?.path !== workspacePath) throw fault('workspace_conflict', '工作区已变化，请重新预览');
-			receipt = store.policyCommand(cmd, workspacePath, captured, cmd.kind === 'policy_evaluate' ? policyExecutionRuntime() : undefined);
+			receipt = store.policyCommand(cmd, workspacePath, captured, (cmd.kind === 'policy_evaluate' || cmd.kind === 'policy_evaluate_pack') ? policyExecutionRuntime() : undefined);
 		}
-		if (fresh && (cmd.kind === 'policy_generate' || cmd.kind === 'policy_evaluate')) launch(cmd.operationId, cmd.kind);
-		if (cmd.kind === 'policy_stop') executions.get(cmd.payload.jobId)?.abort();
+		if (fresh && (cmd.kind === 'policy_generate' || cmd.kind === 'policy_evaluate' || cmd.kind === 'policy_evaluate_pack')) launch(cmd.operationId, cmd.kind);
+		if (cmd.kind === 'policy_stop') executions.get(receipt.focusId!)?.abort();
 		if (cmd.kind === 'policy_session' || cmd.kind === 'policy_source_session' || cmd.kind === 'policy_open') await open(policySessionId(receipt.focusId!));
 		return receipt;
 	}
-	function launch(id: string, kind: 'policy_generate' | 'policy_evaluate') {
+	function launch(id: string, kind: 'policy_generate' | 'policy_evaluate' | 'policy_evaluate_pack') {
 		const own = new AbortController(); executions.set(id, own);
 		const signal = AbortSignal.any([controller.signal, own.signal]);
-		const task = (kind === 'policy_generate' ? generatePolicyCandidate(ctx, store, id, signal) : executeAuthorizedPolicyBatch(ctx, store, id, signal)).catch(error => {
+		const task = (kind === 'policy_generate' ? generatePolicyCandidate(ctx, store, id, signal) : kind === 'policy_evaluate_pack' ? executeAuthorizedPolicyPack(ctx, store, id, signal) : executeAuthorizedPolicyBatch(ctx, store, id, signal)).catch(error => {
 			if (kind === 'policy_generate') { const row = store.policyGeneration(id); if (row && ['authorized', 'running'].includes(row.status)) store.failPolicyGeneration(id, signal.aborted ? 'cancelled' : 'failed', row.response, error instanceof Error ? error.message.slice(0, 4000) : 'Generation failed'); }
+			else if (kind === 'policy_evaluate_pack') store.stopPolicyPack(id, signal.aborted ? 'cancelled' : 'failed');
 			else { store.stopPolicyBatch(id, signal.aborted ? 'cancelled' : 'failed'); try { store.evaluatePolicy(id); } catch {} }
 		}).finally(() => { executions.delete(id); jobs.delete(task); });
 		jobs.add(task);
