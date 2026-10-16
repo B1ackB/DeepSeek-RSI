@@ -35,3 +35,7 @@ export const policyConditionsDataSchema = z.strictObject({
 	provider: z.literal('rsi-policy-fixture'), model: z.literal('offline-v1'), budget: policyBudgetSchema,
 	sourceSnapshot: z.strictObject({ root: repositoryRootSchema, digest: z.string().regex(/^[a-f0-9]{64}$/) }).optional(),
 });
+
+export const policySourceBindingSchema = z.strictObject({ workspaceId: z.string().min(1).max(1024), workspacePath: repositoryRootSchema, choiceId: z.uuid(), sourceId: z.uuid(), snapshotDigest: z.string().regex(/^[a-f0-9]{64}$/) });
+export const policyGenerationBudgetSchema = z.strictObject({ provider: z.literal('rsi-policy-generation-fixture'), model: z.literal('offline-v1'), maxRequests: z.literal(1), maxOutputTokens: integer.min(128).max(4096), maxInputBytes: integer.min(1024).max(32768), maxDurationMs: integer.min(100).max(30000) });
+export const policyBatchBudgetSchema = z.strictObject({ maxRequests: integer.min(1).max(16), tokenStopThreshold: integer.min(1).max(200000), maxDurationMs: integer.min(100).max(60000) });

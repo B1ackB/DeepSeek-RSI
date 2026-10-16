@@ -28,6 +28,7 @@ export function observeUsage(store: Store, rsiSessions: ReadonlySet<string>, pro
 			if (policy || ownerId || probe || options.purpose !== undefined || options.reasoningEffort !== undefined || options.provider !== budget.provider || options.model !== budget.model || options.maxTokens !== budget.maxOutputTokens || (options.tools?.length ?? 0) > 0) throw fault('budget_config', 'Generator capabilities, route or ownership differ from authorization');
 			if (options.system !== prompt.system || options.messages.length !== 1 || options.messages[0]?.role !== 'user' || options.messages[0].content.length !== 1 || options.messages[0].content[0]?.type !== 'text' || options.messages[0].content[0].text !== prompt.input || Buffer.byteLength(JSON.stringify([options.system, prompt.input])) > budget.maxInputBytes) throw fault('budget_config', 'Generator input differs from its frozen view');
 		}
+		if (policy?.batch.authorization.evaluationSpec?.evaluator === 'repository-source-v1') checkPolicySessionRequest(policy.entry.run, options);
 		if (policy && (ownerId || probe || options.purpose !== undefined || options.reasoningEffort !== undefined || options.provider !== policy.entry.run.conditions.provider || options.model !== policy.entry.run.conditions.model || options.maxTokens !== policy.entry.run.conditions.budget.maxOutputTokens)) throw fault('budget_config', 'Policy accounting route or legacy ownership conflicts with authorization');
 		if (ownerId) {
 			const state = store.business();

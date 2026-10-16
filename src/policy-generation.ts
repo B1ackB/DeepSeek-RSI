@@ -27,7 +27,7 @@ export async function generatePolicyCandidate(ctx: Context, store: Store, id: st
 		if (!complete) throw fault('policy_generation_partial', 'Generation stream has no complete terminal event');
 		return store.sealPolicyGeneration(id, response);
 	} catch (error) {
-		store.failPolicyGeneration(id, combined.aborted ? 'cancelled' : 'failed', response, error instanceof Error ? error.message.slice(0, 4000) : 'Policy generation failed');
+		if (store.policyGeneration(id)?.status === 'running') store.failPolicyGeneration(id, combined.aborted ? 'cancelled' : 'failed', response, error instanceof Error ? error.message.slice(0, 4000) : 'Policy generation failed');
 		return store.policyGeneration(id)!;
 	} finally { clearTimeout(timer); abort.abort(); }
 }

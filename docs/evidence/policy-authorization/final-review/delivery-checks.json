@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "changedFilesReviewed": 58,
+  "credentialLiteralMatches": [],
+  "brokenLocalDocumentationLinks": [],
+  "spaceIndentedTypeScriptLines": [],
+  "gitWhitespaceCheck": "passed",
+  "packageDryRun": {
+    "files": 165,
+    "policyWorkerIncluded": true,
+    "privateHomesCachesDatabasesExcluded": true
+  },
+  "realModelCalls": 0
+}

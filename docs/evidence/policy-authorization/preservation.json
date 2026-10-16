@@ -1,0 +1,10 @@
+{
+  "startHead": "554b78a05b7590a05137898213acc391c08e6afb",
+  "currentHead": "554b78a05b7590a05137898213acc391c08e6afb",
+  "initialStatus": "",
+  "historicalEvidenceFiles": 85,
+  "changedOrMissingHistoricalEvidence": [],
+  "harnessHead": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+  "harnessPatchUnchanged": true,
+  "existingCacheAndUserDataRetained": true
+}

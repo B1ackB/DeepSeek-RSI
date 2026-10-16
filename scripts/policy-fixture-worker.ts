@@ -26,7 +26,7 @@ export async function apply(ctx: Context) {
 	if (!handoff) store.sealPolicyVersion(policyId, run.policy);
 	else {
 		const binding = store.policyRunBinding(run.runId);
-		if (!binding || policyDigest(binding.entry.run) !== policyDigest(run) || binding.batch.authorization.id !== batchId || binding.batch.authorization.policyId !== policyId || binding.batch.authorization.runtimeDigest !== runtimeDigest || handoff.runtimeDigest !== runtimeDigest || binding.batch.authorization.evaluationSpec?.caseId !== handoff.caseId || binding.progress.status !== 'running' || binding.batch.status !== 'running') { store.close(); throw new Error('Shared worker differs from its active authorization'); }
+		if (!binding || policyDigest(binding.entry.run) !== policyDigest(run) || binding.batch.authorization.id !== batchId || binding.batch.authorization.policyId !== policyId || binding.batch.authorization.runtimeDigest !== runtimeDigest || handoff.runtimeDigest !== runtimeDigest || (binding.batch.authorization.evaluationSpec?.evaluator !== 'repository-evidence-v1' || binding.batch.authorization.evaluationSpec.caseId !== handoff.caseId) || binding.progress.status !== 'running' || binding.batch.status !== 'running') { store.close(); throw new Error('Shared worker differs from its active authorization'); }
 		const resource = binding.progress.resource;
 		if (!resource || handoff.deadline !== Math.min(binding.batch.deadline, binding.progress.startedAt! + run.conditions.budget.maxDurationMs)) { store.close(); throw new Error('Worker has no matching owned home/deadline'); }
 		store.recordPolicyResource(batchId, run.runId, resource.temporaryRoot, process.pid);

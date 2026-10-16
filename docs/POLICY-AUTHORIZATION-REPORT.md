@@ -1,0 +1,42 @@
+# Sidebar policy generation and independent source evaluation
+
+Recorded 2026-10-16 under the [minimal contract](POLICY-AUTHORIZATION-CONTRACTS.md). Fixed responses only; **zero paid calls**, no new dependencies or Harness changes.
+
+## Delivered behavior
+
+The existing source sidebar now offers two separate confirmation groups. An approved baseline and explicitly sealed source are prerequisites; no new bootstrap flow was added.
+
+1. Enter requirements and confirm the single-request generation budget. Authorization binds workspace/choice, exact baseline, source ID/digest and requirements. Reuse the existing proposer, output validator, version objects and lineage. The model receives only the baseline, requirements and independent development example. Source metadata is authority/provenance; selected source bodies, held-out tasks/answers, evaluation history and old sessions are excluded from its request. User data deliberately pasted into requirements or a baseline is not automatically erased.
+2. Review the sealed candidate and separately confirm a cumulative evaluation budget. The host verifies the exact generation, source, baseline/candidate and confirmed generation usage. It freezes equal conditions and runs baseline/candidate in independent native Agent processes. The first `repository-source-v1` task requires search/read of the first selected file, exact first-line evidence and a citation. Full tool events, continuation, headers, ledger and cleanup are checked. A tool-free correct string cannot qualify. This is source transport validation, not arbitrary repository semantics or model improvement.
+3. Review results through the existing adoption controls. No generated/evaluated result changes the workspace default automatically. Source evaluations can only be adopted in their original workspace. Old sessions retain their original bindings, including unused sessions. A new session after explicit adoption uses its exact approved batch/source.
+
+Confirmation can be cancelled without dispatch. Workspace/source changes discard local pending intent; stale server revisions and exact source/version mismatches reject. Explicit stop records the terminal state/receipt before aborting work. Lost successful replies return the same receipt without re-enqueueing. Viewing and reload make no model requests.
+
+## Execution and accounting
+
+The existing SDK developer executor requires exclusive SQLite handoff. It remains supported for its original casebook, while the live sidebar keeps the host's sole connection open. `src/policy-execution.ts` starts two sequential `policy-worker.ts` children running the native Agent Loop with only snapshot search/read tools. They have no database, provider credentials, user profile or evaluator answer. Bounded IPC forwards requests to the host's existing LLM service and attempt observer; there is one ledger, reserved before actual adapter dispatch, with distinct generation and evaluation owners. No attempt import or second billing store is introduced.
+
+The host fixes route, prompt, tool schemas, conditions, runtime and request/token/time bounds. It rechecks source object integrity before each source-batch reservation, even after authorization. Candidate text cannot edit these conditions. A private temporary-home marker binds parent/run ownership before task dispatch; the source root is never a cleanup path. Complete evidence requires process exit, Agent disposal and directory removal. Controller loss exits the isolated child and removes only its verified temporary cwd; missing disposal/evidence stays incomplete and cannot authorize adoption.
+
+The controlled interruption check exposed a real cleanup race: a result send on an already disconnected channel could terminate the process before asynchronous directory cleanup finished. The final child separates successful completion from abandonment, handles send failure and finishes owned-home cleanup before exit. The retained before-fix output and passing process-loss regression document this correction.
+
+## Compatibility and recovery
+
+SQLite remains **7**. Optional generation `source` metadata, a second evaluation specification and new receipts reuse existing tables. Old generation/session/batch JSON is not rewritten or given source defaults. Startup validates exact authorization receipts, source provenance, lineage and conditions; corrupt records fail without clearing them. In-flight/authorized work recovers as interrupted without replay. Unknown usage remains unknown. New explicit work has a fresh owner/authorization and retains all previous costs.
+
+Restore exact objects from the stopped-host backup when missing/corrupt; there is no live-source, sample or latest-version fallback. Retained receipts recover committed intent, not automatic execution. Earlier strict v7 binaries may reject new fields/commands; downgrade from the complete database/object/artifact/session backup. No historical user database was opened during these checks.
+
+## Validation and limits
+
+- `npm run check`: **93 passing tests**, host/client type checks and build on Node **25.8.1**, pinned Harness `d347e703908d0406b7a7ef80e3a0e594d86b2215`. Ten new checks cover separate authorization/hidden-answer exclusion, complete native tasks, atomic rollback, stale/duplicate/conflicting operations, lineage, cumulative limits, unknown/invalid output, no tools/forbidden tools, failed quality, stopping/disposal, controller loss, raw historical rows, corrupt receipts, unowned cwd, synchronous spawn failure and source loss before dispatch. The earlier 83 checks remain passing.
+- Native web sidebar: confirm/cancel, workspace reset, exact generation source, independent evaluation confirmation, six requests/four tools per source batch, unchanged choices/sessions, readable wide/narrow forms and zero browser errors. Restart retained the sealed generation and completed evaluation, and viewing the old snapshot/session made zero requests. Later final-build evaluations were separately confirmed, not replayed.
+- The retained fresh home contains **35 confirmed fixture attempts**, **521 synthetic tokens**: two generation, 24 evaluation and nine daily requests. This includes the seed casebook, one source-bound generation and three explicitly authorized source comparisons. All five original session bindings and earlier records are retained. These values are scripted, not measured model performance.
+- Four owned web hosts/ports and all eight recorded SDK/native evaluation children were checked absent; child homes were removed and browsers closed. Four empty directories left by the reproduced bug were checked for ownership/open handles and removed; diagnostic controller history remains. Source/code history and the pre-existing Harness patch are preserved.
+
+See [bounded evidence](evidence/policy-authorization/README.md). The final client-only error wording was separately typechecked/built; the tested host bundle remained byte-identical. Generation and evaluation still require fixed adapters in an isolated fixture profile. Real-model routes, repository semantic ground truth and real spending remain future contracts. No general optimizer, component-code editing or automatic adoption was introduced.
+
+## Final delivery review
+
+The final code review reproduced two additional failure boundaries before correcting them. Stopping while the private ownership marker was being written, or failing the PID write after fork, could bypass resource cleanup. A cancellation check after the write now prevents launch; post-fork failures use the same exit/wait/removal path. Also, sessions created from a source-evaluation batch omitted `sourceId` by design and could resume from the embedded batch after losing the sealed source object. The shared session resolver now validates the batch's exact source authorization/object before resume or dispatch. Historical casebook bindings remain unchanged.
+
+The final `npm run check` passed **94 tests**, both type checks and build on Node 25.8.1. The additional regression covers both preparation/PID failure checkpoints; the full-task session regression also verifies missing-source refusal without rebinding the old session or making another request. Earlier 93-test evidence above remains intact. A fresh isolated native web run repeats separate generation/evaluation confirmations, full tool tasks, old-session binding and restore; a real host restart verifies zero replay. Final records are in [delivery review evidence](evidence/policy-authorization/final-review/README.md).
