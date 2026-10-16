@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "paidRequests": 0,
+  "freshRequestsAfterFinalRestart": 3,
+  "totalDailyRequests": 12,
+  "totalDailySyntheticTokens": 180,
+  "sources": 4,
+  "sessions": 6,
+  "oldFiveBindingsUnchanged": true,
+  "browserErrors": []
+}

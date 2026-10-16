@@ -1,0 +1,150 @@
+{
+	"date": "2026-10-15",
+	"runtime": "Node 25.8.1",
+	"independentProcesses": 3,
+	"totalFixtureRequests": 9,
+	"paidRequests": 0,
+	"runs": [
+		{
+			"runtime": "v25.8.1",
+			"processId": 26594,
+			"selectedSide": "baseline",
+			"modelMode": "deterministic fixture only",
+			"paidRequests": 0,
+			"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+			"sourceDigest": "66c1bd8af2ff8bdb9d15705182e1a85c5937bcbfb8a271c42984a51659877130",
+			"runs": [
+				{
+					"side": "baseline",
+					"requests": 3,
+					"toolResults": 2,
+					"completed": true,
+					"policyInFirstRequest": true,
+					"unrelatedPolicyAbsent": true,
+					"forbiddenToolBlocked": true
+				}
+			],
+			"totalFixtureRequests": 3,
+			"forbiddenExecutions": 0,
+			"rootsAfterDisposal": 0,
+			"evidenceReachedFinalRequest": true,
+			"inputUnchanged": true,
+			"limitations": [
+				"Not real-model quality evidence",
+				"Not OS sandbox validation",
+				"Does not implement candidate lifecycle, adoption, or durable policy binding"
+			],
+			"steps": [
+				{
+					"id": "rsi-audit-baseline",
+					"turn": 1,
+					"step": 1
+				},
+				{
+					"id": "rsi-audit-baseline",
+					"turn": 1,
+					"step": 2
+				},
+				{
+					"id": "rsi-audit-baseline",
+					"turn": 1,
+					"step": 3
+				}
+			]
+		},
+		{
+			"runtime": "v25.8.1",
+			"processId": 26595,
+			"selectedSide": "candidate",
+			"modelMode": "deterministic fixture only",
+			"paidRequests": 0,
+			"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+			"sourceDigest": "66c1bd8af2ff8bdb9d15705182e1a85c5937bcbfb8a271c42984a51659877130",
+			"runs": [
+				{
+					"side": "candidate",
+					"requests": 3,
+					"toolResults": 2,
+					"completed": true,
+					"policyInFirstRequest": true,
+					"unrelatedPolicyAbsent": true,
+					"forbiddenToolBlocked": true
+				}
+			],
+			"totalFixtureRequests": 3,
+			"forbiddenExecutions": 0,
+			"rootsAfterDisposal": 0,
+			"evidenceReachedFinalRequest": true,
+			"inputUnchanged": true,
+			"limitations": [
+				"Not real-model quality evidence",
+				"Not OS sandbox validation",
+				"Does not implement candidate lifecycle, adoption, or durable policy binding"
+			],
+			"steps": [
+				{
+					"id": "rsi-audit-candidate",
+					"turn": 1,
+					"step": 1
+				},
+				{
+					"id": "rsi-audit-candidate",
+					"turn": 1,
+					"step": 2
+				},
+				{
+					"id": "rsi-audit-candidate",
+					"turn": 1,
+					"step": 3
+				}
+			]
+		},
+		{
+			"runtime": "v25.8.1",
+			"processId": 26596,
+			"selectedSide": "restored",
+			"modelMode": "deterministic fixture only",
+			"paidRequests": 0,
+			"harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+			"sourceDigest": "66c1bd8af2ff8bdb9d15705182e1a85c5937bcbfb8a271c42984a51659877130",
+			"runs": [
+				{
+					"side": "restored",
+					"requests": 3,
+					"toolResults": 2,
+					"completed": true,
+					"policyInFirstRequest": true,
+					"unrelatedPolicyAbsent": true,
+					"forbiddenToolBlocked": true
+				}
+			],
+			"totalFixtureRequests": 3,
+			"forbiddenExecutions": 0,
+			"rootsAfterDisposal": 0,
+			"evidenceReachedFinalRequest": true,
+			"inputUnchanged": true,
+			"limitations": [
+				"Not real-model quality evidence",
+				"Not OS sandbox validation",
+				"Does not implement candidate lifecycle, adoption, or durable policy binding"
+			],
+			"steps": [
+				{
+					"id": "rsi-audit-restored",
+					"turn": 1,
+					"step": 1
+				},
+				{
+					"id": "rsi-audit-restored",
+					"turn": 1,
+					"step": 2
+				},
+				{
+					"id": "rsi-audit-restored",
+					"turn": 1,
+					"step": 3
+				}
+			]
+		}
+	]
+}

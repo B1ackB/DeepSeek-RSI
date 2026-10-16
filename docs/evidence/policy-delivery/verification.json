@@ -1,0 +1,46 @@
+{
+  "runtime": {
+    "node": "25.8.1",
+    "harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215"
+  },
+  "paidRequests": 0,
+  "ownedHosts": [
+    {
+      "pid": 22206,
+      "port": 50461,
+      "processAbsent": true,
+      "portReleased": true,
+      "retainedHome": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-7yy7J3",
+      "browserClosed": true
+    },
+    {
+      "pid": 22756,
+      "port": 50807,
+      "processAbsent": true,
+      "portReleased": true
+    }
+  ],
+  "seedChildren": [
+    {
+      "pid": 22148,
+      "processAbsent": true,
+      "directoryRemoved": true
+    },
+    {
+      "pid": 22156,
+      "processAbsent": true,
+      "directoryRemoved": true
+    }
+  ],
+  "browserClosed": true,
+  "oldSessionBindingsUnchangedAfterRestart": true,
+  "sqliteVersion": 7,
+  "policyChoices": 3,
+  "policySources": 3,
+  "policySessions": 5,
+  "dailyRequests": 9,
+  "generationRequests": 1,
+  "batchRequests": 6,
+  "allAttemptsConfirmed": true,
+  "retainedHome": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-source-ui-7yy7J3"
+}

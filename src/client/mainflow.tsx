@@ -30,8 +30,10 @@ export function MainflowCard({ task, snapshot, disabled, run, openSession }: { t
 	return <section className="rsi-card" aria-label="偏好驱动 Skill 修改">
 		<h3>{labels[task.status]}</h3><strong>{task.name}</strong>
 		<small>{task.scenario.label} · {task.parentId ? '继续上一轮调整' : '本次调整'}</small>
-		{task.error && <p role="alert">{task.error}</p>}
+		{task.error && <p role="alert">{task.error === '[object Object]' ? '本次任务已中断，旧记录未保存可读原因。' : task.error}</p>}
+		{task.status === 'failed' && !task.authorization && rows.length === 0 && <p>尚未授权生成候选，RSI 请求数为 0。若要继续优化，请在下方填写“下一轮要求”，点击“带入要求，准备下一轮”重新打开确认卡；也可选择“用旧版继续”直接执行正式任务。</p>}
 		{task.status === 'confirming' && <>
+			<p role="status"><strong>请求已收到，正在等待你确认。</strong>聊天暂时不会回复，也尚未调用候选模型。请填写下方偏好并点击“确认偏好、范围与预算，生成候选”，或选择“用旧版继续”。</p>
 			<p>确认后先修改独立 Skill 副本，审阅启用后开始本次任务。原目录保留。</p>
 			{task.scenario.id === 'frontend' && <DesignStart pageType={pageType} direction={direction} onType={setPageType} onDirection={setDirection} />}
 			<label>本次任务需求与必需项目约束<textarea value={brief} maxLength={16000} onChange={e => setBrief(e.target.value)} /></label>

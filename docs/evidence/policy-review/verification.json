@@ -1,0 +1,143 @@
+{
+  "status": "passed",
+  "runtime": "v25.8.1",
+  "paidRequests": 0,
+  "harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+  "choices": [
+    {
+      "id": "f0f0276a-ae95-4450-865f-cf3f8b36910d",
+      "workspaceId": "19677eaa-ef7b-4d95-bf48-be6034e049ed",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-naS2hn/policy-review-home/workspace",
+      "policyId": "f93558a4-bae0-489f-aac7-3634c54a1b4a",
+      "digest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "4dd4e534-bc5b-4879-88bf-3161ccfd8105",
+      "evidenceDigest": "c8d0d2c0da29bf8c88d336553c2039f286c9beed6073ccbe82b98a325c42b3d5",
+      "previousId": null,
+      "approvalId": "f0f0276a-ae95-4450-865f-cf3f8b36910d",
+      "kind": "adopt",
+      "createdAt": 1792056277814
+    },
+    {
+      "id": "47d046ed-5baa-4cbd-90e6-a0e411cb2a60",
+      "workspaceId": "19677eaa-ef7b-4d95-bf48-be6034e049ed",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-naS2hn/policy-review-home/workspace",
+      "policyId": "f93558a4-bae0-489f-aac7-3634c54a1b4a",
+      "digest": "e206f417b110f7f1776cbd764d3eb63631230fb70a7416569ad0b24f961b3597",
+      "batchId": "4dd4e534-bc5b-4879-88bf-3161ccfd8105",
+      "evidenceDigest": "c8d0d2c0da29bf8c88d336553c2039f286c9beed6073ccbe82b98a325c42b3d5",
+      "previousId": "f0f0276a-ae95-4450-865f-cf3f8b36910d",
+      "approvalId": "47d046ed-5baa-4cbd-90e6-a0e411cb2a60",
+      "kind": "adopt",
+      "createdAt": 1792056277995
+    },
+    {
+      "id": "2a971d78-2100-4cd7-95b1-2e64c5462a76",
+      "workspaceId": "19677eaa-ef7b-4d95-bf48-be6034e049ed",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-naS2hn/policy-review-home/workspace",
+      "policyId": "f93558a4-bae0-489f-aac7-3634c54a1b4a",
+      "digest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "4dd4e534-bc5b-4879-88bf-3161ccfd8105",
+      "evidenceDigest": "c8d0d2c0da29bf8c88d336553c2039f286c9beed6073ccbe82b98a325c42b3d5",
+      "previousId": "47d046ed-5baa-4cbd-90e6-a0e411cb2a60",
+      "approvalId": "f0f0276a-ae95-4450-865f-cf3f8b36910d",
+      "kind": "restore",
+      "createdAt": 1792056278981
+    }
+  ],
+  "sessions": [
+    {
+      "sessionId": "rsi-policy/559ce886-0254-4731-bafa-48614046504d",
+      "choiceId": "f0f0276a-ae95-4450-865f-cf3f8b36910d",
+      "workspaceId": "19677eaa-ef7b-4d95-bf48-be6034e049ed",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-naS2hn/policy-review-home/workspace",
+      "policyId": "f93558a4-bae0-489f-aac7-3634c54a1b4a",
+      "policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "4dd4e534-bc5b-4879-88bf-3161ccfd8105",
+      "conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+      "createdAt": 1792056277863
+    },
+    {
+      "sessionId": "rsi-policy/9a7eb926-236b-46c3-bb0c-c0a747de4309",
+      "choiceId": "47d046ed-5baa-4cbd-90e6-a0e411cb2a60",
+      "workspaceId": "19677eaa-ef7b-4d95-bf48-be6034e049ed",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-naS2hn/policy-review-home/workspace",
+      "policyId": "f93558a4-bae0-489f-aac7-3634c54a1b4a",
+      "policyDigest": "e206f417b110f7f1776cbd764d3eb63631230fb70a7416569ad0b24f961b3597",
+      "batchId": "4dd4e534-bc5b-4879-88bf-3161ccfd8105",
+      "conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+      "createdAt": 1792056278045
+    },
+    {
+      "sessionId": "rsi-policy/e3006c8a-bc77-4295-995d-1f02673a93f1",
+      "choiceId": "2a971d78-2100-4cd7-95b1-2e64c5462a76",
+      "workspaceId": "19677eaa-ef7b-4d95-bf48-be6034e049ed",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-naS2hn/policy-review-home/workspace",
+      "policyId": "f93558a4-bae0-489f-aac7-3634c54a1b4a",
+      "policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "4dd4e534-bc5b-4879-88bf-3161ccfd8105",
+      "conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+      "createdAt": 1792056279465
+    }
+  ],
+  "accounting": {
+    "generationTokens": 13,
+    "evaluationTokens": 90,
+    "dailyTokens": 45,
+    "totalTokens": 148
+  },
+  "sourceReachedFinalRequest": true,
+  "nativeToolCalls": 2,
+  "nativeCompletedTurn": true,
+  "evaluationChildCleanup": [
+    {
+      "processExited": true,
+      "agentsDisposed": true,
+      "directoryRemoved": true,
+      "forbiddenExecutions": 0,
+      "temporaryRoot": "/var/folders/g3/tfm273_n6p9crqmm1s82jnj40000gn/T/rsi-policy-sdk-lnDdDg"
+    },
+    {
+      "processExited": true,
+      "agentsDisposed": true,
+      "directoryRemoved": true,
+      "forbiddenExecutions": 0,
+      "temporaryRoot": "/var/folders/g3/tfm273_n6p9crqmm1s82jnj40000gn/T/rsi-policy-sdk-q5uIjS"
+    }
+  ],
+  "cleanup": {
+    "remainingOwnedHosts": [],
+    "ports": [
+      {
+        "port": 53820,
+        "listening": false
+      },
+      {
+        "port": 56064,
+        "listening": false
+      },
+      {
+        "port": 56890,
+        "listening": false
+      },
+      {
+        "port": 57400,
+        "listening": false
+      },
+      {
+        "port": 57986,
+        "listening": false
+      }
+    ],
+    "autoOpenedTestTabClosed": true,
+    "headlessBrowsersClosedByFinally": true,
+    "fixtureHomesRetained": [
+      "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-TixwRW",
+      "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-HjGGAA",
+      "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-sFk3Gn",
+      "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-ZYCn9L",
+      "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-review-naS2hn"
+    ]
+  },
+  "evaluationChildDirectoriesAbsent": true,
+  "harnessPatchPreserved": true
+}

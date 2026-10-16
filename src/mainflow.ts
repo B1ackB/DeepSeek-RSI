@@ -14,7 +14,7 @@ import { candidateResponseSchema, flowBudget, flowChecks, flowTaskSchema, type F
 import type { G1Command, ManagedSkill } from './g1-contracts.ts';
 import type { Store } from './store.ts';
 
-import { redact } from './text.ts';
+import { failureMessage, redact } from './text.ts';
 import { applyComparison } from './comparison.ts';
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -34,7 +34,7 @@ export function applyMainflow(ctx: Context, store: Store, sessions: Map<string, 
 	const get = (id: string) => { const task = store.business().mainflow.tasks.find(t => t.id === id); if (!task) throw fault('task_missing', 'RSI 修改任务不存在'); return task; };
 	const update = (id: string, fn: (t: FlowTask) => void) => store.mutateBusiness(s => fn(s.mainflow.tasks.find(t => t.id === id)!));
 	function track(work: Promise<void>) { jobs.add(work); void work.finally(() => jobs.delete(work)).catch(e => ctx.logger.error('RSI mainflow: %s', String(e))); }
-	function fail(id: string, error: unknown) { update(id, t => { if (t.status === 'stopped' || t.status === 'dispatched') return; if (t.status === 'checking') t.checks.push({ name: '候选检查', status: 'failed', detail: redact(error instanceof Error ? error.message : String(error)).slice(0, 4000) }); t.status = 'failed'; t.error = redact(error instanceof Error ? error.message : String(error)).slice(0, 4000); }); }
+	function fail(id: string, error: unknown) { update(id, t => { if (t.status === 'stopped' || t.status === 'dispatched') return; const detail = failureMessage(error); if (t.status === 'checking') t.checks.push({ name: '候选检查', status: 'failed', detail }); t.status = 'failed'; t.error = detail; }); }
 	async function install(agent: Agent, task: FlowTask, digest: string) {
 		const snapshot = digest === task.baseline.versionDigest ? task.baseline : task.candidate?.snapshot;
 		if (!snapshot || snapshot.versionDigest !== digest) throw fault('binding_missing', '没有可绑定的完整版本');

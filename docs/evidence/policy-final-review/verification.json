@@ -1,0 +1,105 @@
+{
+  "status": "passed",
+  "date": "2026-10-16",
+  "runtime": "v25.8.1",
+  "harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+  "harnessVersion": "0.1.3-alpha.1",
+  "harnessPatchUnchanged": true,
+  "paidRequests": 0,
+  "unitTests": 68,
+  "policyReviewTests": 13,
+  "choices": [
+    {
+      "id": "c4b8c824-ab58-42ac-a68d-1f42c3926d29",
+      "workspaceId": "600adbf5-dfc8-40b7-a70b-b4144ade2564",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-final-review-ksx2AU/policy-review-home/workspace",
+      "policyId": "74646408-332d-4cd7-bd5b-81724e56a675",
+      "digest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "fcae8249-ff1a-4b84-a151-7e5bd515d0c3",
+      "evidenceDigest": "ad8c8f16abe2397febd11a03568d813c732e26542cde9ef55db923ad6fe98cfb",
+      "previousId": null,
+      "approvalId": "c4b8c824-ab58-42ac-a68d-1f42c3926d29",
+      "kind": "adopt",
+      "createdAt": 1792111687135
+    },
+    {
+      "id": "ebcd3562-fb70-4bca-8cad-5d678db8eab2",
+      "workspaceId": "600adbf5-dfc8-40b7-a70b-b4144ade2564",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-final-review-ksx2AU/policy-review-home/workspace",
+      "policyId": "74646408-332d-4cd7-bd5b-81724e56a675",
+      "digest": "e206f417b110f7f1776cbd764d3eb63631230fb70a7416569ad0b24f961b3597",
+      "batchId": "fcae8249-ff1a-4b84-a151-7e5bd515d0c3",
+      "evidenceDigest": "ad8c8f16abe2397febd11a03568d813c732e26542cde9ef55db923ad6fe98cfb",
+      "previousId": "c4b8c824-ab58-42ac-a68d-1f42c3926d29",
+      "approvalId": "ebcd3562-fb70-4bca-8cad-5d678db8eab2",
+      "kind": "adopt",
+      "createdAt": 1792111687299
+    },
+    {
+      "id": "ff602687-0599-483b-9ca2-f15a76f5af77",
+      "workspaceId": "600adbf5-dfc8-40b7-a70b-b4144ade2564",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-final-review-ksx2AU/policy-review-home/workspace",
+      "policyId": "74646408-332d-4cd7-bd5b-81724e56a675",
+      "digest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "fcae8249-ff1a-4b84-a151-7e5bd515d0c3",
+      "evidenceDigest": "ad8c8f16abe2397febd11a03568d813c732e26542cde9ef55db923ad6fe98cfb",
+      "previousId": "ebcd3562-fb70-4bca-8cad-5d678db8eab2",
+      "approvalId": "c4b8c824-ab58-42ac-a68d-1f42c3926d29",
+      "kind": "restore",
+      "createdAt": 1792111687799
+    }
+  ],
+  "sessions": [
+    {
+      "sessionId": "rsi-policy/06e9701e-49a0-4817-b208-0bf48129d363",
+      "choiceId": "c4b8c824-ab58-42ac-a68d-1f42c3926d29",
+      "workspaceId": "600adbf5-dfc8-40b7-a70b-b4144ade2564",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-final-review-ksx2AU/policy-review-home/workspace",
+      "policyId": "74646408-332d-4cd7-bd5b-81724e56a675",
+      "policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "fcae8249-ff1a-4b84-a151-7e5bd515d0c3",
+      "conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+      "createdAt": 1792111687183
+    },
+    {
+      "sessionId": "rsi-policy/9d5b190e-ef21-4a73-b36d-a272f6eb1f75",
+      "choiceId": "ebcd3562-fb70-4bca-8cad-5d678db8eab2",
+      "workspaceId": "600adbf5-dfc8-40b7-a70b-b4144ade2564",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-final-review-ksx2AU/policy-review-home/workspace",
+      "policyId": "74646408-332d-4cd7-bd5b-81724e56a675",
+      "policyDigest": "e206f417b110f7f1776cbd764d3eb63631230fb70a7416569ad0b24f961b3597",
+      "batchId": "fcae8249-ff1a-4b84-a151-7e5bd515d0c3",
+      "conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+      "createdAt": 1792111687348
+    },
+    {
+      "sessionId": "rsi-policy/4ed47d91-a1de-4039-a76a-cd30800c9cb1",
+      "choiceId": "ff602687-0599-483b-9ca2-f15a76f5af77",
+      "workspaceId": "600adbf5-dfc8-40b7-a70b-b4144ade2564",
+      "workspacePath": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-final-review-ksx2AU/policy-review-home/workspace",
+      "policyId": "74646408-332d-4cd7-bd5b-81724e56a675",
+      "policyDigest": "832bbdf19c5148e8b562a250e9bb268319ca00d42e0b988d155a17a1d3ce0598",
+      "batchId": "fcae8249-ff1a-4b84-a151-7e5bd515d0c3",
+      "conditionsDigest": "60b8e4ec190d5c399693b1e94bf7da1669a37b972821301fc5580568b3979233",
+      "createdAt": 1792111688384
+    }
+  ],
+  "accounting": {
+    "generationTokens": 13,
+    "evaluationTokens": 90,
+    "dailyTokens": 45,
+    "totalTokens": 148
+  },
+  "sourceReachedFinalRequest": true,
+  "nativeToolCalls": 2,
+  "nativeCompletedTurn": true,
+  "evaluationChildDirectoriesAbsent": true,
+  "cleanup": {
+    "ownedHostPid": 87299,
+    "remainingOwnedHosts": 0,
+    "port": 63849,
+    "portReleased": true,
+    "headlessBrowserClosed": true,
+    "retainedFixtureHome": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-final-review-ksx2AU"
+  }
+}

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { GenerateOptions, StreamChunk, TokenUsage } from '@deepseek-ai/dsh-llm';
 import { emptyTokens, fault, tokensSchema, type Attempt } from './contracts.ts';
 import type { Store } from './store.ts';
+import { checkPolicySessionRequest } from './policy.ts';
 
 export function measuredTokens(u: TokenUsage) {
 	// 底座 inputTokens 不含缓存；可选缓存字段缺失时不推导总量。
@@ -11,9 +12,23 @@ export function measuredTokens(u: TokenUsage) {
 export function observeUsage(store: Store, rsiSessions: ReadonlySet<string>, probeSessions: ReadonlySet<string> = rsiSessions, retries = new Map<string, string>(), requestOwners: ReadonlyMap<string, string> = new Map()) {
 	return async function* (options: GenerateOptions, next: () => AsyncIterable<StreamChunk>): AsyncIterable<StreamChunk> {
 		const sessionId = options.sessionId ?? null;
+		const policy = sessionId === null ? undefined : store.policyRunBinding(sessionId);
+		const generation = sessionId === null ? undefined : store.policyGenerationBinding(sessionId);
+		const bound = sessionId === null ? undefined : store.policySessionRun(sessionId);
+		if (sessionId?.startsWith('rsi-policy/') && !bound) throw fault('policy_binding_missing', '只读会话缺少持久化版本绑定');
 		const rsi = sessionId !== null && rsiSessions.has(sessionId);
 		const probe = rsi || (sessionId !== null && probeSessions.has(sessionId));
 		const ownerId = sessionId === null ? undefined : requestOwners.get(sessionId);
+		if (bound) {
+			if (policy || generation || ownerId || probe) throw fault('budget_config', '只读会话不能重分配计量归属');
+			checkPolicySessionRequest(bound, options);
+		}
+		if (generation) {
+			const budget = generation.authorization.budget; const prompt = store.generationPrompt(generation);
+			if (policy || ownerId || probe || options.purpose !== undefined || options.reasoningEffort !== undefined || options.provider !== budget.provider || options.model !== budget.model || options.maxTokens !== budget.maxOutputTokens || (options.tools?.length ?? 0) > 0) throw fault('budget_config', 'Generator capabilities, route or ownership differ from authorization');
+			if (options.system !== prompt.system || options.messages.length !== 1 || options.messages[0]?.role !== 'user' || options.messages[0].content.length !== 1 || options.messages[0].content[0]?.type !== 'text' || options.messages[0].content[0].text !== prompt.input || Buffer.byteLength(JSON.stringify([options.system, prompt.input])) > budget.maxInputBytes) throw fault('budget_config', 'Generator input differs from its frozen view');
+		}
+		if (policy && (ownerId || probe || options.purpose !== undefined || options.reasoningEffort !== undefined || options.provider !== policy.entry.run.conditions.provider || options.model !== policy.entry.run.conditions.model || options.maxTokens !== policy.entry.run.conditions.budget.maxOutputTokens)) throw fault('budget_config', 'Policy accounting route or legacy ownership conflicts with authorization');
 		if (ownerId) {
 			const state = store.business();
 			const comparison = state.mainflow.tasks.find(t => t.comparison?.id === ownerId)?.comparison;
@@ -27,8 +42,8 @@ export function observeUsage(store: Store, rsiSessions: ReadonlySet<string>, pro
 		if (probe && (options.provider !== 'deepseek-official' || options.model !== 'deepseek-v4-flash' || options.maxTokens === undefined || options.maxTokens > 4096 || options.reasoningEffort !== 'high')) throw fault('budget_config', 'G0 probe route/output cap differs from the approved configuration');
 		let attempt: Attempt = {
 			schemaVersion: 1, attemptId: randomUUID(), revision: 1,
-			owner: ownerId || rsi ? 'rsi' : sessionId ? 'session' : 'unresolved', ownerId: ownerId ?? (rsi ? store.snapshot().probeId : sessionId), sessionId,
-			purpose: ownerId ? (store.business().mainflow.tasks.some(t => t.comparison?.id === ownerId) ? (sessionId?.endsWith('/baseline') ? 'baseline' : 'evaluation') : store.business().mainflow.tasks.some(t => t.id === ownerId) ? 'generation' : 'analysis') : probe ? 'probe' : 'daily', callKind: options.purpose === 'compaction' ? 'compression' : 'agent', retryOfAttemptId: options.purpose === undefined && sessionId ? retries.get(sessionId) ?? null : null,
+			owner: generation || policy || ownerId || rsi ? 'rsi' : sessionId ? 'session' : 'unresolved', ownerId: generation?.authorization.id ?? policy?.batch.authorization.id ?? ownerId ?? (rsi ? store.snapshot().probeId : sessionId), sessionId,
+			purpose: generation ? 'generation' : policy ? (policy.entry.side === 'baseline' ? 'baseline' : 'evaluation') : ownerId ? (store.business().mainflow.tasks.some(t => t.comparison?.id === ownerId) ? (sessionId?.endsWith('/baseline') ? 'baseline' : 'evaluation') : store.business().mainflow.tasks.some(t => t.id === ownerId) ? 'generation' : 'analysis') : probe ? 'probe' : 'daily', callKind: options.purpose === 'compaction' ? 'compression' : 'agent', retryOfAttemptId: generation || policy || bound ? null : options.purpose === undefined && sessionId ? retries.get(sessionId) ?? null : null,
 			provider: options.provider, model: options.model, providerRequestId: null,
 			state: 'reserved', createdAt: Date.now(), startedAt: null, endedAt: null, usageState: 'pending', tokens: emptyTokens(), usageSource: null, diagnostic: null,
 		};
@@ -50,7 +65,7 @@ export function observeUsage(store: Store, rsiSessions: ReadonlySet<string>, pro
 				}
 				if (chunk.type === 'finish' && !finished) {
 					finished = true;
-					update({ state: chunk.reason.kind === 'error' ? 'failed' : chunk.reason.kind === 'aborted' ? 'cancelled' : 'succeeded', endedAt: Date.now(), usageState: attempt.tokens.total === null ? 'unknown' : 'confirmed' });
+					update({ state: chunk.reason.kind === 'error' ? 'failed' : chunk.reason.kind === 'aborted' ? 'cancelled' : 'succeeded', endedAt: Date.now(), usageState: attempt.tokens.total === null || attempt.diagnostic ? 'unknown' : 'confirmed' });
 				}
 				yield chunk;
 			}

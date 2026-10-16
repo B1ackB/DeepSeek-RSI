@@ -1,0 +1,59 @@
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 check
+> npm run typecheck && npm test && npm run build
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.client.json
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 test
+> node --test tests/*.test.ts
+
+✔ comparison freezes inputs, compiles both artifacts, preserves unknown usage and never selects ACTIVE (357.869375ms)
+✔ trusted scenarios extend matching and compilation without host decision authority (0.301959ms)
+✔ frontend preferences stay scoped, ask at most two bounded batches, and freeze task overrides (19.313666ms)
+✔ version 2 migration preserves receipts, rolls back invalid data, and persists preference commands atomically (6.982084ms)
+✔ G1 native observation, explicit one-shot analysis, scope guards, cancellation and restart (442.633667ms)
+✔ real Harness Skill registry pins text and resources across durable bindings (149.230333ms)
+✔ real Harness monotonic guard blocks a later scope-local tool and leaves daily tools available (3.387542ms)
+✔ Harness structured cancellation remains readable without leaking raw objects or credentials (1.541125ms)
+✔ candidate rejects missing, corrupt, duplicate and unauthorized replacements while preserving complete baseline (113.523208ms)
+✔ generation budget, interruption and v4 migration preserve authorization and uncertain usage (25.582083ms)
+✔ script candidates fail closed when Docker cannot start and never execute on the host (35.027458ms)
+✔ v5 migration preserves old tasks and preferences while adding scenario defaults (29.5845ms)
+✔ main flow gates real Harness dispatch, seals exact candidate, separates usage, and links an old session (548.251792ms)
+✔ policy objects seal canonical bytes without replacement and preserve parent provenance (80.500791ms)
+✔ policy object reads reject missing, symlinked, noncanonical and oversized files (3.924459ms)
+✔ populated v6 migration appends tables and retains every historical row and artifact byte (21.107834ms)
+✔ invalid v6 data rolls back schema and new tables without rewriting old rows (6.618417ms)
+✔ batch authorization is immutable, exact-version bound and cannot reuse spending identities (35.790292ms)
+✔ policy and batch accounting covers both complete streams and cumulative request/token stops (71.071833ms)
+✔ unknown and conflicting totals block both sides, survive recovery and do not poison unrelated owners (138.786125ms)
+✔ restart interrupts authorized and in-flight batches, retains reservations and permits only late usage settlement (67.507083ms)
+✔ policy observer rejects missing binding, changed envelopes, legacy ownership and cancelled batches before dispatch (30.747042ms)
+✔ settled not-sent reservations consume a slot without inventing tokens; in-flight usage cannot authorize parallel dispatch (29.273292ms)
+✔ persistent batch and run deadlines and backward clocks reject dispatch without a new reservation (28.829375ms)
+✔ policy content and frozen conditions reject authority fields, templates, byte excess, traversal and mutation (6.566ms)
+✔ snapshot tools never access host paths and enforce argument, call and result limits (1.063375ms)
+✔ native SDK completes baseline, candidate and restored tasks in independent owned profiles with durable pre-dispatch accounting (904.085458ms)
+✔ native SDK denies late scoped tools and out-of-snapshot reads without executing forbidden effects (394.420583ms)
+✔ native SDK stops before dispatch for request/token caps, unknown usage and changed model route (1001.955792ms)
+✔ native SDK preserves provider failures, truncated streams and crash recovery without replay (605.760583ms)
+✔ native SDK cancellation and external deadline interrupt a hanging provider and reap the owned process (486.366834ms)
+✔ native Agent Loop retry records two attempts and links the actual retry event without network (51.292ms)
+✔ Web commands persist, reject stale/conflicting writes, and roll back failure (1076.303208ms)
+✔ unknown requests survive restart, block RSI, and do not block daily sessions (6.901958ms)
+✔ stream ledger separates owners, deduplicates usage and pauses on conflicting or missing usage (34.725083ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3677.632583
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 build
+> node scripts/build.mjs
+

@@ -1,6 +1,6 @@
 # DeepSeek RSI
 
-**A Skill evolution plugin with users in control.** Inside DeepSeek Harness, revise a Skill from your requirements, compare the old and new outputs with previews, tokens, and elapsed time, then choose a version or give feedback for another iteration.
+**An Agent evolution plugin with users in control.** The current user-facing workflow revises Skills inside DeepSeek Harness: compare old and new outputs with previews, tokens and elapsed time, then choose a version or give feedback for another iteration. The first additional object, a read-only repository execution policy, now has [fixed-response execution gates](POLICY-REPORT.md) and [explicit sidebar review/adoption/restoration](POLICY-REVIEW-REPORT.md).
 
 Repository: [B1ackB/DeepSeek-RSI](https://github.com/B1ackB/DeepSeek-RSI). Current development version: `0.0.0-g2.5`.
 
@@ -8,7 +8,7 @@ Repository: [B1ackB/DeepSeek-RSI](https://github.com/B1ackB/DeepSeek-RSI). Curre
 
 An Agent's behavior depends on the Skills it loads as well as its model: task methods, writing rules, reference material, and helper scripts. This project turns those editable resources into recorded, reviewable candidate versions so users can refine their Agents over time.
 
-RSI here means **controlled iteration at the Skill layer**. The model interprets requirements and proposes edits. The host controls authorization, scope, versions, accounting, and compilation. The user decides whether a candidate is worth adopting. The plugin does not change model weights, the Harness controller, or its own permissions, and does not switch versions automatically in the background.
+RSI here means **controlled iteration of explicitly supported Agent behavior**. Skill evolution is the current UI workflow. The repository-evidence-policy developer path generates scoped candidates, seals versions and separately authorizes fixed comparisons through independent native Agent children. The model proposes content within scope. The host controls authorization, versions, accounting and fixed checks. The user decides adoption. The plugin does not change model weights, the Harness controller or its own permissions, and does not switch versions automatically. The sidebar supports explicit policy review, workspace adoption/restoration and immutable dedicated pilot-session bindings under the fixed-response contract.
 
 ## Workflow
 
@@ -90,6 +90,18 @@ npm run check
 
 The linking script checks the Harness commit and refuses to replace a different existing link. `npm run check` runs host/client type checks, Node tests, and the build. Tests do not call real models or start Docker. The existing esbuild dependency compiles both the plugin and comparison CSS/JavaScript.
 
+`npm run policy:fixture` runs a complete offline Agent task through the native SDK in a new owned home/profile. It loads no real provider or ambient credentials and verifies sealed policy versions, batch-owned request accounting, interruption recovery and process cleanup. Detailed results go to `.cache/policy-fixture-result.json`. Policy boundary/failure and populated-v6 compatibility checks are included in the normal test suite. Use Node 25.8.1 with the existing native dependencies, as above.
+
+`npm run policy:comparison` runs baseline and candidate in separate children sharing one persisted batch. It retains a new controller database/result in a unique `.cache/policy-comparison-<UUID>` directory and removes the owned child homes. The test suite covers six fixed repository cases, cumulative limits, failed quality checks, unknown usage, child/controller process loss and missing cleanup receipts. These are fixed-response checks, not real-model performance measurements. See the [paired evaluation report](POLICY-COMPARISON-REPORT.md).
+
+`npm run policy:generation` exercises a scoped single-request proposer, immutable candidate sealing and a separately authorized paired evaluation. The proposer receives only the baseline, requirements and an independent development example; fixed-case answers and previous evaluation results are excluded. The command retains a new controller database/result under `.cache/policy-generation-<UUID>`. All responses remain scripted and offline. See the [generation gate report](POLICY-GENERATION-REPORT.md).
+
+The policy sidebar keeps the current session binding separate from future workspace defaults. See the [review/session report](POLICY-REVIEW-REPORT.md) and [final code review](POLICY-FINAL-REVIEW.md) for exact approval, recovery and compatibility boundaries.
+
+`npm run policy:snapshot -- /absolute/checkout exact/relative/file ...` collects only explicitly selected current worktree text and seals it in a new `.cache/policy-snapshot-<id>/repository-snapshots` directory. Add `--verify` to exercise the captured source through one offline native Agent task (three fixed-response requests; no paid provider). Sensitive/unsupported selections fail as a whole. No recursive discovery, Git execution, source writes or live filesystem tools are used. The optional snapshot provenance is covered by the existing conditions digest; old snapshots and SQLite rows need no rewrite. See the [snapshot contract](POLICY-SNAPSHOT-CONTRACTS.md) and [validation report](POLICY-SNAPSHOT-REPORT.md).
+
+The policy sidebar also accepts exact workspace-relative file paths, previews their full captured text and requires explicit sealing confirmation. It recaptures before sealing and rejects changed source or stale policy/workspace state. A separate button creates a new read-only session bound to that exact sealed snapshot and approved policy; creation makes no model request. Existing sessions retain their original source. The fixed adapter still requires an isolated fixture profile; no real-model route is enabled. See the [sidebar source report](POLICY-SOURCE-UI-REPORT.md).
+
 For development, start from the built Harness checkout with a separate `DSH_HOME` and this repository's patch:
 
 ```sh
@@ -99,6 +111,8 @@ DSH_HOME=/absolute/path/to/rsi-dev-home DSH_TELEMETRY_MODE=DISABLED \
 ```
 
 Use the authenticated launch link. Do not install a second RSI copy into the same profile. Harness manages credentials; do not commit authentication links, credentials, or local databases.
+
+If a Skill request appears to receive no chat reply, open the **RSI** sidebar first. The confirmation card pauses the ordinary Agent before its first model request; fill in the preference and confirm the displayed scope and budget, or select **用旧版继续** to run the task with the baseline. Waiting alone does not generate a candidate. Stopping the chat interrupts this wait. To retry Skill optimization after that interruption, enter a requirement under **下一轮要求** and select **带入要求，准备下一轮**; this opens a fresh confirmation card without calling a model. Confirming generation, starting a comparison, and continuing the ordinary task are separate actions that can incur model usage.
 
 ## Installation, upgrades, and data
 
@@ -117,9 +131,9 @@ DSH_HOME=/absolute/path/to/rsi-home node --import tsx/esm apps/cli/src/bin.ts \
  plugin --profile web add /absolute/path/to/DeepSeek-RSI/.cache/b1ackb-deepseek-rsi-0.0.0-g2.5.tgz --ignore-scripts
 ```
 
-Stop the profile's host and back up all of `DSH_HOME/rsi` before upgrading. This version migrates SQLite to **6**, preserving the ledger, receipts, and version records. Historical workflow records gain default scenario and empty comparison fields. Older packages cannot read version 6; roll back using a stopped-host backup. Uninstall with `plugin --profile web remove @b1ackb/deepseek-rsi` in the same profile; it does not clear RSI data.
+Stop the profile's host and back up all of `DSH_HOME/rsi` before upgrading. This development version uses SQLite **7**, appending policy version/batch/generation/choice/session tables while retaining terminal historical rows byte-for-byte; it does not insert policy defaults into the old business JSON. Earlier upgrades still add their scenario/comparison defaults. Startup interrupts unfinished work without replay. Older packages cannot read version 7, and earlier v7 development builds can reject new policy metadata and commands; downgrade using the complete stopped-host backup, including objects and artifacts. Uninstall with `plugin --profile web remove @b1ackb/deepseek-rsi` in the same profile; it does not clear RSI data.
 
-Comparison artifacts live under `DSH_HOME/rsi/artifacts`, Skill versions under `objects`, and the database remains `g0.sqlite` for compatibility. Preview links require the running Harness and browser authentication. They are local previews, not public deployments; stopping the host or changing its port can invalidate an old address.
+Comparison artifacts live under `DSH_HOME/rsi/artifacts`, Skill versions under `objects`, sealed policy content under `policies`, and repository source objects under `repository-snapshots`. The database remains `g0.sqlite` for compatibility and now appends `policy_sources` preview/seal records within the unreleased v7 path. Back up these directories together. The policy sidebar reviews existing fixed evaluation batches, supports explicit adoption/restoration and separately confirms sources for new dedicated sessions. Generation and evaluation authorization remain developer entry points; the sidebar does not launch them. Preview links require the running Harness and browser authentication. They are local previews, not public deployments; stopping the host or changing its port can invalidate an old address.
 
 ## Evidence and limits
 
@@ -136,6 +150,16 @@ Comparison artifacts live under `DSH_HOME/rsi/artifacts`, Skill versions under `
 |---|---|
 | Purpose, workflow, installation | This README |
 | Product boundaries and roadmap | [FRAMEWORK.md](FRAMEWORK.md) |
+| Proposed Agent evolution scope and first policy pilot | [EVOLUTION-PILOT-PLAN.md](EVOLUTION-PILOT-PLAN.md) |
+| Repository policy contract and fixture execution boundary | [POLICY-CONTRACTS.md](POLICY-CONTRACTS.md) |
+| Repository policy first-gate implementation evidence | [POLICY-REPORT.md](POLICY-REPORT.md) |
+| Repository policy sealing, v7 migration and batch accounting evidence | [POLICY-PERSISTENCE-REPORT.md](POLICY-PERSISTENCE-REPORT.md) |
+| Shared policy batches and fixed full-task evaluation | [POLICY-COMPARISON-REPORT.md](POLICY-COMPARISON-REPORT.md) |
+| Scoped policy generation, separate authorization and closed-loop fixture | [POLICY-GENERATION-REPORT.md](POLICY-GENERATION-REPORT.md) |
+| Explicit policy review, workspace choices and immutable session bindings | [POLICY-REVIEW-REPORT.md](POLICY-REVIEW-REPORT.md) |
+| Final review of exact selection, native resume and version restoration | [POLICY-FINAL-REVIEW.md](POLICY-FINAL-REVIEW.md) |
+| Real worktree capture, sensitive exclusions and immutable snapshot binding | [POLICY-SNAPSHOT-CONTRACTS.md](POLICY-SNAPSHOT-CONTRACTS.md), [validation](POLICY-SNAPSHOT-REPORT.md) |
+| Sidebar file selection, explicit sealing and exact source session binding | [POLICY-SOURCE-UI-REPORT.md](POLICY-SOURCE-UI-REPORT.md) |
 | Modules, call chains, trust boundaries | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Collaboration, scenario extensions, review | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Comparison, iterations, migration | [EXTENSION-CONTRACTS.md](EXTENSION-CONTRACTS.md) |

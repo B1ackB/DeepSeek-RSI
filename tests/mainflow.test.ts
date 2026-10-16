@@ -10,6 +10,21 @@ import { sealFixture } from '../src/skills.ts';
 import { checkCandidate, generationInput } from '../src/mainflow.ts';
 import { flowTaskSchema, flowBudget, type FlowTask } from '../src/mainflow-contracts.ts';
 import { emptyTokens, type Attempt } from '../src/contracts.ts';
+import { failureMessage } from '../src/text.ts';
+
+test('Harness structured cancellation remains readable without leaking raw objects or credentials', () => {
+	assert.match(failureMessage({ kind: 'user' }), /等待已被停止/);
+	assert.match(failureMessage({ kind: 'parent' }), /上级任务/);
+	assert.match(failureMessage({ kind: 'disposed' }), /会话已关闭/);
+	assert.equal(failureMessage({ kind: 'hook', reason: 'secret=private-value' }).includes('private-value'), false);
+	assert.equal(failureMessage(new Error('compile failed')), 'compile failed');
+	assert.equal(failureMessage({ message: 'provider failed' }), 'provider failed');
+	assert.equal(failureMessage('cancelled'), 'cancelled');
+	for (const unknown of [{ kind: 'unknown', secret: 'private-value' }, {}, null, undefined]) {
+		assert.equal(failureMessage(unknown), '任务中断，未收到可读的错误原因');
+	}
+	assert.equal(failureMessage(new Error('x'.repeat(5000))).length, 4000);
+});
 
 async function writable(root: string) { await chmod(root, 0o700); for (const e of await readdir(root, { withFileTypes: true })) if (e.isDirectory()) await writable(join(root, e.name)); }
 async function fixture(dir: string, source = resolve('fixtures/frontend/v0')): Promise<FlowTask> {
@@ -63,7 +78,7 @@ test('generation budget, interruption and v4 migration preserve authorization an
 		const raw = new DatabaseSync(file); const before = JSON.parse(String(raw.prepare('SELECT data FROM g1_state').get()!.data)); delete before.mainflow;
 		raw.prepare('UPDATE g1_state SET data=?').run(JSON.stringify(before)); raw.exec('PRAGMA user_version=4'); const preserved = raw.prepare('SELECT data FROM attempts').get()!.data; raw.close();
 		store = openStore(file); assert.deepEqual(store.business().mainflow, { tasks: [], preferences: [], active: [] }); store.close();
-		const after = new DatabaseSync(file); assert.equal(after.prepare('PRAGMA user_version').get()!.user_version, 6); assert.equal(after.prepare('SELECT data FROM attempts').get()!.data, preserved);
+		const after = new DatabaseSync(file); assert.equal(after.prepare('PRAGMA user_version').get()!.user_version, 7); assert.equal(after.prepare('SELECT data FROM attempts').get()!.data, preserved);
 		assert.deepEqual(JSON.parse(String(after.prepare('SELECT data FROM g1_state').get()!.data)).mainflow, { tasks: [], preferences: [], active: [] });
 		after.exec('PRAGMA user_version=4'); after.prepare('UPDATE attempts SET data=?').run('{bad'); after.close();
 		assert.throws(() => openStore(file));

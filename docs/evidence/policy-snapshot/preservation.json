@@ -1,0 +1,132 @@
+{
+	"headBefore": "a867eda6953121f1b893f3846ee42bd26df50f91",
+	"headAfter": "a867eda6953121f1b893f3846ee42bd26df50f91",
+	"unchanged": [
+		"docs/EVOLUTION-PILOT-PLAN.md",
+		"docs/POLICY-COMPARISON-REPORT.md",
+		"docs/POLICY-FINAL-REVIEW.md",
+		"docs/POLICY-GENERATION-REPORT.md",
+		"docs/POLICY-PERSISTENCE-REPORT.md",
+		"docs/POLICY-REPORT.md",
+		"docs/POLICY-REVIEW-REPORT.md",
+		"docs/evidence/evolution-feasibility/README.md",
+		"docs/evidence/evolution-feasibility/probe.mjs",
+		"docs/evidence/evolution-feasibility/result.json",
+		"docs/evidence/policy-comparison/README.md",
+		"docs/evidence/policy-comparison/check.txt",
+		"docs/evidence/policy-comparison/complete.json",
+		"docs/evidence/policy-comparison/verification.json",
+		"docs/evidence/policy-final-review/README.md",
+		"docs/evidence/policy-final-review/before-fix.txt",
+		"docs/evidence/policy-final-review/browser-result.json",
+		"docs/evidence/policy-final-review/check.txt",
+		"docs/evidence/policy-final-review/preservation.json",
+		"docs/evidence/policy-final-review/sidebar-narrow.png",
+		"docs/evidence/policy-final-review/sidebar.png",
+		"docs/evidence/policy-final-review/targeted.txt",
+		"docs/evidence/policy-final-review/verification.json",
+		"docs/evidence/policy-gate/README.md",
+		"docs/evidence/policy-gate/check.txt",
+		"docs/evidence/policy-gate/complete.json",
+		"docs/evidence/policy-gate/verification.json",
+		"docs/evidence/policy-generation/README.md",
+		"docs/evidence/policy-generation/check.txt",
+		"docs/evidence/policy-generation/complete.json",
+		"docs/evidence/policy-generation/verification.json",
+		"docs/evidence/policy-persistence/README.md",
+		"docs/evidence/policy-persistence/check.txt",
+		"docs/evidence/policy-persistence/complete.json",
+		"docs/evidence/policy-persistence/verification.json",
+		"docs/evidence/policy-review/README.md",
+		"docs/evidence/policy-review/browser-result.json",
+		"docs/evidence/policy-review/check.txt",
+		"docs/evidence/policy-review/native-session.json",
+		"docs/evidence/policy-review/preservation.json",
+		"docs/evidence/policy-review/sidebar-narrow.png",
+		"docs/evidence/policy-review/sidebar.png",
+		"docs/evidence/policy-review/verification.json",
+		"scripts/browser-policy-review.mjs",
+		"scripts/policy-comparison.ts",
+		"scripts/policy-fixture.ts",
+		"scripts/policy-generation.ts",
+		"scripts/policy-review-browser-fixture.ts",
+		"scripts/policy-review-fixture.ts",
+		"src/client/policy.tsx",
+		"src/policy-evaluation.ts",
+		"src/policy-generation-contracts.ts",
+		"src/policy-generation.ts",
+		"src/policy-review-contracts.ts",
+		"src/policy-review.ts",
+		"src/policy.ts",
+		"tests/policy-comparison.test.ts",
+		"tests/policy-generation.test.ts",
+		"tests/policy-persistence.test.ts",
+		"tests/policy-review.test.ts",
+		"tests/policy.test.ts",
+		"docs/EXTENSION-CONTRACTS.md",
+		"scripts/build.mjs",
+		"src/client/mainflow.tsx",
+		"src/client/model.ts",
+		"src/client/panel.tsx",
+		"src/g1-contracts.ts",
+		"src/g1.ts",
+		"src/mainflow.ts",
+		"src/onboarding.ts",
+		"src/store.ts",
+		"src/text.ts",
+		"src/usage.ts",
+		"tests/mainflow.test.ts"
+	],
+	"intentionalExtensions": [
+		{
+			"path": "docs/POLICY-CONTRACTS.md",
+			"before": "c8ba41462d89687319229a5c9ee4f7b59f7ffb9b67faa62292f1ffa054a1c536",
+			"after": "76b5f60667112281746ab90f7ae17c8688e8e9b3f9fa0c9e0a0948cc89d7da55"
+		},
+		{
+			"path": "scripts/policy-fixture-worker.ts",
+			"before": "5d0bf7017640d1d9a316154b4dfa6850e582c5f13edfdd239d6e988e013bee60",
+			"after": "bd647e31b809dfba8ab4558b5cede02836c668da929c3369c8d90bddf62504e5"
+		},
+		{
+			"path": "src/policy-contracts.ts",
+			"before": "11eaec3a0eafc9a442ef37c4ec5b584a00b5a18ee9e52cf42b8eb0604b3e3b5f",
+			"after": "530da9dd2c14220f59d5409c391ca12d02b5523069935b3cce22a7159b51e84e"
+		},
+		{
+			"path": "src/policy-versions.ts",
+			"before": "91249e5c060836523d905a56a71bfec809b9b2c13ddd9090f8b8e548784ff0b5",
+			"after": "50882f038402dc58e36ac4c94e8db402004c48a4e1caf166d7f48ddeeaac9335"
+		},
+		{
+			"path": "docs/ARCHITECTURE.md",
+			"before": "4ec51dec01e71288ac99ab04ddf02dc81bfb028fa9a844d16fef493e3ad95185",
+			"after": "661fb9f9d2d3bf856bc284c92a134de876bda138f424fb553a1326286f7fa176"
+		},
+		{
+			"path": "docs/CONTRACTS.md",
+			"before": "cf3fb9a551120169617bb03cc0dce10a0004ff77752c08a1de506fffdccda5c0",
+			"after": "99d9061256eb1b86ee4f323f983bc95458fa3f7f8e6ad960ae657040ad38d8ff"
+		},
+		{
+			"path": "docs/FRAMEWORK.md",
+			"before": "89c115badfe52721f3d5dcaa89729ed684eb709103029dcf9937279ec4f26c9d",
+			"after": "36f60e3041271f196528c367ff6e3b5114d4e65beef6a2d71ac1d305c1985b81"
+		},
+		{
+			"path": "docs/README.md",
+			"before": "6743eeab784e5678fbc2e6cef67816bad7b91156cb0c09dd3169059257d3d1f0",
+			"after": "4f9010e7d0e92c19bdfc167f9eda6a48e52b9f76a34507b72a267f655d0b6b8f"
+		},
+		{
+			"path": "package.json",
+			"before": "a235ab981fa952655ae25b37d2f4d7f12e0abafa6cf397d2f1ca9c80ddc928cd",
+			"after": "4097fe57560fbbccba3ac989744d88bea918b04fbde3c796c5385834f2bac221"
+		}
+	],
+	"missing": [],
+	"originalDirtyFileCount": 83,
+	"unchangedCount": 74,
+	"extensionCount": 9,
+	"harnessPatchUnchanged": true
+}

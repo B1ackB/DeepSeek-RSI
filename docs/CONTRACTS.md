@@ -2,6 +2,14 @@
 
 2026-09-13: the current product uses compilation/format thresholds and user choice. See [extension contracts](EXTENSION-CONTRACTS.md) for comparisons, later iterations, and SQLite 6 migration. G0 sections below describe the historical integration contract and do not authorize current spending.
 
+2026-10-15: [policy contracts](POLICY-CONTRACTS.md) add literal repository policies, separately authorized generation, sealed lineage, SQLite 6→7 additive persistence, shared batch accounting and paired full-task checks. Verification remains offline with fixed responses. The subsequent review gate adds explicit sidebar selection/restoration and dedicated fixed-route session bindings; ordinary chats are not enrolled.
+
+2026-10-16: [final review](POLICY-FINAL-REVIEW.md) clarifies recovery to an intact approved policy when the other object is unavailable, fixed output caps on native resume, and workspace-scoped confirmation. Original evidence and usage checks remain mandatory.
+
+2026-10-16: [repository snapshot capture](POLICY-SNAPSHOT-CONTRACTS.md) adds explicit bounded worktree-file sealing and optional conditions provenance. Historical file conditions/digests and SQLite 7 rows retain their original bytes; no schema migration is added. Execution still reads frozen text through the fixed offline route.
+
+2026-10-16: [sidebar source selection](POLICY-SOURCE-UI-REPORT.md) appends `policy_sources` within unreleased SQLite 7 and optional `sourceId` on new session bindings. Preview, exact recapture/seal confirmation and source-bound session creation are separate commands. Old bindings/terminal rows remain unchanged; new source bodies/objects and exact receipts remain recoverable. No paid authorization is added.
+
 [Documentation](README.md) · [Development rules](../AGENTS.md)
 
 Historical update: 2026-09-08. G0 integration was implemented with executable definitions in `src/contracts.ts`; evidence and remaining limitations are in [G0-REPORT.md](G0-REPORT.md). Section 8 retains the first approved batch, not a renewable budget.
@@ -15,8 +23,8 @@ The [preference-driven revision contract](G2-CONTRACTS.md#preference-driven-inde
 ## 1. Project invariants
 
 1. Local observation does not create model spending. Analysis is user-triggered and does not authorize edits.
-2. Revision authorization binds one Skill, baseline, scope, requirements, checks, and budget. Each generation produces one candidate. Further requirements create a linked task with fresh authorization checks; old accounting is retained.
-3. Models edit authorized candidates only, never runtime code, permissions, budgets, compilers, or active pointers.
+2. Revision authorization binds one explicitly supported optimization object, exact baseline, scope, requirements, checks and budget. The existing UI supports directory Skills; the additional policy object's current fixture gate is defined in [POLICY-CONTRACTS.md](POLICY-CONTRACTS.md). Each generation produces one candidate. Further requirements create a linked task with fresh authorization checks; old accounting is retained.
+3. Models edit authorized candidate content only, never the controller, permissions, budgets, compilers, evaluators or active pointers. Editable objects currently cover Skill resources and a literal repository-evidence policy; candidate Agent/tool implementation code remains outside the enabled scope.
 4. Active and reference versions are separate. Activation requires separate approval of an exact candidate. Previously bound sessions retain their version; an unbound task may wait for approval before its first binding. Source overwrite requires separate consent.
 5. Scenario compilation/format checks are technical thresholds. Users judge output value; functional/aesthetic scores do not block their choice. Scope and integrity checks remain mandatory. Incomplete usage cannot establish complete-execution token savings.
 6. This version does not implement automatic score-driven search or stopping. Users continue, adopt, or stop. Revision and comparison budgets are separately confirmed; failed/interrupted work retains costs.

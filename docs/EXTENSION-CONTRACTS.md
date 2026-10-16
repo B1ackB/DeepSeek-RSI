@@ -2,6 +2,8 @@
 
 User decision dated 2026-09-13. These rules supersede the earlier design in which functional scores or regression results decided whether a candidate was worth activating. Historical reports retain their original conclusions.
 
+These contracts describe the existing Skill comparison flow. The first additional object, repository-evidence-policy, has a separate [full-task execution contract](POLICY-CONTRACTS.md). Its sidebar review, explicit selection/restoration and session bindings are a dedicated fixed-response pilot, separate from Skill output scenarios.
+
 - Users choose the baseline, candidate, or further sidebar revision. The host does not compute an overall quality score or automatically select a winner. Passing compilation means only that the scenario's compilation/format checks completed.
 - Authorization, file scope, integrity, and provider usage validation remain mandatory. Comparison has a separate budget explicitly covering one request per side. Viewing results and preparing another iteration do not call models.
 - A comparison freezes requirements, preferences, model settings, and scenario version; only Skill files differ. Each side records artifact digest, compilation state, timestamps, and duration. Tokens come from the provider ledger.
@@ -11,6 +13,7 @@ User decision dated 2026-09-13. These rules supersede the earlier design in whic
 - Authenticated Harness HTTP serves previews with HTML sandbox/CSP isolation and separate links. They are not public deployments.
 - Request failures, compilation failures, unknown usage, and interruptions remain recorded. After comparison starts, candidate compilation and related usage must complete before adoption. Baseline and further-revision choices remain available. The older review path without comparison is preserved.
 - SQLite 6 adds default scenarios and empty comparison/parent fields to historical tasks while preserving old tables, receipts, versions, and accounting. Older binaries require a stopped-host backup for rollback.
+- SQLite 7 appends the separate policy version/batch tables described in [policy contracts](POLICY-CONTRACTS.md), preserving v6 terminal rows verbatim. Skill scenario fields and attempt ownership are not repurposed.
 
 ## Executable fields
 

@@ -7,9 +7,10 @@ import type { createPanelModel } from './model.ts';
 import { defaultOptimizationBudget, type Analysis, type G1Snapshot } from '../g1-contracts.ts';
 import { MainflowCard } from './mainflow.tsx';
 import { FrontendPreparation } from './frontend.tsx';
+import { PolicyReview } from './policy.tsx';
 
 type Model = ReturnType<typeof createPanelModel>;
-export type PanelInjected = { hooks: { rsi: Model['source'] }; command: Model['command']; catalog: Model['catalog']; openSession: (id: string) => Promise<void> };
+export type PanelInjected = { hooks: { rsi: Model['source'] }; command: Model['command']; catalog: Model['catalog']; policySource: Model['policySource']; openSession: (id: string) => Promise<void> };
 type PanelProps = PropsRuntime<'shell.panel'> & InjectFace<PanelInjected>;
 const objectives = { accuracy: '定位准确率', tokens: '完整执行 Token', brevity: '简洁表达', speed: '完成速度', maintainability: '可维护性', design: '设计偏好适配' };
 const rules = { script_failure: '执行失败线索', retry_cluster: '重试集中出现', repeated_read: '重复读取', large_output: '工具输出较长', user_preference: '表达或成本偏好' };
@@ -58,7 +59,7 @@ function DirectionForm({ analysis, index, save, busy }: { analysis: Analysis; in
 	</details>;
 }
 
-export function RsiPanel({ useRsi, useSessions, useWorkspaces, command, catalog, openSession }: PanelProps) {
+export function RsiPanel({ useRsi, useSessions, useWorkspaces, command, catalog, policySource, openSession }: PanelProps) {
 	const view = useRsi(s => s);
 	const sessions = useSessions(s => s);
 	const workspaces = useWorkspaces(s => s);
@@ -109,6 +110,7 @@ export function RsiPanel({ useRsi, useSessions, useWorkspaces, command, catalog,
 		{view.error && <p role="alert">连接中断，显示最后快照。{view.error}</p>}
 		{error && <p role="alert">{error}</p>}
 		{snapshot ? <>
+			<PolicyReview key={workspaceId} snapshot={snapshot} workspaceId={workspaceId} sessionId={sessionId} disabled={disabled} command={command} policySource={policySource} openSession={openSession} />
 			{snapshot.business.mainflow.tasks.filter(t => t.sessionId === sessionId || t.executionSessionId === sessionId).slice(-1).map(t => <MainflowCard key={t.id} task={t} snapshot={snapshot} disabled={disabled} run={run} openSession={openSession} />)}
 			<Usage snapshot={snapshot} sessionId={sessionId} analysisId={analysis?.id ?? null} />
 			<small>最近更新 {new Date(snapshot.updatedAt).toLocaleTimeString()} · 日常用量从插件加载后记录，供应商尚未返回的用量不会记为零。</small>

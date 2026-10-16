@@ -1,0 +1,21 @@
+✔ review is free; adoption binds exact pair/batch/evidence, receipts survive restart and ABA conflicts (579.832666ms)
+✔ restoration requires a same-workspace explicit approval; rejected commands cannot alter active choice (19.26925ms)
+✔ restoration survives a damaged other object while selected bytes and original evidence remain mandatory (115.933666ms)
+✔ incomplete or changed evidence, unknown usage and corrupt objects block evaluated adoption (111.598ms)
+✔ complete but incorrect full-task results remain a visible user decision (563.230375ms)
+✔ native first requests retain old bindings; new sessions inherit adoption/restore and scoped tools are enforced (144.23475ms)
+✔ native JSONL resume uses the original policy, does not replay, and missing binding fails before publication (57.446292ms)
+✔ native UI-style resume preserves the cap and original binding before the session first request (52.773833ms)
+✔ route/tools/output changes cannot dispatch; unknown usage blocks further daily work and keeps batch accounting separate (35.92125ms)
+✔ choice/receipt commit atomically, lost replies and pre-Agent interruptions recover without model replay (169.952792ms)
+✔ interrupted daily requests retain original bindings and unknown usage; recovery cannot replay or restart their budget (50.790417ms)
+✔ workspace attachment failure keeps the exact session intent and retries without creating or running another Agent (40.031542ms)
+✔ v6/v7 additive upgrade preserves old terminal bytes and validates new binding references (24.444917ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2205.650084

@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "paidRequests": 0,
+  "calls": 9,
+  "choices": 3,
+  "sessions": 5,
+  "checks": [
+    "workspace switch clears pending confirmation",
+    "explicit confirmation/cancel",
+    "review without dispatch",
+    "old session first request after adoption",
+    "native full tool task",
+    "restore future binding",
+    "reload without replay",
+    "readable sidebar at wide/narrow viewport",
+    "sensitive path rejected before preview",
+    "full source preview without dispatch",
+    "cancel seal without mutation",
+    "changed source requires fresh preview",
+    "workspace switch clears source and confirmation",
+    "explicit exact seal",
+    "new sessions bind exact source before first request",
+    "old/new source native full tasks",
+    "reload retains snapshots without replay"
+  ],
+  "browserErrors": []
+}

@@ -1,6 +1,7 @@
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client';
 import { z } from 'zod';
 import { catalogSchema, g1SnapshotSchema, receiptSchema, type G1Command, type G1Snapshot } from '../g1-contracts.ts';
+import { policySourceSchema } from '../policy-review-contracts.ts';
 
 export function createPanelModel(connection: ConnectionHandle) {
 	let view: { snapshot: G1Snapshot | null; error: string } = { snapshot: null, error: '' };
@@ -36,11 +37,12 @@ export function createPanelModel(connection: ConnectionHandle) {
 		source: { getSnapshot: () => view, subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; } },
 		async command<K extends G1Command['kind']>(kind: K, payload: Extract<G1Command, { kind: K }>['payload']) {
 			if (!view.snapshot || view.error) throw new Error('连接尚未就绪，请等待最新状态');
-			const input = { schemaVersion: 1, operationId: crypto.randomUUID(), expectedRevision: view.snapshot.business.revision, kind, payload };
+			const input = { schemaVersion: 1, operationId: crypto.randomUUID(), expectedRevision: kind.startsWith('policy_') ? view.snapshot.snapshotRevision : view.snapshot.business.revision, kind, payload };
 			const result = z.strictObject({ receipt: receiptSchema, snapshot: g1SnapshotSchema }).parse(await call('command', input));
 			accept(result.snapshot); return result.receipt.focusId;
 		},
 		async catalog(workspaceId: string, sessionId: string | null, signal: AbortSignal) { return catalogSchema.parse(await call('catalog', { workspaceId, sessionId }, signal)); },
+		async policySource(workspaceId: string, sourceId: string, signal: AbortSignal) { return policySourceSchema.parse(await call('policy_source', { workspaceId, sourceId }, signal)); },
 		async dispose() { controller.abort(); listeners.clear(); await done; },
 	};
 }

@@ -1,0 +1,79 @@
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 check
+> npm run typecheck && npm test && npm run build
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.client.json
+
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 test
+> node --test tests/*.test.ts
+
+✔ comparison freezes inputs, compiles both artifacts, preserves unknown usage and never selects ACTIVE (621.517667ms)
+✔ trusted scenarios extend matching and compilation without host decision authority (0.314375ms)
+✔ frontend preferences stay scoped, ask at most two bounded batches, and freeze task overrides (6.444208ms)
+✔ version 2 migration preserves receipts, rolls back invalid data, and persists preference commands atomically (13.046792ms)
+✔ G1 native observation, explicit one-shot analysis, scope guards, cancellation and restart (587.191709ms)
+✔ real Harness Skill registry pins text and resources across durable bindings (102.995791ms)
+✔ real Harness monotonic guard blocks a later scope-local tool and leaves daily tools available (6.438375ms)
+✔ Harness structured cancellation remains readable without leaking raw objects or credentials (0.776125ms)
+✔ candidate rejects missing, corrupt, duplicate and unauthorized replacements while preserving complete baseline (94.932666ms)
+✔ generation budget, interruption and v4 migration preserve authorization and uncertain usage (106.591833ms)
+✔ script candidates fail closed when Docker cannot start and never execute on the host (37.267ms)
+✔ v5 migration preserves old tasks and preferences while adding scenario defaults (77.805ms)
+✔ main flow gates real Harness dispatch, seals exact candidate, separates usage, and links an old session (882.104958ms)
+✔ six fixed complete-task cases run both isolated children in one durable batch per case (3772.773542ms)
+✔ one cumulative batch budget limits the candidate and can stop before its process is launched (1016.796458ms)
+✔ unknown usage on either side persists, stops the batch and cannot be resumed by reopening authorization (723.16325ms)
+✔ child loss on either side recovers shared reservations and resource ownership without replay (730.329792ms)
+✔ wrong facts and citations fail fixed checks, and a tool-free correct answer cannot pass infrastructure (1391.540208ms)
+✔ cancel and batch deadline stop a hanging candidate, retain baseline and reap both workers (2035.624459ms)
+✔ fixed evaluator rejects changed cases and missing, reassigned or unclean execution evidence (517.716709ms)
+✔ handoff requires an existing batch, preserves active state only during an explicit handoff and does not alter old v7 rows (14.528583ms)
+✔ missing cleanup receipt blocks the next child and retains explicit resource ownership for inspection (259.432792ms)
+✔ controller process loss closes its native child through EOF and restart retains unresolved cleanup without replay (424.025459ms)
+✔ native proposer sees only baseline/requirements/development, seals scoped content and records distinct generation ownership (79.754ms)
+✔ scope violations, malformed/unchanged responses, partial/failed streams and unknown usage cannot become candidates (571.245833ms)
+✔ authorization is one-shot, revision guarded, exact-input bound and rejects unapproved configuration (76.959375ms)
+✔ exact generator envelope and ownership guards reject tools, history, route changes and stale writes before dispatch (27.250333ms)
+✔ sealed generation gets a separate fixed evaluation authorization and preserves lineage and cumulative policy accounting (694.802458ms)
+✔ fresh generation can extend a sealed candidate without altering the baseline or previous provenance (34.983708ms)
+✔ restart retains append-only partial output, unknown reservations and spent identity without sealing or replay (14.955917ms)
+✔ cancellation and deadline dispose the native proposer and retain unknown usage without a candidate (247.774416ms)
+✔ failed filesystem publication keeps response/costs without a committed candidate; a new authorization can recover (61.102167ms)
+✔ adding generation storage preserves old v7 rows and invalid generation records fail without rewriting history (12.037375ms)
+✔ policy objects seal canonical bytes without replacement and preserve parent provenance (123.17925ms)
+✔ policy object reads reject missing, symlinked, noncanonical and oversized files (24.142541ms)
+✔ populated v6 migration appends tables and retains every historical row and artifact byte (42.404458ms)
+✔ invalid v6 data rolls back schema and new tables without rewriting old rows (7.915458ms)
+✔ batch authorization is immutable, exact-version bound and cannot reuse spending identities (96.044125ms)
+✔ policy and batch accounting covers both complete streams and cumulative request/token stops (135.224916ms)
+✔ unknown and conflicting totals block both sides, survive recovery and do not poison unrelated owners (203.251791ms)
+✔ restart interrupts authorized and in-flight batches, retains reservations and permits only late usage settlement (111.956834ms)
+✔ policy observer rejects missing binding, changed envelopes, legacy ownership and cancelled batches before dispatch (51.088833ms)
+✔ settled not-sent reservations consume a slot without inventing tokens; in-flight usage cannot authorize parallel dispatch (27.928417ms)
+✔ persistent batch and run deadlines and backward clocks reject dispatch without a new reservation (25.756917ms)
+✔ policy content and frozen conditions reject authority fields, templates, byte excess, traversal and mutation (7.282042ms)
+✔ snapshot tools never access host paths and enforce argument, call and result limits (1.788083ms)
+✔ native SDK completes baseline, candidate and restored tasks in independent owned profiles with durable pre-dispatch accounting (1168.1635ms)
+✔ native SDK denies late scoped tools and out-of-snapshot reads without executing forbidden effects (556.348875ms)
+✔ native SDK stops before dispatch for request/token caps, unknown usage and changed model route (1162.333583ms)
+✔ native SDK preserves provider failures, truncated streams and crash recovery without replay (675.147917ms)
+✔ native SDK cancellation and external deadline interrupt a hanging provider and reap the owned process (552.844125ms)
+✔ native Agent Loop retry records two attempts and links the actual retry event without network (68.92275ms)
+✔ Web commands persist, reject stale/conflicting writes, and roll back failure (1113.860125ms)
+✔ unknown requests survive restart, block RSI, and do not block daily sessions (9.08525ms)
+✔ stream ledger separates owners, deduplicates usage and pauses on conflicting or missing usage (48.14625ms)
+ℹ tests 55
+ℹ suites 0
+ℹ pass 55
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11243.760625
+
+> @b1ackb/deepseek-rsi@0.0.0-g2.5 build
+> node scripts/build.mjs
+
