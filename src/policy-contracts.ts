@@ -46,11 +46,12 @@ export const policyEvaluationResultSchema = z.strictObject({
 });
 export const policyBatchInputSchema = z.strictObject({
 	id: z.uuid(), policyId: z.uuid(), runtimeDigest: digest,
-	generationId: z.uuid().optional(),
+	generationId: z.uuid().optional(), packEvaluationId: z.uuid().optional(),
 	evaluationSpec: policyEvaluationSpecSchema.optional(),
 	runs: z.array(z.strictObject({ side: z.enum(['baseline', 'candidate']), run: policyRunSchema })).min(1).max(2),
 	budget: policyBatchBudgetSchema,
 }).refine(batch => new Set(batch.runs.map(row => row.run.runId)).size === batch.runs.length && new Set(batch.runs.map(row => row.side)).size === batch.runs.length && batch.runs.every(row => row.run.conditionsDigest === batch.runs[0].run.conditionsDigest) && (batch.runs.length === 1 || batch.runs[0].side === 'baseline'), 'Batch runs must be unique, ordered and share frozen conditions')
+	.refine(batch => !batch.packEvaluationId || batch.evaluationSpec?.evaluator === 'repository-source-qa-manual-v1', 'Whole-pack member requires a manual question specification')
 	.refine(batch => !batch.generationId || (batch.runs.length === 2 && !!batch.evaluationSpec), 'Generated candidate requires separately authorized paired evaluation');
 export type PolicyBatchInput = z.infer<typeof policyBatchInputSchema>;
 export const policyRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'cancelled', 'interrupted']);

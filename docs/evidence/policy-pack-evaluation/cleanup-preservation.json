@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "preExistingEvidenceAndFixtureFiles": 173,
+  "allHistoricalHashesUnchanged": true,
+  "harnessHead": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+  "harnessPatchDigest": "7e1f1e75cd99354f7c2e0a695e7cab10755fc15e0a860ef88d1349d740d12d93",
+  "harnessPatchUnchanged": true,
+  "ownedHosts": [
+    {
+      "pid": 15241,
+      "port": 63758,
+      "released": true
+    },
+    {
+      "pid": 15725,
+      "port": 64038,
+      "released": true
+    },
+    {
+      "pid": 15831,
+      "port": 64223,
+      "released": true
+    }
+  ],
+  "ownedWorkersExited": 10,
+  "ownedWorkerHomesRemoved": 10,
+  "paidCalls": 0,
+  "sourceBackedUpBeforeEdits": true
+}

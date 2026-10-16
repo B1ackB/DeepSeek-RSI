@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "realRepositorySource": true,
+  "sourcePaths": [
+    "src/policy-manual-qa.ts",
+    "src/policy-qa-inputs.ts"
+  ],
+  "generationRequests": 1,
+  "evaluationRequests": 20,
+  "questionRequestCounts": [
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      3,
+      3
+    ]
+  ],
+  "explicitSealingAndIndependentAuthorization": true,
+  "hiddenAnswers": true,
+  "budgetUnchangedUntilEdited": true,
+  "wholePack": true,
+  "wholePackEvaluations": 1,
+  "unchangedBindings": 1,
+  "unchangedChoices": 1,
+  "sealedParentAndRevisionDraft": true,
+  "reloadWithoutReplay": true,
+  "narrowPanelVisible": false,
+  "browserErrors": []
+}

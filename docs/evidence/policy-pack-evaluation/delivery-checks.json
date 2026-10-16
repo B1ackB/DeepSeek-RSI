@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "tabIndentation": true,
+  "changedDocumentationLinks": true,
+  "diffWhitespace": true,
+  "packageFiles": 233,
+  "packageExcludesPrivateProfiles": true,
+  "packageExcludesEnvironmentFiles": true,
+  "branch": "codex/policy-pack-evaluation",
+  "newDependencies": false,
+  "paidCalls": 0
+}

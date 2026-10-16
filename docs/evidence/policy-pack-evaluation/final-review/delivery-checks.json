@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "tabIndentation": true,
+  "changedDocumentationLinks": true,
+  "noAuthenticatedLaunchUrls": true,
+  "packageContainsHostWorkerAndClient": true,
+  "packageExcludesPrivateProfiles": true,
+  "packageExcludesEnvironmentFiles": true,
+  "newDependencies": false,
+  "paidCalls": 0
+}

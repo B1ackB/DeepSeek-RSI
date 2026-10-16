@@ -92,3 +92,22 @@ export async function executeAuthorizedPolicyBatch(ctx: Context, store: Store, i
 	finally { clearTimeout(timer); controller.abort(); }
 	return store.evaluatePolicy(id);
 }
+
+/** One authorization/window; reuse three existing independently checked pairs. */
+export async function executeAuthorizedPolicyPack(ctx: Context, store: Store, id: string, signal?: AbortSignal) {
+	const pack = store.policyPackEvaluation(id);
+	if (!pack || pack.batchIds.some(id => store.policyBatch(id)?.status !== 'authorized') || pack.runtimeDigest !== policyExecutionRuntime()) throw new Error('Whole-pack evaluation cannot start, change runtime or replay');
+	const controller = new AbortController(); const abort = AbortSignal.any([controller.signal, ...signal ? [signal] : []]);
+	const timer = setTimeout(() => controller.abort(), Math.max(0, pack.deadline - Date.now()));
+	try {
+		for (const batchId of pack.batchIds) {
+			abort.throwIfAborted();
+			const result = await executeAuthorizedPolicyBatch(ctx, store, batchId, abort);
+			if (result.status === 'incomplete') break;
+		}
+	} finally {
+		clearTimeout(timer);
+		store.stopPolicyPack(id, abort.aborted ? 'cancelled' : 'failed'); controller.abort();
+	}
+	return store.policyPackSummary(id);
+}

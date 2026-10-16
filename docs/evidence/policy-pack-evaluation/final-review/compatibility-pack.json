@@ -1,0 +1,14 @@
+{
+  "root": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-pack-final-compat-nsQJvL",
+  "status": "passed",
+  "originalDatabaseHashUnchanged": true,
+  "allOriginalTables": 14,
+  "allRawRowsUnchanged": true,
+  "attempts": 28,
+  "eligiblePairs": 4,
+  "retainedPackEvaluations": 1,
+  "wholePackRequests": 20,
+  "wholePackSyntheticTokens": 300,
+  "retainedSessions": 1,
+  "newModelAttempts": 0
+}

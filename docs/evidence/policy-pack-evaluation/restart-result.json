@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "requestsAfterRestart": 0,
+  "identicalPolicyProjection": true,
+  "identicalAttemptRows": true,
+  "totalAttempts": 28,
+  "wholePackEvaluations": 1,
+  "packs": 2,
+  "reviews": 4,
+  "retainedSessions": 1,
+  "reloadedPackEditableAndSelectionExact": true,
+  "narrowPanelVisible": false,
+  "browserErrors": []
+}
