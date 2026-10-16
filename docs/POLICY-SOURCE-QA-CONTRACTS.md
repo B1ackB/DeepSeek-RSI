@@ -2,6 +2,8 @@
 
 2026-10-16. Extension of [sidebar authorization](POLICY-AUTHORIZATION-CONTRACTS.md), fixed responses only. This contract precedes implementation. The editable object remains literal repository-evidence-policy instructions.
 
+The subsequent [manual pack gate](POLICY-MANUAL-QA-CONTRACTS.md) adds explicitly reviewed human-authored packs for other sealed snapshots. The built-in pack and historical commands below retain their original semantics.
+
 ## First supported source and questions
 
 Use one host-authored `repository-source-qa-v1` pack with three fixed cases: `symbol`, `call-chain`, `error-path`. Its source is the three ordinary JavaScript files in `fixtures/repository-qa-v1/`, captured through the existing real-worktree preview/seal path. Select their full repository-relative paths (`fixtures/repository-qa-v1/checkout.js`, `pricing.js` and `unused.js` under the same directory). Match the entire sorted path/content manifest byte-for-byte, including the decoy file; the registered checkout root can differ. No code is executed when authorizing or evaluating. Unsupported or changed manifests fail before batch creation or model dispatch; never substitute the pack's files for the selected snapshot. Supporting another repository requires another reviewed host pack/version, not inferred ground truth or a candidate-provided answer.

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import type { Store } from './store.ts';
 import { policyDigest, policyEvidenceSchema, type PolicyRun, type PolicyEvidence } from './policy-contracts.ts';
+import { validateManualQa, manualSourceQuestion } from './policy-manual-qa.ts';
 import { evaluatePolicyBatch, sourceEvaluation } from './policy-evaluation.ts';
 import { sourceQaRuntime } from './policy-source-qa.ts';
 import { POLICY_AUTHORITY, checkPolicySessionRequest } from './policy.ts';
@@ -16,7 +17,7 @@ import { boundedPolicyMessage, policyProcessOwnershipSchema, policyProcessReques
 
 const workerPath = fileURLToPath(new URL(import.meta.url.endsWith('.ts') ? './policy-worker.ts' : './policy-worker.js', import.meta.url));
 export function policyExecutionRuntime() {
-	return policyDigest([process.version, evaluatePolicyBatch.toString(), sourceEvaluation.toString(), sourceQaRuntime(), readFileSync(workerPath, 'utf8'), readFileSync(fileURLToPath(import.meta.url), 'utf8'), ...['@deepseek-ai/dsh-agent-loop', '@deepseek-ai/dsh-llm'].map(name => readFileSync(fileURLToPath(import.meta.resolve(name)), 'utf8'))]);
+	return policyDigest([process.version, evaluatePolicyBatch.toString(), sourceEvaluation.toString(), sourceQaRuntime(), validateManualQa.toString(), manualSourceQuestion.toString(), readFileSync(workerPath, 'utf8'), readFileSync(fileURLToPath(import.meta.url), 'utf8'), ...['@deepseek-ai/dsh-agent-loop', '@deepseek-ai/dsh-llm'].map(name => readFileSync(fileURLToPath(import.meta.resolve(name)), 'utf8'))]);
 }
 async function executeSide(ctx: Context, store: Store, batchId: string, run: PolicyRun, signal: AbortSignal): Promise<PolicyEvidence> {
 	const root = await mkdtemp(join(tmpdir(), 'rsi-policy-evaluation-'));

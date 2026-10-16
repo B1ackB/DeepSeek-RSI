@@ -10,7 +10,7 @@ import JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { openStore, type Store } from '../src/store.ts';
-import { authorizeGeneratedPolicyEvaluation, evaluationCase } from '../src/policy-evaluation.ts';
+import { authorizeGeneratedPolicyEvaluation } from '../src/policy-evaluation.ts';
 import { runPolicyGenerationFixture } from './policy-generation.ts';
 import { executePolicyComparison } from './policy-comparison.ts';
 import { policyRuntime } from './policy-fixture.ts';
@@ -60,7 +60,7 @@ export function registerPolicyReviewAdapter(ctx: Context, store: Store, mode: Po
 			}
 			requests.push({ sessionId: options.sessionId, system: options.system, tools: options.tools, messages: JSON.parse(JSON.stringify(options.messages)) });
 			const binding = options.sessionId ? store.policyRunBinding(options.sessionId) : undefined;
-			const fixed = binding?.batch.authorization.evaluationSpec ? evaluationCase(binding.batch.authorization.evaluationSpec, binding.entry.run.conditions) : undefined;
+			const fixed = binding?.batch.authorization.evaluationSpec ? store.policyEvaluationCase(binding.batch.authorization.evaluationSpec, binding.entry.run.conditions) : undefined;
 			const bound = options.sessionId ? store.policySessionRun(options.sessionId) : undefined;
 			const source = fixed ? binding!.entry.run.conditions.files[0] : bound?.conditions.sourceSnapshot ? bound.conditions.files[0] : undefined;
 			const reads = mode === 'missing_read' ? fixed!.reads.slice(0, 1) : fixed?.reads ?? [source?.path ?? 'sample.js'];

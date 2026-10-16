@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "changedTextFilesChecked": 36,
+  "brokenDocumentationLinks": 0,
+  "nonTabCodeIndentation": 0,
+  "credentialLiteralFindings": 0,
+  "diffWhitespaceCheck": "passed",
+  "packagedFiles": 208,
+  "workerAndContractIncluded": true,
+  "privateProfilesDatabasesAndLogsExcluded": true,
+  "noNewDependencies": true
+}

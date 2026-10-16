@@ -1,0 +1,15 @@
+✔ manual packs seal exact source questions, isolate oracle, run all three complete pairs and preserve version/session history (1812.983292ms)
+✔ manual pack draft/seal boundaries reject invalid citations, stale authority and mismatches; failed publication transaction is recoverable (98.020333ms)
+✔ manual QA keeps full-tool, cumulative and unknown-usage gates under quality failures, stop and disposal (3117.511916ms)
+✔ manual QA controller loss after reads preserves pack/legacy bytes and unknown usage without replay (477.256208ms)
+✔ manual pack authority corruption fails startup without clearing rows; missing pack prevents dispatch and preserves history (266.96375ms)
+✔ identical source bytes do not authorize another source record or inherit its question pack (461.847208ms)
+✔ process loss after question-object publication cannot seal a draft or authorize evaluation on recovery (197.834833ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6688.706417

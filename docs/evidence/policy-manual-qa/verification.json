@@ -1,0 +1,75 @@
+{
+  "status": "passed",
+  "base": "8f62c0907c21bea48fb36b5e31c2b9f1dddcc802",
+  "preservedHistoricalAndFixtureFiles": 150,
+  "harnessHeadAndPatchUnchanged": true,
+  "unchangedTablesAcrossRestart": {
+    "policy_versions": 3,
+    "policy_generations": 2,
+    "policy_batches": 4,
+    "policy_choices": 1,
+    "policy_sessions": 1,
+    "policy_sources": 1,
+    "policy_qa_packs": 2,
+    "attempts": 28
+  },
+  "manualQuestions": [
+    {
+      "caseId": "symbol",
+      "requests": 6,
+      "totalTokens": 90,
+      "sameConditions": true,
+      "independentPids": [
+        86811,
+        86812
+      ]
+    },
+    {
+      "caseId": "call-chain",
+      "requests": 8,
+      "totalTokens": 120,
+      "sameConditions": true,
+      "independentPids": [
+        86813,
+        86814
+      ]
+    },
+    {
+      "caseId": "error-path",
+      "requests": 6,
+      "totalTokens": 90,
+      "sameConditions": true,
+      "independentPids": [
+        86815,
+        86816
+      ]
+    }
+  ],
+  "syntheticTokensIncludingSeedAndGeneration": 416,
+  "paidRequests": 0,
+  "ownedHostsAbsent": [
+    {
+      "pid": 82832,
+      "port": 53879
+    },
+    {
+      "pid": 86115,
+      "port": 54427
+    },
+    {
+      "pid": 86761,
+      "port": 55117
+    },
+    {
+      "pid": 90192,
+      "port": 55465
+    },
+    {
+      "pid": 94348,
+      "port": 56230
+    }
+  ],
+  "ownedEvaluationWorkersAbsent": 18,
+  "ownedWorkerHomesRemoved": 18,
+  "privateFinalHome": "/Users/black/Documents/ChatGPT/DeepSeek-RSI/.cache/policy-manual-qa-xEailE"
+}

@@ -10,7 +10,7 @@ import { FrontendPreparation } from './frontend.tsx';
 import { PolicyReview } from './policy.tsx';
 
 type Model = ReturnType<typeof createPanelModel>;
-export type PanelInjected = { hooks: { rsi: Model['source'] }; command: Model['command']; catalog: Model['catalog']; policySource: Model['policySource']; openSession: (id: string) => Promise<void> };
+export type PanelInjected = { hooks: { rsi: Model['source'] }; command: Model['command']; catalog: Model['catalog']; policySource: Model['policySource']; policyQa: Model['policyQa']; openSession: (id: string) => Promise<void> };
 type PanelProps = PropsRuntime<'shell.panel'> & InjectFace<PanelInjected>;
 const objectives = { accuracy: '定位准确率', tokens: '完整执行 Token', brevity: '简洁表达', speed: '完成速度', maintainability: '可维护性', design: '设计偏好适配' };
 const rules = { script_failure: '执行失败线索', retry_cluster: '重试集中出现', repeated_read: '重复读取', large_output: '工具输出较长', user_preference: '表达或成本偏好' };
@@ -59,7 +59,7 @@ function DirectionForm({ analysis, index, save, busy }: { analysis: Analysis; in
 	</details>;
 }
 
-export function RsiPanel({ useRsi, useSessions, useWorkspaces, command, catalog, policySource, openSession }: PanelProps) {
+export function RsiPanel({ useRsi, useSessions, useWorkspaces, command, catalog, policySource, policyQa, openSession }: PanelProps) {
 	const view = useRsi(s => s);
 	const sessions = useSessions(s => s);
 	const workspaces = useWorkspaces(s => s);
@@ -101,6 +101,7 @@ export function RsiPanel({ useRsi, useSessions, useWorkspaces, command, catalog,
 		.rsi-panel h2,.rsi-panel h3,.rsi-panel p{margin:0}.rsi-panel h2{font-size:18px}.rsi-panel h3{font-size:14px}
 		.rsi-panel section,.rsi-panel label,.rsi-panel fieldset{display:grid;gap:8px}.rsi-panel button,.rsi-panel input,.rsi-panel select,.rsi-panel textarea{font:inherit;color:inherit;border:0.5px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-base);border-radius:6px;padding:6px 8px;max-width:100%}.rsi-panel button{cursor:pointer}.rsi-panel button:disabled{opacity:.5;cursor:default}.rsi-panel textarea{min-height:70px;width:100%;box-sizing:border-box}.rsi-panel input[type=checkbox]{width:auto;margin:0}.rsi-panel fieldset label{display:flex;align-items:center;gap:8px}.rsi-panel summary{cursor:pointer;font-weight:600}
 		.rsi-card{border:0.5px solid var(--dsw-alias-border-l3);border-radius:10px;padding:12px;display:grid;gap:8px}.rsi-card[open]{display:grid}.rsi-card[open]>summary{margin-bottom:8px}.rsi-muted,.rsi-panel small{opacity:.72}.rsi-panel small{display:block}.rsi-total{font-size:23px;font-variant-numeric:tabular-nums}.rsi-usage-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rsi-actions{display:flex;flex-wrap:wrap;gap:6px}.rsi-panel [role=alert]{border-left:3px solid currentColor;padding-left:8px}
+		.rsi-panel .rsi-policy-qa fieldset{min-width:0;margin:0;padding:8px}.rsi-panel .rsi-policy-qa label{display:grid;align-items:stretch;min-width:0}.rsi-policy-qa input,.rsi-policy-qa select{min-width:0;width:100%;box-sizing:border-box}
 		.rsi-design-start>small{margin:8px 0}.rsi-design-start fieldset{margin:8px 0;padding:8px;border:0}.rsi-design-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rsi-design-options button{display:grid;gap:5px;text-align:left;padding:6px;min-width:0}.rsi-design-options button[aria-pressed=true]{outline:2px solid currentColor;outline-offset:1px}.rsi-design-options button:focus-visible{outline:2px dashed currentColor;outline-offset:3px}.rsi-design-options strong{font-size:12px}.rsi-design-options small{font-size:10px;line-height:1.4}.rsi-design-summary{border-left:2px solid currentColor;padding:8px;white-space:pre-wrap}
 		.rsi-design-preview{position:relative;display:block;height:64px;overflow:hidden;border-radius:3px;background:#f0f2f5;color:#1c2635}.rsi-design-preview i,.rsi-design-preview b,.rsi-design-preview em,.rsi-design-preview>span{position:absolute;display:block;background:currentColor;font-style:normal}.rsi-design-preview i{left:8px;top:8px;width:15px;height:3px}.rsi-design-preview b{left:8px;top:20px;width:48%;height:9px}.rsi-design-preview em{left:8px;top:34px;width:62%;height:2px;opacity:.4}.rsi-design-preview>span{left:8px;top:45px;width:25px;height:8px;border-radius:2px;background:#4361c7}.rsi-type-portfolio b{width:32%;height:29px}.rsi-type-portfolio em{left:48%;top:20px;width:42%;height:29px}.rsi-type-portfolio>span{top:54px;height:2px}.rsi-type-dashboard i{left:0;top:0;height:64px;width:12%;opacity:.2}.rsi-type-dashboard b,.rsi-type-dashboard em,.rsi-type-dashboard>span{left:21%;width:65%;height:8px}.rsi-type-article b{width:74%;height:6px}.rsi-type-article em{height:14px;background:repeating-linear-gradient(currentColor 0 1px,transparent 1px 5px)}.rsi-type-article>span{height:2px;width:47%;background:currentColor}
 		.rsi-design-preview[class*=rsi-style] b{background:none;width:auto;height:auto;font-size:24px;line-height:1;top:18px}.rsi-style-editorial{background:#f2eadc;color:#372d25}.rsi-style-editorial b{font-family:Georgia,serif}.rsi-style-editorial>span{background:#372d25;height:2px;width:66%;border-radius:0}.rsi-style-bold{background:#192332;color:#fbfdff}.rsi-style-bold b{font-weight:900}.rsi-style-bold>span{background:#d5ef64}.rsi-style-warm{background:#f8e8d7;color:#683e33}.rsi-style-warm>span{background:#c56f48;border-radius:9px}.rsi-style-clear>span{background:#4361c7}
@@ -110,7 +111,7 @@ export function RsiPanel({ useRsi, useSessions, useWorkspaces, command, catalog,
 		{view.error && <p role="alert">连接中断，显示最后快照。{view.error}</p>}
 		{error && <p role="alert">{error}</p>}
 		{snapshot ? <>
-			<PolicyReview key={workspaceId} snapshot={snapshot} workspaceId={workspaceId} sessionId={sessionId} disabled={disabled} command={command} policySource={policySource} openSession={openSession} />
+			<PolicyReview key={workspaceId} snapshot={snapshot} workspaceId={workspaceId} sessionId={sessionId} disabled={disabled} command={command} policySource={policySource} policyQa={policyQa} openSession={openSession} />
 			{snapshot.business.mainflow.tasks.filter(t => t.sessionId === sessionId || t.executionSessionId === sessionId).slice(-1).map(t => <MainflowCard key={t.id} task={t} snapshot={snapshot} disabled={disabled} run={run} openSession={openSession} />)}
 			<Usage snapshot={snapshot} sessionId={sessionId} analysisId={analysis?.id ?? null} />
 			<small>最近更新 {new Date(snapshot.updatedAt).toLocaleTimeString()} · 日常用量从插件加载后记录，供应商尚未返回的用量不会记为零。</small>
