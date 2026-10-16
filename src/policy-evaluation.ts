@@ -3,6 +3,7 @@ import { fault, type Attempt } from './contracts.ts';
 import { policyDigest, policyConditionsSchema, policyCaseIdSchema, policyBatchInputSchema, freezePolicyRun, type PolicyBatch, type PolicyBatchInput } from './policy-contracts.ts';
 import type { Store } from './store.ts';
 import { POLICY_AUTHORITY, policyTools } from './policy.ts';
+import { sourceQuestion } from './policy-source-qa.ts';
 
 const citation = z.strictObject({ path: z.string(), startLine: z.number().int().min(1), endLine: z.number().int().min(1) });
 export const policyAnswerSchema = z.strictObject({ status: z.enum(['sufficient', 'insufficient']), claims: z.array(z.strictObject({ fact: z.string(), value: z.string(), citations: z.array(citation).max(8) })).min(1).max(8) });
@@ -21,7 +22,8 @@ export function policyCase(input: unknown) {
 	const answer = { status: id === 'insufficient' ? 'insufficient' : 'sufficient', claims: item.facts.map(row => ({ fact: row.fact, value: row.value, citations: row.sources })) };
 	return { spec, conditions, answer, reads: item.reads };
 }
-export function sourceEvaluation(sourceId: string, input: unknown) {
+export function sourceEvaluation(sourceId: string, input: unknown, caseId?: unknown) {
+	if (caseId !== undefined) return sourceQuestion(sourceId, input, caseId);
 	const original = policyConditionsSchema.parse(input);
 	if (!original.sourceSnapshot) throw fault('policy_source_invalid', 'Source evaluation needs a sealed repository snapshot');
 	const file = original.files[0];
@@ -30,7 +32,7 @@ export function sourceEvaluation(sourceId: string, input: unknown) {
 	return { spec: { evaluator: 'repository-source-v1' as const, sourceId, digest: policyDigest([conditions, answer]) }, conditions, answer, reads: [file.path] };
 }
 export function evaluationCase(spec: NonNullable<PolicyBatchInput['evaluationSpec']>, conditions: unknown) {
-	return spec.evaluator === 'repository-evidence-v1' ? policyCase(spec.caseId) : sourceEvaluation(spec.sourceId, conditions);
+	return spec.evaluator === 'repository-evidence-v1' ? policyCase(spec.caseId) : sourceEvaluation(spec.sourceId, conditions, spec.evaluator === 'repository-source-qa-v1' ? spec.caseId : undefined);
 }
 export function validatePolicyEvaluation(input: PolicyBatchInput) {
 	if (!input.evaluationSpec) return;
@@ -79,7 +81,7 @@ export function evaluatePolicyBatch(batch: PolicyBatch, attempts: Attempt[]) {
 		const envelopes = evidence && strings(evidence.dispatch[0]?.messages).includes(run.conditions.question) && evidence.dispatch.every((row, index) => row.request === index + 1 && row.policyPresent && row.authorityPresent && row.system === `${POLICY_AUTHORITY}\n\n${run.policy.instructions}` && policyDigest(row.tools) === policyDigest(tools) && Buffer.byteLength(JSON.stringify([row.system, row.messages, row.tools])) <= run.conditions.budget.maxInputBytes);
 		const complete = batch.progress.find(row => row.runId === run.runId)?.status === 'completed' && z.object({ reason: z.object({ kind: z.literal('completed') }) }).safeParse(result?.events.at(-1)?.type === 'turn/end' ? result.events.at(-1)!.data : null).success;
 		const ledger = rows.length > 0 && rows.every(row => row.state === 'succeeded' && row.usageState === 'confirmed' && !row.diagnostic) && policyDigest(rows.map(row => row.attemptId)) === policyDigest(evidence?.dispatch.map(row => row.attemptId) ?? []);
-		const sourceProtocol = batch.authorization.evaluationSpec?.evaluator !== 'repository-source-v1' || (calls.some(row => row.success && row.data.name === 'rsi_search') && calls.some(row => row.success && row.data.name === 'rsi_read' && (() => { try { return policyDigest(JSON.parse(row.data.arguments)) === policyDigest({ path: run.conditions.files[0].path }); } catch { return false; } })()));
+		const sourceProtocol = batch.authorization.evaluationSpec?.evaluator === 'repository-evidence-v1' || (calls.some(row => row.success && row.data.name === 'rsi_search') && fixed.reads.every(path => calls.some(row => row.success && row.data.name === 'rsi_read' && (() => { try { return policyDigest(JSON.parse(row.data.arguments)) === policyDigest({ path }); } catch { return false; } })())));
 		const cleanup = evidence?.cleanup; const infrastructure = !!(identity && envelopes && complete && ledger && validHeaders && realTools && sourceProtocol && !evidence?.error && cleanup?.processExited && cleanup.agentsDisposed && cleanup.directoryRemoved && cleanup.forbiddenExecutions === 0);
 		let answer: z.infer<typeof policyAnswerSchema> | undefined;
 		try { answer = policyAnswerSchema.parse(JSON.parse(result?.finalResponse ?? '')); } catch {}

@@ -2,11 +2,13 @@ import { useState } from 'react';
 import type { G1Snapshot } from '../g1-contracts.ts';
 import type { PolicySource } from '../policy-review-contracts.ts';
 import type { createPanelModel } from './model.ts';
+import { policySourceCaseSchema, type PolicySourceCase } from '../policy-inputs.ts';
 
 type Command = ReturnType<typeof createPanelModel>['command'];
 export function PolicyAuthoring({ snapshot, source, disabled, command }: { snapshot: G1Snapshot; source: PolicySource; disabled: boolean; command: Command }) {
 	const [requirements, setRequirements] = useState(''); const [output, setOutput] = useState(1024); const [input, setInput] = useState(16384); const [seconds, setSeconds] = useState(5);
 	const [requests, setRequests] = useState(6); const [tokens, setTokens] = useState(1000); const [duration, setDuration] = useState(30);
+	const [caseId, setCaseId] = useState<PolicySourceCase | ''>('');
 	const [confirmation, setConfirmation] = useState<{ kind: 'policy_generate' | 'policy_evaluate'; payload: Parameters<Command>[1]; label: string } | null>(null);
 	const [busy, setBusy] = useState(false); const [error, setError] = useState('');
 	const active = snapshot.policy.choices.findLast(row => row.workspaceId === source.workspaceId);
@@ -15,6 +17,8 @@ export function PolicyAuthoring({ snapshot, source, disabled, command }: { snaps
 	const blocked = disabled || busy || running || source.status !== 'sealed' || active?.id !== source.choiceId;
 	const intent = { workspaceId: source.workspaceId, expectedActive: source.choiceId, sourceId: source.id, snapshotDigest: source.conditions.sourceSnapshot!.digest };
 	const review = snapshot.policy.reviews.find(row => row.batchId === active?.batchId);
+	const qaAvailable = snapshot.policy.sources.find(row => row.id === source.id)?.qaAvailable === true;
+	const cases = { symbol: '符号定位', 'call-chain': '调用链', 'error-path': '错误路径' };
 	const baseline = review?.sides.find(row => (row.side === 'baseline' ? review.baselineDigest : review.candidateDigest) === active?.digest)?.instructions;
 	async function run(kind: Parameters<Command>[0], payload: Parameters<Command>[1]) {
 		setBusy(true); setError('');
@@ -36,8 +40,11 @@ export function PolicyAuthoring({ snapshot, source, disabled, command }: { snaps
 			<button disabled={!requirements.trim()} onClick={() => setConfirmation({ kind: 'policy_generate', label: '授权生成候选', payload: { ...intent, baselineDigest: active!.digest, requirements, budget: { provider: 'rsi-policy-generation-fixture', model: 'offline-v1', maxRequests: 1, maxOutputTokens: output, maxInputBytes: input, maxDurationMs: Math.round(seconds * 1000) } } })}>准备生成授权</button>
 		</fieldset>
 		<h4>独立评测预算</h4>
-		<p>两侧使用上方同一快照、相同工具和单侧限制。固定任务仅检查搜索、读取首个文件、首行证据回传和引用，不证明任意仓库问答质量。</p>
+		<p>两侧使用上方同一快照、相同问题、工具和单侧限制。固定问答包覆盖符号定位、调用链和错误路径，仅适用于完整匹配的封存源码。</p>
+		{!qaAvailable && <small>当前快照不匹配预置问答包；可继续使用首行传输检查。请在本项目工作区选择 fixtures/repository-qa-v1/ 下的三个 .js 文件进行预览和封存。</small>}
 		<fieldset disabled={blocked} onChange={() => setConfirmation(null)}>
+			<label>固定评测问题<select value={caseId} onChange={event => setCaseId(event.target.value ? policySourceCaseSchema.parse(event.target.value) : '')}><option value="">首行传输检查</option>{policySourceCaseSchema.options.map(id => <option key={id} value={id} disabled={!qaAvailable}>{cases[id]}</option>)}</select></label>
+			{caseId ? <small>本次只运行“{cases[caseId]}”一题。两侧均需搜索并读取相关文件；固定响应完整比较需要 8 次请求，请按需明确调整整批上限。</small> : <small>首行检查只验证传输和引用，不证明仓库问答质量。</small>}
 			<label>评测整批请求上限<input type="number" min={1} max={16} value={requests} onChange={event => setRequests(Number(event.target.value))} /></label>
 			<label>评测整批 Token 停止阈值<input type="number" min={1} max={200000} value={tokens} onChange={event => setTokens(Number(event.target.value))} /></label>
 			<label>评测整批时限（秒）<input type="number" min={0.1} max={60} step={0.1} value={duration} onChange={event => setDuration(Number(event.target.value))} /></label>
@@ -48,11 +55,11 @@ export function PolicyAuthoring({ snapshot, source, disabled, command }: { snaps
 			{row.error && <p role="alert">{row.error}</p>}
 			{row.instructions && <label>本轮候选策略全文<textarea readOnly rows={4} value={row.instructions} /></label>}{row.rationale && <p>{row.rationale}</p>}
 			{['authorized', 'running'].includes(row.status) && <button disabled={disabled || busy} onClick={() => void run('policy_stop', { workspaceId: source.workspaceId, target: 'generation', jobId: row.id })}>停止本轮生成</button>}
-			{row.status === 'sealed' && <button disabled={blocked || row.sourceId !== source.id || row.baselineDigest !== active?.digest} onClick={() => setConfirmation({ kind: 'policy_evaluate', label: '授权独立评测', payload: { ...intent, generationId: row.id, baselineDigest: row.baselineDigest, candidateDigest: row.candidateDigest!, budget: { maxRequests: requests, tokenStopThreshold: tokens, maxDurationMs: Math.round(duration * 1000) } } })}>准备此候选的独立评测</button>}
+			{row.status === 'sealed' && <button disabled={blocked || row.sourceId !== source.id || row.baselineDigest !== active?.digest || (!!caseId && !qaAvailable)} onClick={() => setConfirmation({ kind: 'policy_evaluate', label: '授权独立评测', payload: { ...intent, generationId: row.id, baselineDigest: row.baselineDigest, candidateDigest: row.candidateDigest!, ...caseId ? { caseId } : {}, budget: { maxRequests: requests, tokenStopThreshold: tokens, maxDurationMs: Math.round(duration * 1000) } } })}>准备此候选的独立评测</button>}
 		</details>)}
 		{confirmation && <div role="group" aria-label={confirmation.label}>
 			<p>{confirmation.label}：仅针对当前展示的基线、候选与已封存源码。不会自动采纳。</p>
-			{confirmation.kind === 'policy_generate' ? <p>要求：{requirements} · 1 次请求 · 输出 {output} Token · 输入 {input} 字节 · {seconds} 秒。</p> : <p>两侧独立完整任务 · 整批 {requests} 次请求 · {tokens} Token 停止阈值 · {duration} 秒。</p>}
+			{confirmation.kind === 'policy_generate' ? <p>要求：{requirements} · 1 次请求 · 输出 {output} Token · 输入 {input} 字节 · {seconds} 秒。</p> : <p>{caseId ? cases[caseId] : '首行传输检查'} · 两侧独立完整任务 · 整批 {requests} 次请求 · {tokens} Token 停止阈值 · {duration} 秒。</p>}
 			<button disabled={blocked} onClick={() => void run(confirmation.kind, confirmation.payload)}>确认{confirmation.label}</button><button disabled={busy} onClick={() => setConfirmation(null)}>取消本次授权</button>
 		</div>}
 	</section>;

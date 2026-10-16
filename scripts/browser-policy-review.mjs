@@ -102,6 +102,32 @@ try {
 		await card.getByRole('region', { name: '策略生成与独立评测', exact: true }).scrollIntoViewIfNeeded();
 		sourceChecks.push('generation confirmation cancel/workspace reset without dispatch', 'exact sealed source and baseline bound', 'generator excludes selected source and held-out answers', 'generation does not authorize evaluation', 'independent evaluation confirmation cancel', 'two source full tool tasks with separate generation/batch accounting', 'no automatic adoption or session rebinding', 'reload without generation or evaluation replay');
 	}
+	if (process.argv.includes('--qa')) {
+		assert.ok(process.argv.includes('--authorization')); const before = await status();
+		const sources = card.getByRole('region', { name: '仓库文件与快照', exact: true });
+		const paths = ['checkout.js', 'pricing.js', 'unused.js'].map(name => `fixtures/repository-qa-v1/${name}`);
+		await sources.getByLabel('仓库文件路径').fill(paths.join('\n')); await sources.getByRole('button', { name: '预览所选文件', exact: true }).click();
+		await sources.getByLabel(`快照文件 ${paths[0]}`).waitFor(); await sources.getByRole('button', { name: '封存此预览', exact: true }).click(); await sources.getByRole('button', { name: '确认封存快照', exact: true }).click(); await sources.getByText(/^快照 4 · 已明确封存/).waitFor();
+		const author = sources.getByRole('region', { name: '策略生成与独立评测', exact: true });
+		await author.getByLabel('本轮策略修改要求').fill('Read definitions, trace callers and errors, and cite every factual claim.');
+		await author.getByRole('button', { name: '准备生成授权', exact: true }).click(); await author.getByRole('button', { name: '确认授权生成候选', exact: true }).click(); await author.getByText('候选生成 2 · 候选已封存', { exact: true }).waitFor();
+		state = await status(); assert.equal(state.calls, 15); assert.equal(state.generationRequests.length, 2); assert.doesNotMatch(JSON.stringify(state.generationRequests), /INVALID_QUANTITY|submit|pricing\.js|entry-call|caught-result|repository-source-qa-v1/);
+		const candidate = author.locator('details').filter({ hasText: '候选生成 2' });
+		const selector = author.getByLabel('固定评测问题'); let count = 15;
+		for (const caseId of ['symbol', 'call-chain', 'error-path']) {
+			await selector.selectOption(caseId);
+			if (caseId === 'symbol') { assert.equal(await author.getByLabel('评测整批请求上限').inputValue(), '6'); await author.getByLabel('评测整批请求上限').fill('8'); }
+			await candidate.getByRole('button', { name: '准备此候选的独立评测', exact: true }).click();
+			if (caseId === 'symbol') { await author.getByRole('button', { name: '取消本次授权', exact: true }).click(); assert.equal((await status()).calls, count); await candidate.getByRole('button', { name: '准备此候选的独立评测', exact: true }).click(); }
+			await author.getByRole('button', { name: '确认授权独立评测', exact: true }).click(); count += 8;
+			for (let n = 0; n < 200; n++) { state = await status(); if (state.calls === count && state.policy.reviews.at(-1).status === 'passed') break; await new Promise(resolve => setTimeout(resolve, 50)); }
+			assert.equal(state.calls, count); assert.equal(state.policy.reviews.at(-1).status, 'passed'); assert.ok(state.policy.reviews.at(-1).sides.every(row => row.requests === 4 && row.tools === 3 && row.totalTokens === 60));
+			assert.deepEqual(state.policy.choices, before.policy.choices); assert.deepEqual(state.policy.sessions, before.policy.sessions);
+		}
+		await page.reload(); await card.getByText('候选生成 2 · 候选已封存', { exact: true }).waitFor(); state = await status(); assert.equal(state.calls, 39); assert.equal(state.generationRequests.length, 2);
+		await card.getByLabel('固定评测问题').selectOption('error-path'); await card.getByLabel('固定评测问题').scrollIntoViewIfNeeded();
+		sourceChecks.push('exact three-file QA manifest availability', 'QA generation excludes held-out source and answers', 'question selection never raises budget', 'QA evaluation cancel without dispatch', 'three separately confirmed symbol/call-chain/error-path comparisons', 'full multi-file tool tasks and cumulative accounting', 'QA reload without replay or automatic adoption');
+	}
 	await writeFile(`${root}/browser-status.json`, JSON.stringify(state, null, 2));
 	const text = await card.innerText(); assert.doesNotMatch(text, /\b[a-f0-9]{12,64}\b|\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b/i);
 	await page.screenshot({ path: `${root}/sidebar.png` });

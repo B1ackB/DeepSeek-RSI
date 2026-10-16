@@ -11,6 +11,7 @@ import { validatePolicyEvaluation, evaluatePolicyBatch, sourceEvaluation } from 
 import { policyGenerationInputSchema, policyGenerationSchema, policyGenerationResponseSchema, policyGenerationSession, policyGeneratorPrompt, policyGeneratorInputDigest, type PolicyGeneration } from './policy-generation-contracts.ts';
 import { policyChoiceSchema, policySessionSchema, policyCommandSchema, policyReviewSnapshotSchema, policySessionId, policySourceSchema, type PolicySource } from './policy-review-contracts.ts';
 import { sealRepositorySnapshot, readRepositorySnapshot, repositoryManifest } from './policy-snapshot.ts';
+import { sourceQaAvailable } from './policy-source-qa.ts';
 
 export function openStore(file: string, handoffBatchId?: string) {
 	if (handoffBatchId !== undefined) { z.uuid().parse(handoffBatchId); if (!existsSync(file)) throw fault('policy_handoff_missing', 'Handoff requires an existing store'); }
@@ -150,12 +151,13 @@ export function openStore(file: string, handoffBatchId?: string) {
 		if (!cmd || cmd.kind !== 'policy_generate' || cmd.payload.workspaceId !== link.workspaceId || cmd.payload.expectedActive !== link.choiceId || cmd.payload.sourceId !== link.sourceId || cmd.payload.snapshotDigest !== link.snapshotDigest || cmd.payload.baselineDigest !== task.authorization.baselineDigest || cmd.payload.requirements !== task.authorization.requirements || policyDigest(cmd.payload.budget) !== policyDigest(task.authorization.budget) || receiptSchema.parse(JSON.parse(String(receipt!.result))).focusId !== task.authorization.id) throw fault('policy_generation_mismatch', 'Generation has no exact explicit authorization receipt');
 	}
 	function checkEvaluationIntent(batch: PolicyBatch, verifyObject = false) {
-		if (batch.authorization.evaluationSpec?.evaluator !== 'repository-source-v1') return;
+		const spec = batch.authorization.evaluationSpec;
+		if (!spec || spec.evaluator === 'repository-evidence-v1') return;
 		const task = policyGeneration(batch.authorization.generationId!)!; checkGenerationIntent(task); generationSource(task, verifyObject);
 		const link = task.authorization.source!;
 		const receipt = db.prepare('SELECT command,result FROM g1_operations WHERE id=?').get(batch.authorization.id);
 		const cmd = receipt && policyCommandSchema.parse(JSON.parse(String(receipt.command)));
-		if (!cmd || cmd.kind !== 'policy_evaluate' || cmd.payload.workspaceId !== link.workspaceId || cmd.payload.expectedActive !== link.choiceId || cmd.payload.sourceId !== link.sourceId || cmd.payload.snapshotDigest !== link.snapshotDigest || cmd.payload.generationId !== task.authorization.id || cmd.payload.baselineDigest !== task.authorization.baselineDigest || cmd.payload.candidateDigest !== task.candidateDigest || policyDigest(cmd.payload.budget) !== policyDigest(batch.authorization.budget) || receiptSchema.parse(JSON.parse(String(receipt!.result))).focusId !== batch.authorization.id) throw fault('policy_generation_mismatch', 'Evaluation has no exact separate authorization receipt');
+		if (!cmd || cmd.kind !== 'policy_evaluate' || cmd.payload.caseId !== (spec.evaluator === 'repository-source-qa-v1' ? spec.caseId : undefined) || cmd.payload.workspaceId !== link.workspaceId || cmd.payload.expectedActive !== link.choiceId || cmd.payload.sourceId !== link.sourceId || cmd.payload.snapshotDigest !== link.snapshotDigest || cmd.payload.generationId !== task.authorization.id || cmd.payload.baselineDigest !== task.authorization.baselineDigest || cmd.payload.candidateDigest !== task.candidateDigest || policyDigest(cmd.payload.budget) !== policyDigest(batch.authorization.budget) || receiptSchema.parse(JSON.parse(String(receipt!.result))).focusId !== batch.authorization.id) throw fault('policy_generation_mismatch', 'Evaluation has no exact separate authorization receipt');
 	}
 	function generationSource(task: PolicyGeneration, verifyObject = true) {
 		const link = task.authorization.source; if (!link) return undefined;
@@ -219,7 +221,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 			const usage = rows.filter(row => row.ownerId === task.authorization.id);
 			return [{ id: task.authorization.id, workspaceId: link.workspaceId, sourceId: link.sourceId, snapshotDigest: link.snapshotDigest, baselineDigest: task.authorization.baselineDigest, candidateDigest: task.candidateDigest, requirements: task.authorization.requirements, status: task.status, error: task.error, instructions, rationale, budget: task.authorization.budget, requests: usage.length, totalTokens: usage.some(row => row.usageState !== 'confirmed' || ['reserved', 'in_flight'].includes(row.state)) ? null : usage.reduce((sum, row) => sum + (row.tokens.total ?? 0), 0) }];
 		});
-		return policyReviewSnapshotSchema.parse({ generations, choices: policyChoices(), sessions: policySessions(), reviews, sources: policySources().map(source => ({ id: source.id, workspaceId: source.workspaceId, choiceId: source.choiceId, snapshotDigest: source.conditions.sourceSnapshot!.digest, status: source.status, createdAt: source.createdAt, files: repositoryManifest(snapshotForSource(source)) })) });
+		return policyReviewSnapshotSchema.parse({ generations, choices: policyChoices(), sessions: policySessions(), reviews, sources: policySources().map(source => ({ id: source.id, workspaceId: source.workspaceId, choiceId: source.choiceId, snapshotDigest: source.conditions.sourceSnapshot!.digest, status: source.status, createdAt: source.createdAt, ...sourceQaAvailable(source.conditions.files) ? { qaAvailable: true } : {}, files: repositoryManifest(snapshotForSource(source)) })) });
 	}
 	function checkPolicyCommand(input: unknown, workspacePath: string) {
 		const cmd = policyCommandSchema.parse(input);
@@ -250,7 +252,7 @@ export function openStore(file: string, handoffBatchId?: string) {
 					const task = policyGeneration(cmd.payload.generationId); const link = task?.authorization.source;
 					const usage = attempts().filter(row => row.ownerId === task?.authorization.id);
 					if (!task || task.status !== 'sealed' || task.authorization.policyId !== active.policyId || task.authorization.baselineDigest !== p.baselineDigest || task.candidateDigest !== cmd.payload.candidateDigest || !link || link.sourceId !== source.id || link.choiceId !== active.id || link.snapshotDigest !== p.snapshotDigest || usage.length !== 1 || usage.some(row => row.state !== 'succeeded' || row.usageState !== 'confirmed' || row.diagnostic)) throw fault('policy_generation_mismatch', '需要该策略和快照的完整候选及已确认用量');
-					const fixed = sourceEvaluation(source.id, source.conditions);
+					const fixed = sourceEvaluation(source.id, source.conditions, cmd.payload.caseId);
 					authorizePolicyBatch({ id: cmd.operationId, policyId: active.policyId, generationId: task.authorization.id, runtimeDigest, evaluationSpec: fixed.spec, runs: [{ side: 'baseline', run: freezePolicyRun(policyContent(active.policyId, p.baselineDigest), fixed.conditions) }, { side: 'candidate', run: freezePolicyRun(policyContent(active.policyId, cmd.payload.candidateDigest), fixed.conditions) }], budget: cmd.payload.budget });
 				}
 			} else if (cmd.kind === 'policy_stop') {
@@ -400,10 +402,11 @@ export function openStore(file: string, handoffBatchId?: string) {
 			const task = policyGeneration(authorization.generationId);
 			if (!task || task.status !== 'sealed' || task.authorization.policyId !== authorization.policyId || authorization.runs.length !== 2 || authorization.runs[0].run.policyDigest !== task.authorization.baselineDigest || authorization.runs[1].run.policyDigest !== task.candidateDigest || !authorization.evaluationSpec) throw fault('policy_generation_mismatch', 'Evaluation requires the exact sealed generation lineage');
 		}
-		if (authorization.evaluationSpec?.evaluator === 'repository-source-v1') {
+		const spec = authorization.evaluationSpec;
+		if (spec && spec.evaluator !== 'repository-evidence-v1') {
 			const task = authorization.generationId && policyGeneration(authorization.generationId);
 			const source = task && generationSource(task, false);
-			if (!source || source.id !== authorization.evaluationSpec.sourceId || authorization.runs.some(row => row.run.conditionsDigest !== policyDigest(sourceEvaluation(source.id, source.conditions).conditions))) throw fault('policy_generation_mismatch', 'Source evaluation differs from exact generation snapshot');
+			if (!source || source.id !== spec.sourceId || authorization.runs.some(row => row.run.conditionsDigest !== policyDigest(sourceEvaluation(source.id, source.conditions, spec.evaluator === 'repository-source-qa-v1' ? spec.caseId : undefined).conditions))) throw fault('policy_generation_mismatch', 'Source evaluation differs from exact generation snapshot');
 		}
 		const candidate = authorization.runs.find(row => row.side === 'candidate');
 		const provenance = candidate && policyVersions(authorization.policyId).find(row => row.digest === candidate.run.policyDigest)?.generationId;

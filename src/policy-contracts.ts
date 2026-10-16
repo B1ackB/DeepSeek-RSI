@@ -9,7 +9,7 @@ export const policyContentSchema = z.strictObject({
 export type PolicyContent = z.infer<typeof policyContentSchema>;
 export { policyBudgetSchema, policyPathSchema, policyFilesSchema, repositoryPathDenied, repositoryContentDenied, repositorySelectionSchema, repositoryRootSchema, repositorySnapshotSchema, policyConditionsDataSchema, policyBatchBudgetSchema } from './policy-inputs.ts';
 export type { RepositorySnapshot } from './policy-inputs.ts';
-import { repositorySnapshotSchema, policyConditionsDataSchema, policyBatchBudgetSchema } from './policy-inputs.ts';
+import { repositorySnapshotSchema, policyConditionsDataSchema, policyBatchBudgetSchema, policySourceCaseSchema } from './policy-inputs.ts';
 export const policyConditionsSchema = policyConditionsDataSchema.refine(conditions => {
 	if (!conditions.sourceSnapshot) return true;
 	const snapshot = repositorySnapshotSchema.safeParse({ schemaVersion: 1, kind: 'repository-worktree', root: conditions.sourceSnapshot.root, files: conditions.files });
@@ -30,8 +30,8 @@ export function freezePolicyRun(policy: unknown, conditions: unknown): PolicyRun
 
 export const policyVersionSchema = z.strictObject({ policyId: z.uuid(), digest, parentDigest: digest.nullable(), createdAt: integer, generationId: z.uuid().optional() }).refine(row => row.digest !== row.parentDigest, 'A version cannot parent itself');
 export type PolicyVersion = z.infer<typeof policyVersionSchema>;
-export const policyCaseIdSchema = z.enum(['symbol', 'call-chain', 'error-path', 'misleading', 'insufficient', 'untrusted']);
-export const policyEvaluationSpecSchema = z.discriminatedUnion('evaluator', [z.strictObject({ evaluator: z.literal('repository-evidence-v1'), caseId: policyCaseIdSchema, digest }), z.strictObject({ evaluator: z.literal('repository-source-v1'), sourceId: z.uuid(), digest })]);
+export const policyCaseIdSchema = z.enum([...policySourceCaseSchema.options, 'misleading', 'insufficient', 'untrusted']);
+export const policyEvaluationSpecSchema = z.discriminatedUnion('evaluator', [z.strictObject({ evaluator: z.literal('repository-evidence-v1'), caseId: policyCaseIdSchema, digest }), z.strictObject({ evaluator: z.literal('repository-source-v1'), sourceId: z.uuid(), digest }), z.strictObject({ evaluator: z.literal('repository-source-qa-v1'), sourceId: z.uuid(), caseId: policySourceCaseSchema, digest })]);
 export const policyDispatchSchema = z.strictObject({ attemptId: z.uuid(), state: z.literal('in_flight'), request: integer.min(1), policyPresent: z.boolean(), authorityPresent: z.boolean(), system: z.string(), tools: z.array(z.json()), messages: z.array(z.json()) });
 export const policyEvidenceSchema = z.strictObject({
 	runId: z.uuid(), policyDigest: digest, conditionsDigest: digest, runtimeDigest: digest,

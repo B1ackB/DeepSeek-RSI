@@ -1,0 +1,83 @@
+{
+  "paidRequests": 0,
+  "baseCommit": "96af936501b14da7abdac3013db076618575b644",
+  "harnessCommit": "d347e703908d0406b7a7ef80e3a0e594d86b2215",
+  "harnessPatchUnchanged": true,
+  "preservedHistoricalEvidenceFiles": 114,
+  "retainedFixtureHome": ".cache/policy-source-qa-ui-yD9n0z",
+  "retainedPolicyAndUsageRowsUnchangedAcrossRestart": {
+    "attempts": 48,
+    "policy_generations": 3,
+    "policy_batches": 5,
+    "policy_sessions": 5,
+    "policy_choices": 3,
+    "policy_sources": 4
+  },
+  "sqliteVersion": 7,
+  "confirmedFixtureAttempts": 48,
+  "syntheticTokens": 714,
+  "generationRequests": 3,
+  "dailyRequests": 9,
+  "qaComparisons": [
+    {
+      "caseId": "symbol",
+      "status": "passed",
+      "requests": 8,
+      "syntheticTokens": 120,
+      "toolsPerSide": [
+        3,
+        3
+      ]
+    },
+    {
+      "caseId": "call-chain",
+      "status": "passed",
+      "requests": 8,
+      "syntheticTokens": 120,
+      "toolsPerSide": [
+        3,
+        3
+      ]
+    },
+    {
+      "caseId": "error-path",
+      "status": "passed",
+      "requests": 8,
+      "syntheticTokens": 120,
+      "toolsPerSide": [
+        3,
+        3
+      ]
+    }
+  ],
+  "pairedConditionsEqual": true,
+  "ownedChildrenAbsent": [
+    54156,
+    54164,
+    54462,
+    54463,
+    54464,
+    54465,
+    54466,
+    54467,
+    54468,
+    54469
+  ],
+  "ownedChildHomesRemoved": true,
+  "hosts": [
+    {
+      "pid": 54437,
+      "port": 62425,
+      "processAbsent": true,
+      "portReleased": true
+    },
+    {
+      "pid": 54524,
+      "port": 62639,
+      "processAbsent": true,
+      "portReleased": true
+    }
+  ],
+  "workerAndClientBundlesExcludeHostAnswerPack": true,
+  "browserErrors": []
+}
